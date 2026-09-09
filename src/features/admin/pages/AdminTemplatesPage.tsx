@@ -1,0 +1,472 @@
+import React, { useState } from 'react';
+import { Icon } from '../../../components/common/Icon';
+import { Template, TemplateStatus } from '../../../types/template';
+import {
+  useTemplates,
+  createTemplate,
+  updateTemplate,
+  deleteTemplate,
+  resetTemplates
+} from '../../../mocks/templateStore';
+import { formatCurrency } from '../../../utils/formatters';
+import { TemplateFormModal } from '../components/TemplateFormModal';
+
+export const AdminTemplatesPage: React.FC = () => {
+  const templates = useTemplates();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatusTab, setSelectedStatusTab] = useState<'all' | TemplateStatus>('all');
+  const [selectedStyleFilter, setSelectedStyleFilter] = useState('');
+  const [selectedPriceFilter, setSelectedPriceFilter] = useState('');
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+
+  // Compute KPI metrics
+  const totalCount = templates.length;
+  const publishedCount = templates.filter((t) => t.status === 'published' || t.isActive).length;
+  const draftCount = templates.filter((t) => t.status === 'draft').length;
+  const hiddenCount = templates.filter((t) => t.status === 'hidden').length;
+
+  // Filter templates
+  const filteredTemplates = templates.filter((tpl) => {
+    // Status tab
+    if (selectedStatusTab !== 'all') {
+      const currentStatus = tpl.status || (tpl.isActive ? 'published' : 'draft');
+      if (currentStatus !== selectedStatusTab) return false;
+    }
+
+    // Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchName = tpl.name.toLowerCase().includes(q);
+      const matchSlug = tpl.slug.toLowerCase().includes(q);
+      const matchStyle = (tpl.style || '').toLowerCase().includes(q);
+      const matchDesc = tpl.description.toLowerCase().includes(q);
+      if (!matchName && !matchSlug && !matchStyle && !matchDesc) return false;
+    }
+
+    // Style filter
+    if (selectedStyleFilter && tpl.style !== selectedStyleFilter) {
+      return false;
+    }
+
+    // Price filter
+    if (selectedPriceFilter && tpl.price !== Number(selectedPriceFilter)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const handleOpenCreate = () => {
+    setEditingTemplate(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (tpl: Template) => {
+    setEditingTemplate(tpl);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveTemplate = (data: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (editingTemplate) {
+      updateTemplate(editingTemplate.id, data);
+    } else {
+      createTemplate(data);
+    }
+  };
+
+  const handleDelete = (tpl: Template) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa mẫu thiệp "${tpl.name}"?`)) {
+      deleteTemplate(tpl.id);
+    }
+  };
+
+  // Distinct styles for dropdown filter
+  const distinctStyles = Array.from(new Set(templates.map((t) => t.style).filter(Boolean)));
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      {/* SECTION A: Title & Header Actions */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-surface-subtle text-gold-foil font-label-caps text-[10px] tracking-widest uppercase font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold-foil"></span>
+            Danh mục sản phẩm mẫu • Bộ sưu tập thiệp cưới số
+          </div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso tracking-tight mt-1">
+            04. Quản Lý Mẫu Thiệp
+          </h1>
+          <p className="text-xs text-text-muted mt-1 max-w-2xl leading-relaxed">
+            Quản lý và cập nhật toàn bộ mẫu thiệp cưới số độc bản bán lẻ của <strong>Nhà Có Tiệc</strong>. Thiết lập giá niêm yết (50.000đ - 100.000đ), chỉnh sửa ảnh thumbnail, link xem thử demo và trạng thái phát hành.
+          </p>
+        </div>
+
+        {/* Global Action Buttons */}
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Đặt lại toàn bộ mẫu thiệp về dữ liệu ban đầu?')) {
+                resetTemplates();
+              }
+            }}
+            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+            title="Khôi phục danh sách mẫu ban đầu"
+          >
+            <Icon name="refresh" className="text-[15px]" />
+            <span>Đặt lại mẫu</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenCreate}
+            className="px-4 py-2 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+          >
+            <Icon name="add" className="text-[18px]" />
+            <span>+ Thêm mẫu thiệp</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION B: 4 KPI Summary Cards (Stitch Spec) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Tổng mẫu */}
+        <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col justify-between">
+          <div className="flex items-center justify-between text-text-muted">
+            <span className="font-label-caps text-[10px] uppercase font-semibold">Tổng mẫu thiết kế</span>
+            <Icon name="style" className="text-[18px] text-gold-foil" />
+          </div>
+          <div className="mt-2">
+            <span className="font-serif text-2xl font-bold text-deep-espresso">{totalCount} Mẫu</span>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-border-delicate flex items-center justify-between text-[11px] text-text-muted">
+            <span className="text-emerald-800 font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              {publishedCount} Mở bán
+            </span>
+            <span>{draftCount} Nháp • {hiddenCount} Ẩn</span>
+          </div>
+        </div>
+
+        {/* Card 2: Bán chạy nhất */}
+        <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col justify-between">
+          <div className="flex items-center justify-between text-text-muted">
+            <span className="font-label-caps text-[10px] uppercase font-semibold">Bán chạy nhất</span>
+            <Icon name="workspace_premium" className="text-[18px] text-burgundy-wine" />
+          </div>
+          <div className="mt-2">
+            <span className="font-serif text-lg font-bold text-deep-espresso truncate block">
+              Minh Anh Editorial
+            </span>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-border-delicate flex items-center justify-between text-[11px]">
+            <span className="text-burgundy-wine font-semibold">84 đơn đặt</span>
+            <span className="text-gold-foil font-medium">100.000đ</span>
+          </div>
+        </div>
+
+        {/* Card 3: Doanh số & Giá bình quân */}
+        <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col justify-between">
+          <div className="flex items-center justify-between text-text-muted">
+            <span className="font-label-caps text-[10px] uppercase font-semibold">Mức giá bán lẻ</span>
+            <Icon name="payments" className="text-[18px] text-emerald-700" />
+          </div>
+          <div className="mt-2">
+            <span className="font-serif text-2xl font-bold text-deep-espresso">50k - 100k</span>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-border-delicate flex items-center justify-between text-[11px] text-text-muted">
+            <span>Mô hình</span>
+            <span className="text-deep-espresso font-semibold">Đồng giá bán lẻ thiệp</span>
+          </div>
+        </div>
+
+        {/* Card 4: Tỷ lệ chuyển đổi */}
+        <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col justify-between">
+          <div className="flex items-center justify-between text-text-muted">
+            <span className="font-label-caps text-[10px] uppercase font-semibold">Hiệu suất demo</span>
+            <Icon name="trending_up" className="text-[18px] text-emerald-700" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="font-serif text-2xl font-bold text-deep-espresso">100%</span>
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+              Sẵn sàng xem thử
+            </span>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-border-delicate flex items-center justify-between text-[11px] text-text-muted">
+            <span>Link demo trực tiếp</span>
+            <span className="text-deep-espresso font-semibold">previewUrl riêng biệt</span>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION C: Search, Status Tabs & Filters */}
+      <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col gap-3.5">
+        {/* Status Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-delicate pb-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            <button
+              type="button"
+              onClick={() => setSelectedStatusTab('all')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                selectedStatusTab === 'all'
+                  ? 'bg-deep-espresso text-white shadow-xs'
+                  : 'bg-surface-subtle text-text-muted hover:text-deep-espresso'
+              }`}
+            >
+              Tất cả ({totalCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatusTab('published')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                selectedStatusTab === 'published'
+                  ? 'bg-emerald-800 text-white shadow-xs'
+                  : 'bg-surface-subtle text-text-muted hover:text-deep-espresso'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Đang mở bán ({publishedCount})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatusTab('draft')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                selectedStatusTab === 'draft'
+                  ? 'bg-amber-700 text-white shadow-xs'
+                  : 'bg-surface-subtle text-text-muted hover:text-deep-espresso'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span>Bản nháp ({draftCount})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatusTab('hidden')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                selectedStatusTab === 'hidden'
+                  ? 'bg-slate-700 text-white shadow-xs'
+                  : 'bg-surface-subtle text-text-muted hover:text-deep-espresso'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+              <span>Đã ẩn ({hiddenCount})</span>
+            </button>
+          </div>
+
+          <span className="text-xs text-text-muted shrink-0">
+            Hiển thị: <strong>{filteredTemplates.length}</strong> / {totalCount} mẫu thiệp
+          </span>
+        </div>
+
+        {/* Search & Filter Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+          {/* Search box */}
+          <div className="sm:col-span-6 relative">
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[17px]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm theo tên mẫu, mã slug, phong cách, mô tả..."
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-surface-subtle text-xs font-medium text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine border border-border-delicate"
+            />
+          </div>
+
+          {/* Style Filter */}
+          <div className="sm:col-span-3">
+            <select
+              value={selectedStyleFilter}
+              onChange={(e) => setSelectedStyleFilter(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-surface-subtle text-xs font-medium text-deep-espresso border border-border-delicate focus:outline-none focus:ring-1 focus:ring-burgundy-wine cursor-pointer"
+            >
+              <option value="">Phong cách: Tất cả</option>
+              {distinctStyles.map((st) => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Price Filter */}
+          <div className="sm:col-span-3">
+            <select
+              value={selectedPriceFilter}
+              onChange={(e) => setSelectedPriceFilter(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-surface-subtle text-xs font-medium text-deep-espresso border border-border-delicate focus:outline-none focus:ring-1 focus:ring-burgundy-wine cursor-pointer"
+            >
+              <option value="">Mức giá: Tất cả</option>
+              <option value="50000">Đồng giá 50.000đ</option>
+              <option value="100000">Đồng giá 100.000đ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION D: Visual Template Cards Grid (3 Columns Layout) */}
+      {filteredTemplates.length === 0 ? (
+        <div className="bg-surface-card rounded-2xl p-12 text-center border border-border-delicate flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-surface-subtle flex items-center justify-center text-text-muted">
+            <Icon name="search_off" className="text-[24px]" />
+          </div>
+          <h3 className="font-serif text-base font-bold text-deep-espresso">
+            Không tìm thấy mẫu thiệp phù hợp
+          </h3>
+          <p className="text-xs text-text-muted max-w-sm">
+            Thử thay đổi từ khóa tìm kiếm hoặc bỏ bớt các bộ lọc phong cách và trạng thái.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setSelectedStatusTab('all');
+              setSelectedStyleFilter('');
+              setSelectedPriceFilter('');
+            }}
+            className="px-4 py-1.5 rounded-full bg-burgundy-wine text-white text-xs font-semibold mt-1"
+          >
+            Xóa bộ lọc
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredTemplates.map((tpl) => {
+            const currentStatus = tpl.status || (tpl.isActive ? 'published' : 'draft');
+            return (
+              <article
+                key={tpl.id}
+                className="group bg-surface-card rounded-2xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 border border-border-delicate flex flex-col justify-between"
+              >
+                {/* 1. Thumbnail Image Container with Price & Status Overlay - Modern Smartphone 9:16 aspect ratio */}
+                <div
+                  className="relative w-full aspect-phone bg-surface-subtle overflow-hidden"
+                  style={{ aspectRatio: '9 / 16' }}
+                >
+                  <img
+                    src={tpl.thumbnailUrl}
+                    alt={tpl.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    style={{ objectPosition: tpl.thumbnailPosition || 'center 30%' }}
+                  />
+
+                  {/* Top Badges Overlay */}
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                    {/* Status Badge */}
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-label-caps uppercase font-bold tracking-wider shadow-sm flex items-center gap-1 backdrop-blur-md ${
+                        currentStatus === 'published'
+                          ? 'bg-emerald-900/90 text-white'
+                          : currentStatus === 'draft'
+                          ? 'bg-amber-900/90 text-white'
+                          : 'bg-slate-900/90 text-slate-200'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          currentStatus === 'published'
+                            ? 'bg-emerald-400'
+                            : currentStatus === 'draft'
+                            ? 'bg-amber-400'
+                            : 'bg-slate-400'
+                        }`}
+                      ></span>
+                      <span>
+                        {currentStatus === 'published'
+                          ? 'Published'
+                          : currentStatus === 'draft'
+                          ? 'Draft'
+                          : 'Hidden'}
+                      </span>
+                    </span>
+
+                    {/* Style Pill Tag */}
+                    <span className="px-2.5 py-1 rounded-full bg-surface-card/90 backdrop-blur-md text-deep-espresso font-label-caps text-[10px] uppercase font-semibold shadow-xs">
+                      {tpl.style || 'Thanh Lịch'}
+                    </span>
+                  </div>
+
+                  {/* Price Tag Overlay (Bottom Right) */}
+                  <div className="absolute bottom-3 right-3 bg-deep-espresso/90 backdrop-blur-md text-white px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                    <span className="font-label-caps text-[9px] text-gold-foil uppercase font-semibold">Giá lẻ</span>
+                    <span className="font-serif text-xs font-bold">
+                      {formatCurrency(tpl.price)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. Card Content Details */}
+                <div className="p-4 flex-1 flex flex-col justify-between gap-3 text-xs">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-serif text-base font-bold text-deep-espresso group-hover:text-burgundy-wine transition-colors leading-snug">
+                        {tpl.name}
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(tpl)}
+                        className="text-text-muted hover:text-rose-700 p-1 rounded transition-colors"
+                        title="Xóa mẫu thiệp"
+                      >
+                        <Icon name="delete" className="text-[16px]" />
+                      </button>
+                    </div>
+
+                    {/* Style & Slug */}
+                    <div className="flex items-center gap-2 text-[11px] text-text-muted">
+                      <span className="font-medium text-deep-espresso">
+                        Phong cách: <strong>{tpl.style || 'Thanh lịch'}</strong>
+                      </span>
+                    </div>
+
+                    <div className="font-mono text-[10px] text-gold-foil bg-surface-subtle/70 px-2 py-0.5 rounded border border-border-delicate/80 truncate">
+                      slug: /mau-thiep/{tpl.slug}
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-text-muted text-xs leading-relaxed line-clamp-2 mt-0.5">
+                      {tpl.description}
+                    </p>
+                  </div>
+
+                  {/* 3. Actions: "Mở thiệp xem thử" & "Chỉnh sửa" */}
+                  <div className="pt-3 border-t border-border-delicate flex items-center gap-2">
+                    {/* Chỉnh sửa */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(tpl)}
+                      className="flex-1 h-9 rounded-full bg-surface-subtle hover:bg-surface-cream text-deep-espresso text-xs font-semibold flex items-center justify-center gap-1.5 border border-border-delicate transition-colors shadow-2xs"
+                    >
+                      <Icon name="edit" className="text-[15px] text-burgundy-wine" />
+                      <span>Chỉnh sửa</span>
+                    </button>
+
+                    {/* Mở thiệp xem thử */}
+                    <a
+                      href={tpl.previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-9 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                      title="Mở đường link demo của mẫu thiệp trong tab mới"
+                    >
+                      <Icon name="open_in_new" className="text-[15px]" />
+                      <span>Mở thiệp xem thử</span>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {/* MODAL: Thêm mới & Chỉnh sửa mẫu thiệp */}
+      <TemplateFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialData={editingTemplate}
+        onSave={handleSaveTemplate}
+      />
+    </div>
+  );
+};
+

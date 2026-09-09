@@ -1,0 +1,269 @@
+import React, { useState } from 'react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Icon } from '../common/Icon';
+import { SocialIcon, SOCIAL_PLATFORMS_LIST } from '../common/SocialIcon';
+import { useCmsContent, DEFAULT_CMS_CONTENT } from '../../mocks/cmsStore';
+import { useAuth } from '../../mocks/authStore';
+
+export const PublicLayout: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const cms = useCmsContent();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
+
+  const socialConfig = cms.socialLinks || DEFAULT_CMS_CONTENT.socialLinks;
+  const activeSocials = SOCIAL_PLATFORMS_LIST.map((platform) => {
+    const item = socialConfig?.[platform.id];
+    return {
+      id: platform.id,
+      name: platform.name,
+      enabled: item?.enabled ?? false,
+      url: item?.url?.trim() || '',
+    };
+  }).filter((item) => item.enabled && item.url.length > 0);
+
+  const navLinks = [
+    { name: 'Trang chủ', path: '/' },
+    { name: 'Mẫu thiệp cưới', path: '/mau-thiep' },
+    { name: 'Liên hệ', path: '/lien-he' },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-surface-cream text-on-surface font-sans">
+      {/* 1. Header / Navbar */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-[#5c0b14]/95 backdrop-blur-md border-b border-white/15 transition-colors shadow-md pt-safe">
+        <div className="h-16 px-4 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
+          {/* Left: Brand Logo with twin rings - ONLY "Nhà Có Tiệc" (No tagline) */}
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <svg
+              className="w-8 h-8 shrink-0 drop-shadow-sm text-white"
+              fill="none"
+              viewBox="0 0 40 36"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <ellipse cx="15" cy="20" fill="none" opacity="0.95" rx="11" ry="11" stroke="currentColor" strokeWidth="1.5" />
+              <ellipse cx="25" cy="20" fill="none" opacity="0.95" rx="11" ry="11" stroke="currentColor" strokeWidth="1.5" />
+              <ellipse cx="15" cy="20" fill="none" opacity="0.6" rx="9.2" ry="9.2" stroke="currentColor" strokeDasharray="1 2" strokeWidth="0.6" />
+              <path d="M20 5 L21.2 9 L25 10.2 L21.2 11.4 L20 15 L18.8 11.4 L15 10.2 L18.8 9 Z" fill="currentColor" />
+              <circle cx="20" cy="10.2" fill="currentColor" r="1.2" />
+            </svg>
+            <span className="font-serif text-[22px] font-bold tracking-tight text-white leading-none">
+              Nhà Có Tiệc
+            </span>
+          </Link>
+
+          {/* Desktop Navigation Links: Trang chủ, Mẫu thiệp cưới, Liên hệ */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`text-sm font-medium transition-colors ${
+                    isActive ? 'text-white font-semibold underline underline-offset-4' : 'text-white/80 hover:text-white'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right Action: ONE main entry point "Đăng nhập" before login */}
+          <div className="flex items-center gap-3">
+            {!isAuthenticated ? (
+              <Link
+                to="/dang-nhap"
+                className="px-5 py-2 text-xs md:text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/25 rounded-full shadow-xs active:scale-95 transition-all"
+              >
+                Đăng nhập
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  to={isAdmin ? '/admin/tong-quan' : '/dashboard'}
+                  className="px-4 py-1.5 text-xs font-semibold rounded-full bg-gold-foil text-deep-espresso hover:brightness-105 transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <Icon name={isAdmin ? 'admin_panel_settings' : 'dashboard'} className="text-[16px]" />
+                  <span className="hidden sm:inline">{isAdmin ? 'Quản trị Admin' : 'Cổng Khách Hàng'}</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-full border border-white/20 transition-all"
+                  title="Đăng xuất"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Hamburger Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menu"
+              className="md:hidden w-9 h-9 flex items-center justify-center text-white/90 hover:text-white active:scale-95 transition-transform"
+            >
+              <Icon name={mobileMenuOpen ? 'close' : 'menu'} className="text-[24px]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#45080f] border-t border-white/10 px-4 py-4 flex flex-col gap-3 animate-in fade-in">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/90 hover:text-white text-sm py-1.5 font-medium flex items-center justify-between"
+              >
+                <span>{link.name}</span>
+                <Icon name="chevron_right" className="text-[16px] text-white/50" />
+              </Link>
+            ))}
+            <div className="pt-3 border-t border-white/10">
+              {!isAuthenticated ? (
+                <Link
+                  to="/dang-nhap"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full py-2.5 text-center rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold block border border-white/20"
+                >
+                  Đăng nhập
+                </Link>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={isAdmin ? '/admin/tong-quan' : '/dashboard'}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 py-2 text-center rounded-full bg-gold-foil text-deep-espresso text-xs font-semibold"
+                  >
+                    {isAdmin ? 'Quản trị Admin' : 'Cổng Khách Hàng'}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 py-2 text-center rounded-full bg-white/10 text-white text-xs font-medium border border-white/20"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 pt-16 flex flex-col w-full">
+        <Outlet />
+      </main>
+
+      {/* Public Footer (CMS Dynamic) */}
+      <footer className="bg-deep-espresso text-surface-cream pt-12 pb-8 border-t border-gold-foil/20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-white/10">
+            {/* Col 1: Brand info */}
+            <div className="md:col-span-2 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-serif text-2xl font-bold text-surface-cream">
+                  {cms.footer.brandName || 'Nhà Có Tiệc'}
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-gold-foil"></span>
+              </div>
+              <p className="text-body-sm text-text-muted max-w-sm leading-relaxed">
+                {cms.footer.slogan || 'Nền tảng thiệp cưới trực tuyến đồng hành cùng các cặp đôi. Đội ngũ thiết kế riêng theo từng câu chuyện tình yêu độc bản, hoàn thiện nhanh chóng trong 24h.'}
+              </p>
+              <div className="flex items-center gap-3 pt-2 text-xs text-gold-foil font-medium">
+                <span className="flex items-center gap-1">
+                  <Icon name="verified" className="text-[14px]" /> Cam kết 24h
+                </span>
+                <span>•</span>
+                <span>Giá bán lẻ 50k - 100k</span>
+                <span>•</span>
+                <span>Không phí duy trì</span>
+              </div>
+
+              {/* Social Media Links from CMS */}
+              {activeSocials.length > 0 && (
+                <div className="flex items-center gap-2 pt-2">
+                  {activeSocials.map((s) => (
+                    <a
+                      key={s.id}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={s.name}
+                      title={s.name}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-gold-foil hover:text-deep-espresso text-surface-cream flex items-center justify-center transition-all shadow-2xs hover:scale-105 active:scale-95"
+                    >
+                      <SocialIcon platform={s.id} className="w-3.5 h-3.5" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Col 2: Navigation */}
+            <div className="flex flex-col gap-2.5">
+              <span className="font-label-caps text-xs tracking-wider text-gold-foil font-semibold">
+                Khám phá
+              </span>
+              <Link to="/" className="text-sm text-text-muted hover:text-white transition-colors">
+                Trang chủ
+              </Link>
+              <Link to="/mau-thiep" className="text-sm text-text-muted hover:text-white transition-colors">
+                Bộ sưu tập mẫu thiệp
+              </Link>
+              <Link to="/lien-he" className="text-sm text-text-muted hover:text-white transition-colors">
+                Tư vấn thiết kế
+              </Link>
+              <Link to="/dang-nhap" className="text-sm text-text-muted hover:text-white transition-colors">
+                Đăng nhập tài khoản
+              </Link>
+            </div>
+
+            {/* Col 3: Support */}
+            <div className="flex flex-col gap-2.5">
+              <span className="font-label-caps text-xs tracking-wider text-gold-foil font-semibold">
+                Liên hệ hỗ trợ
+              </span>
+              <div className="flex items-center gap-2 text-sm text-text-muted">
+                <Icon name="call" className="text-[16px] text-gold-foil" />
+                <span>Hotline: {cms.footer.hotline}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-text-muted">
+                <Icon name="chat" className="text-[16px] text-gold-foil" />
+                <span>Zalo: {cms.footer.email ? `CSKH (${cms.footer.email})` : 'Nhà Có Tiệc CSKH'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-text-muted">
+                <Icon name="schedule" className="text-[16px] text-gold-foil" />
+                <span>{cms.footer.workingHours}</span>
+              </div>
+              {cms.footer.address && (
+                <div className="flex items-start gap-2 text-xs text-text-muted mt-1">
+                  <Icon name="place" className="text-[15px] text-gold-foil shrink-0 mt-0.5" />
+                  <span>{cms.footer.address}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Copyright */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-text-muted gap-2">
+            <p>{cms.footer.copyrightText || '© 2026 Nhà Có Tiệc (nhacotiec.vn). Bản quyền thuộc về Nhà Có Tiệc Studio.'}</p>
+            <div className="flex items-center gap-4">
+              <span>Bán theo sản phẩm</span>
+              <span>•</span>
+              <span>Chính sách bảo mật</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
