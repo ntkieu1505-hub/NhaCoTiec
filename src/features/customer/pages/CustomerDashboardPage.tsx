@@ -457,23 +457,30 @@ export const CustomerDashboardPage: React.FC = () => {
               </span>
             </div>
 
-            {/* Stepper list: Only show current and completed steps */}
+            {/* Stepper list: Shows all 8 steps; future steps are locked */}
             <div className="flex flex-col relative pl-1 pt-1">
-              {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[])
-                .filter((stepNum) => stepNum <= currentStep)
-                .map((stepNum) => {
-                  const isCompleted = stepNum < currentStep;
-                  const isCurrent = stepNum === currentStep;
-                  const meta = ORDER_STAGES[stepNum];
+              {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[]).map((stepNum) => {
+                const isCompleted = stepNum < currentStep;
+                const isCurrent = stepNum === currentStep;
+                const isLocked = stepNum > currentStep;
+                const meta = ORDER_STAGES[stepNum];
 
-                  return (
-                    <div key={stepNum} className="relative flex items-start gap-3.5 pb-5 last:pb-1">
-                      {/* Connecting line between steps */}
-                      {stepNum < currentStep && (
-                        <div className="absolute left-[13px] top-6 bottom-0 w-0.5 bg-burgundy-wine" />
-                      )}
+                return (
+                  <div key={stepNum} className="relative flex items-start gap-3.5 pb-5 last:pb-1">
+                    {/* Connecting line between steps */}
+                    {stepNum !== 8 && (
+                      <div
+                        className={`absolute left-[13px] top-6 bottom-0 w-0.5 ${
+                          isCompleted
+                            ? 'bg-burgundy-wine'
+                            : isCurrent
+                            ? 'bg-gradient-to-b from-burgundy-wine to-border-delicate'
+                            : 'bg-border-delicate/40'
+                        }`}
+                      />
+                    )}
 
-                    {/* Step Icon Indicator (✓, ●, ○) */}
+                    {/* Step Icon Indicator (✓, ●, 🔒) */}
                     <div
                       className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all ${
                         isCompleted
@@ -488,12 +495,12 @@ export const CustomerDashboardPage: React.FC = () => {
                       ) : isCurrent ? (
                         <span className="leading-none text-xs">●</span>
                       ) : (
-                        <span className="leading-none text-xs font-normal">○</span>
+                        <Icon name="lock" className="text-[12px] text-text-muted/50" />
                       )}
                     </div>
 
                     {/* Step Information & Action */}
-                    <div className="flex flex-col min-w-0 flex-1 pt-0.5">
+                    <div className={`flex flex-col min-w-0 flex-1 pt-0.5 ${isLocked ? 'opacity-50 select-none' : ''}`}>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span
                           className={`text-xs ${
@@ -514,14 +521,21 @@ export const CustomerDashboardPage: React.FC = () => {
                           </span>
                         ) : isCompleted ? (
                           <span className="font-label-caps text-[9px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                            Hoàn thành
+                            Đã hoàn thành
                           </span>
                         ) : (
-                          <span className="font-label-caps text-[9px] text-text-muted/60">
-                            Chưa thực hiện
+                          <span className="inline-flex items-center gap-1 font-label-caps text-[9px] text-text-muted/70 bg-surface-subtle px-2 py-0.5 rounded-full border border-border-delicate/60">
+                            <Icon name="lock" className="text-[10px]" />
+                            <span>Đang khóa</span>
                           </span>
                         )}
                       </div>
+
+                      {isLocked && (
+                        <span className="text-[11px] text-text-muted/70 mt-1 italic">
+                          Bước này sẽ tự động mở khóa sau khi bạn hoàn tất các bước trước.
+                        </span>
+                      )}
 
                       {/* If Current Step: Show Message & Step-tailored Action */}
                       {isCurrent && (
@@ -735,18 +749,6 @@ export const CustomerDashboardPage: React.FC = () => {
                 );
               })}
             </div>
-
-            {currentStep < 8 && (
-              <div className="p-3 rounded-xl bg-surface-subtle/70 border border-border-delicate flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-text-muted">
-                  <Icon name="lock" className="text-[15px] text-gold-foil shrink-0" />
-                  <span>
-                    Bước kế tiếp: <strong>Bước {currentStep + 1} • {ORDER_STAGES[(currentStep + 1) as OrderStatusStage].name}</strong>
-                  </span>
-                </div>
-                <span className="text-[10px] text-text-muted italic hidden sm:inline">(Sẽ mở khi hoàn tất bước hiện tại)</span>
-              </div>
-            )}
 
             {/* Link to order detail */}
             <div className="pt-2 border-t border-border-delicate flex items-center justify-between text-xs">

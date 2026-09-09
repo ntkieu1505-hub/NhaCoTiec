@@ -650,70 +650,88 @@ export const CustomerOrderDetailPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Timeline Items List: Only show current and completed steps */}
+        {/* Timeline Items List: 8 steps with clear Lock / Active / Completed states */}
         <div className="relative flex flex-col pl-3 pt-2">
-          {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[])
-            .filter((stepNum) => stepNum <= effectiveStage)
-            .map((stepNum) => {
-              const isCompleted = stepNum < effectiveStage;
-              const isCurrent = stepNum === effectiveStage;
-              const meta = ORDER_STAGES[stepNum];
+          {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[]).map((stepNum) => {
+            const isCompleted = stepNum < effectiveStage;
+            const isCurrent = stepNum === effectiveStage;
+            const isLocked = stepNum > effectiveStage;
+            const meta = ORDER_STAGES[stepNum];
 
-              return (
-                <div key={stepNum} className="relative flex items-start gap-4 pb-6 last:pb-1">
-                  {stepNum < effectiveStage && (
-                    <div className="absolute left-3 top-6 bottom-0 w-0.5 bg-burgundy-wine" />
-                  )}
-
+            return (
+              <div key={stepNum} className="relative flex items-start gap-4 pb-6 last:pb-1">
+                {stepNum !== 8 && (
                   <div
-                    className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[12px] flex-shrink-0 transition-all ${
+                    className={`absolute left-3 top-6 bottom-0 w-0.5 ${
                       isCompleted
-                        ? 'bg-burgundy-wine text-white shadow-xs'
+                        ? 'bg-burgundy-wine'
                         : isCurrent
-                        ? 'bg-burgundy-wine text-white ring-4 ring-burgundy-wine/20 animate-pulse shadow-md'
-                        : 'bg-surface-subtle text-text-muted border border-border-delicate'
+                        ? 'bg-gradient-to-b from-burgundy-wine to-border-delicate'
+                        : 'bg-border-delicate/40'
                     }`}
-                  >
-                    {isCompleted ? (
-                      <Icon name="check" className="text-[14px]" />
-                    ) : (
-                      <Icon name={meta.icon} className="text-[14px]" />
-                    )}
-                  </div>
+                  />
+                )}
 
-                  <div className="flex flex-col min-w-0 pt-0.5">
-                    <div className="flex items-baseline gap-2">
-                      <span
-                        className={`text-xs font-semibold ${
-                          isCurrent ? 'text-burgundy-wine font-bold text-sm' : 'text-deep-espresso'
-                        }`}
-                      >
-                        {stepNum}. {meta.name}
-                      </span>
-                      <span className="font-label-caps text-[9px] text-text-muted">
-                        {isCompleted ? 'Hoàn thành' : 'Đang diễn ra'}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-text-muted mt-0.5">
-                      {meta.description}
+                <div
+                  className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[12px] flex-shrink-0 transition-all ${
+                    isCompleted
+                      ? 'bg-burgundy-wine text-white shadow-xs'
+                      : isCurrent
+                      ? 'bg-burgundy-wine text-white ring-4 ring-burgundy-wine/20 animate-pulse shadow-md'
+                      : 'bg-surface-subtle text-text-muted/60 border border-border-delicate'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <Icon name="check" className="text-[14px]" />
+                  ) : isCurrent ? (
+                    <Icon name={meta.icon} className="text-[14px]" />
+                  ) : (
+                    <Icon name="lock" className="text-[12px] text-text-muted/50" />
+                  )}
+                </div>
+
+                <div className={`flex flex-col min-w-0 pt-0.5 flex-1 ${isLocked ? 'opacity-50 select-none' : ''}`}>
+                  <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                    <span
+                      className={`text-xs ${
+                        isCurrent
+                          ? 'text-burgundy-wine font-bold text-sm'
+                          : isCompleted
+                          ? 'text-deep-espresso font-semibold'
+                          : 'text-text-muted'
+                      }`}
+                    >
+                      {stepNum}. {meta.name}
+                    </span>
+                    <span
+                      className={`font-label-caps text-[9px] px-2 py-0.5 rounded-full ${
+                        isCompleted
+                          ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200'
+                          : isCurrent
+                          ? 'bg-burgundy-wine text-white font-bold shadow-2xs'
+                          : 'bg-surface-subtle text-text-muted/70 flex items-center gap-1 border border-border-delicate/60'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        'Đã hoàn thành'
+                      ) : isCurrent ? (
+                        'Đang thực hiện'
+                      ) : (
+                        <>
+                          <Icon name="lock" className="text-[10px]" />
+                          <span>Đang khóa</span>
+                        </>
+                      )}
                     </span>
                   </div>
+                  <span className="text-[11px] text-text-muted mt-0.5">
+                    {isLocked ? 'Bước này sẽ tự động mở khóa sau khi bạn hoàn tất các bước trước.' : meta.description}
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
         </div>
-
-        {effectiveStage < 8 && (
-          <div className="p-3 rounded-xl bg-surface-subtle/70 border border-border-delicate flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-text-muted">
-              <Icon name="lock" className="text-[15px] text-gold-foil shrink-0" />
-              <span>
-                Bước kế tiếp: <strong>Bước {effectiveStage + 1} • {ORDER_STAGES[(effectiveStage + 1) as OrderStatusStage].name}</strong>
-              </span>
-            </div>
-            <span className="text-[10px] text-text-muted italic hidden sm:inline">(Sẽ mở khi hoàn tất bước hiện tại)</span>
-          </div>
-        )}
       </div>
 
       {/* 7. DETAILED ORDER SPECIFICATION */}
