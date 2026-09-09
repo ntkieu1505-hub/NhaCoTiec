@@ -9,6 +9,7 @@ import { AdminLayout } from '../components/layouts/AdminLayout';
 import { HomePage } from '../features/public/pages/HomePage';
 import { TemplatesPage } from '../features/public/pages/TemplatesPage';
 import { TemplateDetailPage } from '../features/public/pages/TemplateDetailPage';
+import { OrderWeddingInfoPage } from '../features/public/pages/OrderWeddingInfoPage';
 import { ContactPage } from '../features/public/pages/ContactPage';
 import { LoginPage } from '../features/public/pages/LoginPage';
 import { RegisterPage } from '../features/public/pages/RegisterPage';
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'mau-thiep', element: <TemplatesPage /> },
       { path: 'mau-thiep/:slug', element: <TemplateDetailPage /> },
+      { path: 'dat-thiep/:slug', element: <OrderWeddingInfoPage /> },
       { path: 'lien-he', element: <ContactPage /> },
       { path: 'dang-nhap', element: <LoginPage /> },
       { path: 'dang-ky', element: <RegisterPage /> },

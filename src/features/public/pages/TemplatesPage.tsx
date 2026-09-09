@@ -120,14 +120,13 @@ export const TemplatesPage: React.FC = () => {
                   <Icon name="visibility" className="text-[17px]" />
                   <span>Xem chi tiết</span>
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTemplateForOrder(template)}
+                <Link
+                  to={`/dat-thiep/${template.slug}`}
                   className="flex-1 h-10 rounded-full bg-[#63141a] hover:bg-deep-espresso text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition-all"
                 >
                   <Icon name="shopping_bag" className="text-[17px]" />
                   <span>Chọn mẫu này</span>
-                </button>
+                </Link>
               </div>
             </div>
           </article>

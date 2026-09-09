@@ -92,6 +92,8 @@ export interface WeddingInformation {
   videoNotes?: string;        // Ghi chú về video
   albumPhotos?: string[];     // Danh sách ảnh album
   albumPhotoCount?: number;   // Số lượng ảnh đã tải
+  albumPhotoNotes?: { id?: string; url: string; note: string; name?: string; size?: string }[];
+  rsvpDeadline?: string;      // Hạn chót nhận phản hồi RSVP
   bankAccountGroom?: {
     bankName: string;
     accountNumber: string;

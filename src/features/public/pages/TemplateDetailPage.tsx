@@ -175,14 +175,13 @@ export const TemplateDetailPage: React.FC = () => {
 
           {/* Primary CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsOrderModalOpen(true)}
+            <Link
+              to={`/dat-thiep/${template.slug}`}
               className="w-full sm:flex-1 h-12 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-label-md text-sm font-semibold flex items-center justify-center gap-2 shadow-md shadow-rose-950/20 active:scale-95 transition-all"
             >
               <Icon name="shopping_bag" className="text-[20px]" />
               <span>Chọn mẫu này • {formatCurrency(template.price)}</span>
-            </button>
+            </Link>
             <a
               href="https://zalo.me"
               target="_blank"
