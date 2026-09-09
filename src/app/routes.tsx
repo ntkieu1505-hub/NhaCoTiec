@@ -44,11 +44,16 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'mau-thiep', element: <TemplatesPage /> },
       { path: 'mau-thiep/:slug', element: <TemplateDetailPage /> },
-      { path: 'dat-thiep/:slug', element: <OrderWeddingInfoPage /> },
       { path: 'lien-he', element: <ContactPage /> },
       { path: 'dang-nhap', element: <LoginPage /> },
       { path: 'dang-ky', element: <RegisterPage /> },
-      { path: 'thanh-toan/:orderId', element: <CheckoutQrPage /> },
+      {
+        element: <CustomerRoute />,
+        children: [
+          { path: 'dat-thiep/:slug', element: <OrderWeddingInfoPage /> },
+          { path: 'thanh-toan/:orderId', element: <CheckoutQrPage /> },
+        ],
+      },
     ],
   },
 

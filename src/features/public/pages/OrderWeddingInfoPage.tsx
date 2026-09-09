@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { useTemplates, getTemplateBySlug } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
@@ -17,7 +17,8 @@ interface UploadedPhoto {
 export const OrderWeddingInfoPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const templates = useTemplates();
   const template = (slug ? getTemplateBySlug(slug) : undefined) || templates[0];
 
@@ -26,6 +27,38 @@ export const OrderWeddingInfoPage: React.FC = () => {
   const [brideName, setBrideName] = useState('Nguyễn Minh Anh');
   const [customerPhone, setCustomerPhone] = useState(user?.phone || '0912 345 678');
   const [customerEmail, setCustomerEmail] = useState(user?.email || 'kiet.minhanh@gmail.com');
+
+  // Auto-fill logged-in customer's contact details
+  useEffect(() => {
+    if (user?.email && customerEmail === 'kiet.minhanh@gmail.com') {
+      setCustomerEmail(user.email);
+    }
+    if (user?.phone && customerPhone === '0912 345 678') {
+      setCustomerPhone(user.phone);
+    }
+  }, [user]);
+
+  // If auth is still checking
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-burgundy-wine border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-text-muted font-medium">Đang kiểm tra thông tin đăng nhập...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Strictly require login before accessing the wedding info order page
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to={`/dang-nhap?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
+  }
 
   // SECTION 2: Thời gian & Địa điểm
   const [weddingDate, setWeddingDate] = useState('2026-10-26');

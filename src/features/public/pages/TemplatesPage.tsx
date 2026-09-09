@@ -6,8 +6,10 @@ import { usePublicTemplates } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { Template } from '../../../types/template';
 import { OrderFormModal } from '../components/OrderFormModal';
+import { useAuth } from '../../../mocks/authStore';
 
 export const TemplatesPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const publicTemplates = usePublicTemplates();
   const [filter, setFilter] = useState<'all' | 'basic' | 'premium'>('all');
   const [selectedTemplateForOrder, setSelectedTemplateForOrder] = useState<Template | null>(null);
@@ -121,7 +123,11 @@ export const TemplatesPage: React.FC = () => {
                   <span>Xem chi tiết</span>
                 </Link>
                 <Link
-                  to={`/dat-thiep/${template.slug}`}
+                  to={
+                    isAuthenticated
+                      ? `/dat-thiep/${template.slug}`
+                      : `/dang-nhap?redirect=${encodeURIComponent(`/dat-thiep/${template.slug}`)}`
+                  }
                   className="flex-1 h-10 rounded-full bg-[#63141a] hover:bg-deep-espresso text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition-all"
                 >
                   <Icon name="shopping_bag" className="text-[17px]" />

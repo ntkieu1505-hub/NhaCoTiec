@@ -5,8 +5,10 @@ import { Badge } from '../../../components/common/Badge';
 import { useTemplates } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { OrderFormModal } from '../components/OrderFormModal';
+import { useAuth } from '../../../mocks/authStore';
 
 export const TemplateDetailPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const { slug } = useParams<{ slug: string }>();
   const templates = useTemplates();
   const template = templates.find((t) => t.slug === slug) || templates[0];
@@ -176,7 +178,11 @@ export const TemplateDetailPage: React.FC = () => {
           {/* Primary CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <Link
-              to={`/dat-thiep/${template.slug}`}
+              to={
+                isAuthenticated
+                  ? `/dat-thiep/${template.slug}`
+                  : `/dang-nhap?redirect=${encodeURIComponent(`/dat-thiep/${template.slug}`)}`
+              }
               className="w-full sm:flex-1 h-12 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-label-md text-sm font-semibold flex items-center justify-center gap-2 shadow-md shadow-rose-950/20 active:scale-95 transition-all"
             >
               <Icon name="shopping_bag" className="text-[20px]" />

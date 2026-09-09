@@ -83,7 +83,7 @@ export const CustomerRoute: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={`/dang-nhap?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    return <Navigate to={`/dang-nhap?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
 
   return <Outlet />;

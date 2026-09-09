@@ -131,6 +131,21 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Order Redirect Requirement Notice */}
+        {redirectUrl && (redirectUrl.includes('/dat-thiep') || redirectUrl.includes('/thanh-toan')) && (
+          <div className="p-3.5 rounded-xl bg-[#63141a]/5 border border-burgundy-wine/20 flex items-start gap-3 text-xs text-deep-espresso">
+            <div className="w-7 h-7 rounded-full bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center shrink-0 mt-0.5">
+              <Icon name="lock" className="text-[16px]" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-burgundy-wine">Yêu cầu đăng nhập trước khi đặt thiệp</span>
+              <span className="text-text-muted leading-relaxed">
+                Vui lòng đăng nhập (hoặc chọn tab Đăng ký tài khoản mới) để bắt đầu điền thông tin và lưu trữ thiệp cưới của bạn.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Tab Switcher */}
         <div className="flex rounded-full bg-surface-subtle p-1 border border-border-delicate">
           <button
