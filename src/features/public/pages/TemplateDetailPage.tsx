@@ -29,10 +29,10 @@ export const TemplateDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         {/* Left: Mobile phone mockup preview (5 cols) */}
         <div className="md:col-span-5 flex flex-col items-center">
-          {/* Realistic smartphone frame with modern 9:16 viewport ratio */}
+          {/* Realistic smartphone frame with modern 9:19.5 viewport ratio */}
           <div
             className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-phone rounded-[38px] bg-[#181513] p-2.5 shadow-2xl border-[3.5px] border-gold-foil/40 ring-4 sm:ring-8 ring-deep-espresso/10 flex flex-col"
-            style={{ aspectRatio: '9 / 16' }}
+            style={{ aspectRatio: '9 / 19.5' }}
           >
             {/* Phone top notch & speaker bar */}
             <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-20 sm:w-22 h-3.5 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
