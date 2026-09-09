@@ -1,4 +1,4 @@
-﻿export type AuthRole = 'admin' | 'customer';
+export type AuthRole = 'admin' | 'customer';
 
 export interface AuthUser {
   id: string;
@@ -14,4 +14,5 @@ export interface AuthState {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isCustomer: boolean;
+  isLoading?: boolean;
 }

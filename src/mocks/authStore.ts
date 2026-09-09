@@ -1,70 +1,72 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthUser, AuthState } from '../types/auth';
+import { auth, googleProvider } from '../services/firebase';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+  User as FirebaseUser,
+} from 'firebase/auth';
 
 /**
  * ADMIN EMAIL ALLOWLIST
  * Only emails included in this allowlist are granted the 'admin' role.
- * Do NOT display or expose this allowlist publicly on the Public Website.
- * In production Firebase integration, this will be replaced with Firebase Custom Claims / Security Rules.
+ * You and your authorized teammates will have full administrative privileges.
+ * You can add emails directly to this array or set VITE_ADMIN_EMAILS in Vercel.
  */
 export const ADMIN_EMAILS: string[] = [
-  'authorized-admin-email@example.com',
+  'kieumllnn@gmail.com',
   'admin@nhacotiec.vn',
+  ...((import.meta as any).env?.VITE_ADMIN_EMAILS
+    ? String((import.meta as any).env.VITE_ADMIN_EMAILS).split(',').map((e: string) => e.trim().toLowerCase())
+    : []),
 ];
 
-export const MOCK_ADMIN_USER: AuthUser = {
-  id: 'admin-001',
-  email: 'authorized-admin-email@example.com',
-  name: 'Quản Trị Viên Nhà Có Tiệc',
-  role: 'admin',
-};
-
-export const MOCK_CUSTOMER_USER: AuthUser = {
-  id: '01',
-  email: 'customer@example.com',
-  name: 'Nguyễn Minh Anh & Trần Đức Minh',
-  phone: '0982 123 456',
-  role: 'customer',
-};
-
-const STORAGE_KEY = 'nha_co_tiec_auth_session_v2';
-
-// In-memory cache synced with localStorage
-let currentUser: AuthUser | null = (() => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Failed to load auth session from localStorage', e);
-  }
-  return null;
-})();
-
-const listeners = new Set<() => void>();
-
-function notify() {
-  try {
-    if (currentUser) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch (e) {
-    console.error('Failed to save auth session to localStorage', e);
-  }
-  listeners.forEach((fn) => fn());
-}
-
 /**
- * Check if an email is in the authorized Admin email allowlist
+ * Check if an email belongs to an authorized Admin
  */
-export function isAdminEmail(email: string): boolean {
+export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
   return ADMIN_EMAILS.some((adminEmail) => adminEmail.toLowerCase() === normalized);
 }
+
+/**
+ * Map Firebase User object to our app AuthUser type
+ */
+function mapFirebaseUser(user: FirebaseUser): AuthUser {
+  const isAdmin = isAdminEmail(user.email);
+  return {
+    id: user.uid,
+    email: user.email || '',
+    name: user.displayName || (isAdmin ? 'Quản Trị Viên Nhà Có Tiệc' : (user.email?.split('@')[0] || 'Khách hàng')),
+    role: isAdmin ? 'admin' : 'customer',
+    phone: user.phoneNumber || undefined,
+    avatarUrl: user.photoURL || undefined,
+  };
+}
+
+let currentUser: AuthUser | null = null;
+let isAuthLoading = true;
+const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((fn) => fn());
+}
+
+// Global Firebase auth state listener
+onAuthStateChanged(auth, (firebaseUser) => {
+  if (firebaseUser) {
+    currentUser = mapFirebaseUser(firebaseUser);
+  } else {
+    currentUser = null;
+  }
+  isAuthLoading = false;
+  notify();
+});
 
 /**
  * Get current authenticated user
@@ -74,78 +76,93 @@ export function getCurrentUser(): AuthUser | null {
 }
 
 /**
- * Perform login:
- * Determines role based on Admin email allowlist.
- * If email matches allowlist -> role is 'admin' and redirects to '/admin/tong-quan'.
- * Otherwise -> role is 'customer' and redirects to '/dashboard'.
+ * Log in with Email and Password via Firebase
  */
-export function login(email: string): { user: AuthUser; redirectTo: string } {
-  const normalizedEmail = email.trim().toLowerCase();
-  const isAdmin = isAdminEmail(normalizedEmail);
+export async function loginWithEmail(email: string, password: string): Promise<{ user: AuthUser; redirectTo: string }> {
+  const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+  const user = mapFirebaseUser(credential.user);
+  currentUser = user;
+  isAuthLoading = false;
+  notify();
+  return {
+    user,
+    redirectTo: user.role === 'admin' ? '/admin/tong-quan' : '/dashboard',
+  };
+}
 
-  if (isAdmin) {
-    currentUser = {
-      id: 'admin-001',
-      email: normalizedEmail,
-      name: 'Quản Trị Viên Nhà Có Tiệc',
-      role: 'admin',
-    };
-    notify();
-    return { user: currentUser, redirectTo: '/admin/tong-quan' };
-  } else {
-    currentUser = {
-      id: '01',
-      email: normalizedEmail || 'customer@example.com',
-      name: 'Nguyễn Minh Anh & Trần Đức Minh',
-      phone: '0982 123 456',
-      role: 'customer',
-    };
-    notify();
-    return { user: currentUser, redirectTo: '/dashboard' };
+/**
+ * Register with Email and Password via Firebase
+ */
+export async function registerWithEmail(
+  email: string,
+  password: string,
+  name?: string
+): Promise<{ user: AuthUser; redirectTo: string }> {
+  const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  if (name && credential.user) {
+    try {
+      await updateProfile(credential.user, { displayName: name.trim() });
+    } catch (e) {
+      console.warn('Failed to update display name', e);
+    }
   }
+  const user = mapFirebaseUser(credential.user);
+  currentUser = user;
+  isAuthLoading = false;
+  notify();
+  return {
+    user,
+    redirectTo: user.role === 'admin' ? '/admin/tong-quan' : '/dashboard',
+  };
 }
 
 /**
- * Perform logout:
- * Clears current session and returns user to public website.
+ * Log in with Google Account via Firebase Popup
  */
-export function logout(): void {
+export async function loginWithGoogle(): Promise<{ user: AuthUser; redirectTo: string }> {
+  const credential = await signInWithPopup(auth, googleProvider);
+  const user = mapFirebaseUser(credential.user);
+  currentUser = user;
+  isAuthLoading = false;
+  notify();
+  return {
+    user,
+    redirectTo: user.role === 'admin' ? '/admin/tong-quan' : '/dashboard',
+  };
+}
+
+/**
+ * Sign out from Firebase
+ */
+export async function logout(): Promise<void> {
+  await signOut(auth);
   currentUser = null;
+  isAuthLoading = false;
   notify();
 }
 
 /**
- * Convenience helper to log in directly as mock customer (for development testing)
+ * Compatibility wrapper
  */
-export function loginAsMockCustomer(): { user: AuthUser; redirectTo: string } {
-  currentUser = { ...MOCK_CUSTOMER_USER };
-  notify();
-  return { user: currentUser, redirectTo: '/dashboard' };
-}
-
-/**
- * Convenience helper to log in directly as mock admin (for development testing)
- */
-export function loginAsMockAdmin(): { user: AuthUser; redirectTo: string } {
-  currentUser = { ...MOCK_ADMIN_USER };
-  notify();
-  return { user: currentUser, redirectTo: '/admin/tong-quan' };
-}
+export const login = loginWithEmail;
 
 /**
  * Reactive React hook for authentication state
  */
 export function useAuth(): AuthState & {
-  login: typeof login;
+  isLoading: boolean;
+  loginWithEmail: typeof loginWithEmail;
+  registerWithEmail: typeof registerWithEmail;
+  loginWithGoogle: typeof loginWithGoogle;
   logout: typeof logout;
-  loginAsMockCustomer: typeof loginAsMockCustomer;
-  loginAsMockAdmin: typeof loginAsMockAdmin;
 } {
-  const [user, setUser] = useState<AuthUser | null>(getCurrentUser);
+  const [user, setUser] = useState<AuthUser | null>(currentUser);
+  const [loading, setLoading] = useState<boolean>(isAuthLoading);
 
   useEffect(() => {
     const handleUpdate = () => {
-      setUser(getCurrentUser());
+      setUser(currentUser);
+      setLoading(isAuthLoading);
     };
     listeners.add(handleUpdate);
     return () => {
@@ -158,9 +175,10 @@ export function useAuth(): AuthState & {
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     isCustomer: user?.role === 'customer',
-    login,
+    isLoading: loading,
+    loginWithEmail,
+    registerWithEmail,
+    loginWithGoogle,
     logout,
-    loginAsMockCustomer,
-    loginAsMockAdmin,
   };
 }

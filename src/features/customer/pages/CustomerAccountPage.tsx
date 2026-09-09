@@ -7,19 +7,19 @@ import { useAuth } from '../../../mocks/authStore';
 
 export const CustomerAccountPage: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const zaloUrl = useZaloSupportUrl();
   const liveOrder = useOrder('NCT01');
 
   // Customer Profile State
   const [customerName, setCustomerName] = useState(
-    liveOrder?.customerName || 'Nguyễn Minh Anh & Trần Đức Minh'
+    user?.name || liveOrder?.customerName || 'Khách hàng Nhà Có Tiệc'
   );
   const [customerPhone, setCustomerPhone] = useState(
-    liveOrder?.customerPhone || '0982 123 456'
+    user?.phone || liveOrder?.customerPhone || '0982 123 456'
   );
   const [customerEmail, setCustomerEmail] = useState(
-    liveOrder?.customerEmail || 'minhanh.wedding@gmail.com'
+    user?.email || liveOrder?.customerEmail || 'khachhang@nhacotiec.vn'
   );
 
   // Change Password State
