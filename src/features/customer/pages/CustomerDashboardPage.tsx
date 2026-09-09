@@ -271,8 +271,8 @@ export const CustomerDashboardPage: React.FC = () => {
               {/* Personalized Card Mockup - Modern Smartphone 9:16 Viewport Ratio */}
               <div className="relative rounded-2xl bg-surface-cream p-5 flex flex-col items-center border border-border-delicate">
                 <div
-                  className="relative w-full max-w-[210px] sm:max-w-[220px] aspect-phone rounded-[32px] bg-[#181513] p-2 shadow-xl border-2 border-gold-foil/40 flex flex-col"
-                  style={{ aspectRatio: '9 / 16' }}
+                  className="relative w-full max-w-[210px] sm:max-w-[220px] rounded-[32px] bg-[#181513] p-2 shadow-xl border-2 border-gold-foil/40 flex flex-col"
+                  style={{ aspectRatio: '9 / 19.5' }}
                 >
                   {/* Phone top notch & speaker bar */}
                   <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
@@ -369,8 +369,8 @@ export const CustomerDashboardPage: React.FC = () => {
               <div className="relative rounded-2xl bg-surface-cream p-5 flex flex-col items-center border border-border-delicate">
                 {/* Template Demo Visual Preview - Modern Smartphone 9:16 Viewport Ratio */}
                 <div
-                  className="relative w-full max-w-[210px] sm:max-w-[220px] aspect-phone rounded-[32px] bg-[#181513] p-2 shadow-xl border-2 border-gold-foil/30 flex flex-col"
-                  style={{ aspectRatio: '9 / 16' }}
+                  className="relative w-full max-w-[210px] sm:max-w-[220px] rounded-[32px] bg-[#181513] p-2 shadow-xl border-2 border-gold-foil/30 flex flex-col"
+                  style={{ aspectRatio: '9 / 19.5' }}
                 >
                   {/* Phone top notch & speaker bar */}
                   <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
@@ -457,23 +457,21 @@ export const CustomerDashboardPage: React.FC = () => {
               </span>
             </div>
 
-            {/* Stepper list */}
+            {/* Stepper list: Only show current and completed steps */}
             <div className="flex flex-col relative pl-1 pt-1">
-              {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[]).map((stepNum) => {
-                const isCompleted = stepNum < currentStep;
-                const isCurrent = stepNum === currentStep;
-                const meta = ORDER_STAGES[stepNum];
+              {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[])
+                .filter((stepNum) => stepNum <= currentStep)
+                .map((stepNum) => {
+                  const isCompleted = stepNum < currentStep;
+                  const isCurrent = stepNum === currentStep;
+                  const meta = ORDER_STAGES[stepNum];
 
-                return (
-                  <div key={stepNum} className="relative flex items-start gap-3.5 pb-5 last:pb-1">
-                    {/* Connecting line between steps */}
-                    {stepNum !== 8 && (
-                      <div
-                        className={`absolute left-[13px] top-6 bottom-0 w-0.5 ${
-                          isCompleted ? 'bg-burgundy-wine' : 'bg-border-delicate/80'
-                        }`}
-                      />
-                    )}
+                  return (
+                    <div key={stepNum} className="relative flex items-start gap-3.5 pb-5 last:pb-1">
+                      {/* Connecting line between steps */}
+                      {stepNum < currentStep && (
+                        <div className="absolute left-[13px] top-6 bottom-0 w-0.5 bg-burgundy-wine" />
+                      )}
 
                     {/* Step Icon Indicator (✓, ●, ○) */}
                     <div
@@ -737,6 +735,18 @@ export const CustomerDashboardPage: React.FC = () => {
                 );
               })}
             </div>
+
+            {currentStep < 8 && (
+              <div className="p-3 rounded-xl bg-surface-subtle/70 border border-border-delicate flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-text-muted">
+                  <Icon name="lock" className="text-[15px] text-gold-foil shrink-0" />
+                  <span>
+                    Bước kế tiếp: <strong>Bước {currentStep + 1} • {ORDER_STAGES[(currentStep + 1) as OrderStatusStage].name}</strong>
+                  </span>
+                </div>
+                <span className="text-[10px] text-text-muted italic hidden sm:inline">(Sẽ mở khi hoàn tất bước hiện tại)</span>
+              </div>
+            )}
 
             {/* Link to order detail */}
             <div className="pt-2 border-t border-border-delicate flex items-center justify-between text-xs">
