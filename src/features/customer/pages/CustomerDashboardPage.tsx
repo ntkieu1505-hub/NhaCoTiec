@@ -65,9 +65,11 @@ export const CustomerDashboardPage: React.FC = () => {
   };
 
   // Data-driven current step strictly mapped from orderStatus
-  const currentStep: OrderStatusStage =
-    ORDER_STATUS_MAP[liveOrder.orderStatus] || liveOrder.currentStage || 1;
-  const currentMeta = ORDER_STAGES[currentStep];
+  const rawStep = ORDER_STATUS_MAP[liveOrder.orderStatus] || liveOrder.currentStage || 1;
+  const currentStep: OrderStatusStage = (typeof rawStep === 'number' && rawStep >= 1 && rawStep <= 8)
+    ? (rawStep as OrderStatusStage)
+    : 1;
+  const currentMeta = ORDER_STAGES[currentStep] || ORDER_STAGES[1];
 
   const exportData = useCustomerExport(liveOrder.id);
   const isDataDelivered = exportData?.status === 'sent';

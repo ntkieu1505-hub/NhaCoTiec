@@ -61,7 +61,20 @@ function initFirestoreTemplatesSync() {
         if (!snapshot.empty) {
           const remoteList: Template[] = [];
           snapshot.forEach((docSnap) => {
-            remoteList.push(docSnap.data() as Template);
+            const data = docSnap.data() as Partial<Template>;
+            if (data) {
+              remoteList.push({
+                name: data.name || data.title || 'Mẫu thiệp cưới',
+                title: data.title || data.name || 'Mẫu thiệp cưới',
+                slug: data.slug || docSnap.id,
+                price: typeof data.price === 'number' ? data.price : 79000,
+                status: data.status || 'published',
+                isActive: data.isActive ?? true,
+                thumbnailUrl: data.thumbnailUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
+                ...data,
+                id: docSnap.id,
+              } as Template);
+            }
           });
 
           if (remoteList.length > 0) {

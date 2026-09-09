@@ -55,8 +55,11 @@ export const CustomerOrderDetailPage: React.FC = () => {
   };
 
   // Real order stage
-  const effectiveStage = currentOrder.currentStage;
-  const stageMeta = ORDER_STAGES[effectiveStage];
+  const effectiveStage: OrderStatusStage =
+    (typeof currentOrder.currentStage === 'number' && currentOrder.currentStage >= 1 && currentOrder.currentStage <= 8)
+      ? currentOrder.currentStage
+      : 1;
+  const stageMeta = ORDER_STAGES[effectiveStage] || ORDER_STAGES[1];
 
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [isWeddingInfoModalOpen, setIsWeddingInfoModalOpen] = useState(false);
@@ -217,7 +220,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
                 name={
                   currentOrder.paymentStatus === 'pending_confirmation' && effectiveStage === 1
                     ? 'hourglass_top'
-                    : stageMeta.icon
+                    : (stageMeta?.icon || 'help')
                 }
                 className="text-[20px] text-burgundy-wine"
               />
@@ -685,7 +688,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
                   {isCompleted ? (
                     <Icon name="check" className="text-[14px]" />
                   ) : isCurrent ? (
-                    <Icon name={meta.icon} className="text-[14px]" />
+                    <Icon name={meta?.icon || 'radio_button_checked'} className="text-[14px]" />
                   ) : (
                     <Icon name="lock" className="text-[12px] text-text-muted/50" />
                   )}

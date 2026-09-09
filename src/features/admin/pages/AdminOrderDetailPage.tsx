@@ -53,7 +53,9 @@ export const AdminOrderDetailPage: React.FC = () => {
     );
   }
 
-  const stageMeta = ORDER_STAGES[order.currentStage];
+  const stageMeta = (order.currentStage && ORDER_STAGES[order.currentStage])
+    ? ORDER_STAGES[order.currentStage]
+    : ORDER_STAGES[1];
   const [customInvitationUrl, setCustomInvitationUrl] = useState('');
 
   const defaultInvitationUrl = order.invitationUrl || `https://nhacotiec.vn/invitation/${

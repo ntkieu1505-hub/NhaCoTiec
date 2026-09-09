@@ -8,7 +8,10 @@ interface StatusChipProps {
 }
 
 export const StatusChip: React.FC<StatusChipProps> = ({ stage, className = '' }) => {
-  const meta = ORDER_STAGES[stage];
+  const safeStage = (typeof stage === 'number' && stage >= 1 && stage <= 8)
+    ? (stage as OrderStatusStage)
+    : 1;
+  const meta = ORDER_STAGES[safeStage] || ORDER_STAGES[1];
 
   const getStyle = (s: OrderStatusStage) => {
     switch (s) {
@@ -33,11 +36,11 @@ export const StatusChip: React.FC<StatusChipProps> = ({ stage, className = '' })
   return (
     <span
       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-label-caps font-semibold border ${getStyle(
-        stage
+        safeStage
       )} ${className}`}
     >
-      <span className="material-symbols-outlined text-[13px]">{meta.icon}</span>
-      <span>{meta.name}</span>
+      <span className="material-symbols-outlined text-[13px]">{meta?.icon || 'help'}</span>
+      <span>{meta?.name || 'Tiến trình'}</span>
     </span>
   );
 };

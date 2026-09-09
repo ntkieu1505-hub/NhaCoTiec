@@ -21,7 +21,15 @@ let currentOrders: Order[] = (() => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((o) => ({
+          ...o,
+          currentStage: (typeof o.currentStage === 'number' && o.currentStage >= 1 && o.currentStage <= 8)
+            ? o.currentStage
+            : 1,
+        }));
+      }
     }
   } catch (e) {
     console.error('Failed to load orders from localStorage', e);
@@ -73,7 +81,30 @@ function initFirestoreSync() {
         if (!snapshot.empty) {
           const map = new Map<string, Order>();
           snapshot.forEach((docSnap) => {
-            map.set(docSnap.id, docSnap.data() as Order);
+            const raw = docSnap.data() as Partial<Order>;
+            const stage = (typeof raw.currentStage === 'number' && raw.currentStage >= 1 && raw.currentStage <= 8)
+              ? (raw.currentStage as OrderStatusStage)
+              : 1;
+
+            const normalizedOrder: Order = {
+              userId: '01',
+              templateId: 'tpl-01',
+              templateName: 'Mẫu thiệp cưới',
+              customerName: raw.weddingInfo ? `${raw.weddingInfo.groomName} & ${raw.weddingInfo.brideName}` : 'Khách hàng',
+              customerPhone: raw.weddingInfo?.customerPhone || '',
+              customerEmail: raw.weddingInfo?.customerEmail || '',
+              price: 79000,
+              orderStatus: 'pending_payment',
+              paymentStatus: 'unpaid',
+              paymentMethod: 'vietqr',
+              category: 'basic',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              ...raw,
+              id: docSnap.id,
+              currentStage: stage,
+            };
+            map.set(docSnap.id, normalizedOrder);
           });
 
           if (map.size > 0) {

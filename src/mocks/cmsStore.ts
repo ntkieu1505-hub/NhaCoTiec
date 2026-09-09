@@ -351,7 +351,19 @@ function initFirestoreCmsSync() {
             ...DEFAULT_CMS_CONTENT,
             ...remoteData,
             hero: { ...DEFAULT_CMS_CONTENT.hero, ...(remoteData.hero || {}) },
-            intro: { ...DEFAULT_CMS_CONTENT.intro, ...(remoteData.intro || {}) },
+            intro: {
+              ...DEFAULT_CMS_CONTENT.intro,
+              ...(remoteData.intro || {}),
+              steps: (remoteData.intro?.steps && Array.isArray(remoteData.intro.steps) && remoteData.intro.steps.length > 0)
+                ? remoteData.intro.steps
+                : DEFAULT_CMS_CONTENT.intro.steps,
+            },
+            features: (remoteData.features && Array.isArray(remoteData.features) && remoteData.features.length > 0)
+              ? remoteData.features
+              : DEFAULT_CMS_CONTENT.features,
+            testimonials: (remoteData.testimonials && Array.isArray(remoteData.testimonials) && remoteData.testimonials.length > 0)
+              ? remoteData.testimonials
+              : DEFAULT_CMS_CONTENT.testimonials,
             featuredTemplates: { ...DEFAULT_CMS_CONTENT.featuredTemplates, ...(remoteData.featuredTemplates || {}) },
             footer: { ...DEFAULT_CMS_CONTENT.footer, ...(remoteData.footer || {}) },
             contact: { ...DEFAULT_CMS_CONTENT.contact, ...(remoteData.contact || {}) },
