@@ -107,15 +107,6 @@ export const CheckoutQrPage: React.FC = () => {
               <Icon name="visibility" className="text-[18px]" />
               <span>Xem tiến trình đơn hàng</span>
             </button>
-
-            {/* Quick Helper to Test Admin Flow */}
-            <Link
-              to="/admin/don-hang"
-              className="w-full h-10 rounded-full bg-surface-subtle hover:bg-surface-container-high text-deep-espresso font-label-md text-xs font-medium border border-border-delicate flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Icon name="admin_panel_settings" className="text-[16px] text-burgundy-wine" />
-              <span>Mở Admin để duyệt thanh toán (Demo Flow)</span>
-            </Link>
           </div>
         </div>
       ) : (
