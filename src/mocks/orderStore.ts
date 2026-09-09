@@ -322,6 +322,83 @@ export function customerSubmitRevision(
 }
 
 /**
+ * Customer Action: Complete Data Submission (Stage 2 -> Stage 3)
+ * After filling in wedding info and/or album, customer confirms sending data to Studio.
+ */
+export function customerCompleteDataSubmission(orderId: string): Order {
+  const now = new Date().toISOString();
+  currentOrders = currentOrders.map((ord) => {
+    if (ord.id === orderId) {
+      return {
+        ...ord,
+        currentStage: 3,
+        orderStatus: 'information_received',
+        updatedAt: now,
+      };
+    }
+    return ord;
+  });
+
+  notify();
+
+  createSystemNotification(
+    'order',
+    orderId,
+    'admin',
+    'Khách hàng đã gửi thông tin thiệp cưới',
+    `Đơn hàng #${orderId} đã được khách hàng điền xong thông tin và album ảnh, sẵn sàng thiết kế.`,
+    `/admin/don-hang/${orderId}`
+  );
+
+  return getOrderById(orderId)!;
+}
+
+/**
+ * Customer Action: Approve Design (Stage 5 -> Stage 7)
+ * Customer approves draft design and publishes official wedding invitation.
+ */
+export function customerApproveDesign(orderId: string): Order {
+  const now = new Date().toISOString();
+  currentOrders = currentOrders.map((ord) => {
+    if (ord.id === orderId) {
+      const brideGroomSlug = ord.weddingInfo
+        ? `${ord.weddingInfo.groomName}-${ord.weddingInfo.brideName}`
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+        : 'minhanh-ducminh';
+      const defaultUrl = `https://nhacotiec.vn/invitation/${brideGroomSlug || 'khach-hang'}`;
+      return {
+        ...ord,
+        currentStage: 7,
+        orderStatus: 'completed',
+        invitationUrl: ord.invitationUrl || defaultUrl,
+        updatedAt: now,
+      };
+    }
+    return ord;
+  });
+
+  notify();
+
+  createSystemNotification(
+    'invitation',
+    orderId,
+    'admin',
+    'Khách hàng đã duyệt thiệp cưới',
+    `Khách hàng đơn #${orderId} đã chính thức duyệt bản thiết kế thiệp cưới!`,
+    `/admin/don-hang/${orderId}`
+  );
+
+  return getOrderById(orderId)!;
+}
+
+
+/**
  * Custom React Hook for live reactivity
  */
 export function useOrder(orderId: string) {

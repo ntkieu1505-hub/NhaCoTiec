@@ -12,6 +12,8 @@ import {
   customerSubmitWeddingInfo,
   customerSubmitAlbum,
   customerSubmitRevision,
+  customerCompleteDataSubmission,
+  customerApproveDesign,
 } from '../../../mocks/orderStore';
 import { WeddingInformation } from '../../../types/order';
 import { formatCurrency } from '../../../utils/formatters';
@@ -51,9 +53,8 @@ export const CustomerOrderDetailPage: React.FC = () => {
     updatedAt: '2026-09-08T22:00:00Z',
   };
 
-  // Preview stage for testing UI layout across all 8 stages
-  const [previewStage, setPreviewStage] = useState<OrderStatusStage | null>(null);
-  const effectiveStage = previewStage || currentOrder.currentStage;
+  // Real order stage
+  const effectiveStage = currentOrder.currentStage;
   const stageMeta = ORDER_STAGES[effectiveStage];
 
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
@@ -138,44 +139,6 @@ export const CustomerOrderDetailPage: React.FC = () => {
               #{currentOrder.id}
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* 2. DEMO INTERACTIVE PREVIEW SELECTOR */}
-      <div className="bg-surface-card rounded-2xl p-3 shadow-xs border border-border-delicate flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-text-muted">
-            <Icon name="tune" className="text-[16px] text-burgundy-wine" />
-            <span className="font-label-caps text-[10px] font-bold uppercase tracking-wider">
-              Mô phỏng giao diện 8 bước (Kiểm thử UI):
-            </span>
-          </div>
-          <span className="text-[11px] text-burgundy-wine font-semibold bg-burgundy-wine/10 px-2 py-0.5 rounded-full">
-            Bước {effectiveStage} / 8 • {stageMeta.name}
-          </span>
-        </div>
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 text-[11px]">
-          {([1, 2, 3, 4, 5, 6, 7, 8] as OrderStatusStage[]).map((stg) => (
-            <button
-              key={stg}
-              onClick={() => setPreviewStage(stg)}
-              className={`px-2.5 py-1 rounded-md border whitespace-nowrap transition-all text-xs ${
-                effectiveStage === stg
-                  ? 'border-burgundy-wine bg-burgundy-wine text-white font-semibold shadow-xs'
-                  : 'border-border-delicate bg-surface-subtle hover:bg-surface-cream text-deep-espresso'
-              }`}
-            >
-              {stg}. {ORDER_STAGES[stg].name}
-            </button>
-          ))}
-          {previewStage !== null && (
-            <button
-              onClick={() => setPreviewStage(null)}
-              className="px-2 py-1 text-[10px] text-burgundy-wine font-semibold underline whitespace-nowrap"
-            >
-              Trở về trạng thái thực
-            </button>
-          )}
         </div>
       </div>
 
@@ -293,15 +256,17 @@ export const CustomerOrderDetailPage: React.FC = () => {
                 </span>
               </div>
 
-              {/* Quick action to test admin side */}
+              {/* Support action */}
               <div className="pt-2 flex flex-col gap-2">
-                <Link
-                  to="/admin/don-hang"
-                  className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold shadow-md hover:bg-[#851622] transition-colors"
+                <a
+                  href={zaloUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-semibold shadow-xs transition-colors"
                 >
-                  <Icon name="admin_panel_settings" className="text-[18px]" />
-                  <span>Chuyển sang Admin Hub để duyệt đơn (Demo Flow)</span>
-                </Link>
+                  <Icon name="chat" className="text-[18px] text-burgundy-wine" />
+                  <span>Liên hệ Zalo hỗ trợ đối soát thanh toán 24/7</span>
+                </a>
               </div>
             </div>
           ) : effectiveStage === 1 && currentOrder.paymentStatus === 'rejected' ? (
@@ -402,19 +367,29 @@ export const CustomerOrderDetailPage: React.FC = () => {
                           </button>
                         </div>
                         {(currentOrder.weddingInfoSubmitted || currentOrder.albumSubmitted) && (
-                          <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[11px]">
-                            {currentOrder.weddingInfoSubmitted && (
-                              <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">
-                                <Icon name="check_circle" className="text-[14px]" />
-                                Đã gửi thông tin lễ cưới
-                              </span>
-                            )}
-                            {currentOrder.albumSubmitted && (
-                              <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">
-                                <Icon name="check_circle" className="text-[14px]" />
-                                Đã tải {currentOrder.weddingInfo?.albumPhotoCount || currentOrder.weddingInfo?.albumPhotos?.length || 0} ảnh cưới
-                              </span>
-                            )}
+                          <div className="flex flex-col gap-2 pt-0.5">
+                            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                              {currentOrder.weddingInfoSubmitted && (
+                                <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">
+                                  <Icon name="check_circle" className="text-[14px]" />
+                                  Đã lưu thông tin lễ cưới
+                                </span>
+                              )}
+                              {currentOrder.albumSubmitted && (
+                                <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">
+                                  <Icon name="check_circle" className="text-[14px]" />
+                                  Đã tải {currentOrder.weddingInfo?.albumPhotoCount || currentOrder.weddingInfo?.albumPhotos?.length || 0} ảnh cưới
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => customerCompleteDataSubmission(activeOrderId)}
+                              className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold shadow-md hover:bg-[#851622] active:scale-95 transition-all mt-1"
+                            >
+                              <Icon name="send" className="text-[16px]" />
+                              <span>Xác nhận hoàn tất &amp; Gửi cho Studio thiết kế</span>
+                            </button>
                           </div>
                         )}
                       </>
@@ -443,7 +418,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
                       </button>
                     </div>
                     <a
-                      href="https://zalo.me"
+                      href={zaloUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="w-full h-10 flex items-center justify-center gap-1.5 rounded-full bg-burgundy-wine text-white text-xs font-semibold"
@@ -456,7 +431,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
 
                 {effectiveStage === 4 && (
                   <a
-                    href="https://zalo.me"
+                    href={zaloUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold shadow-md"
@@ -469,21 +444,32 @@ export const CustomerOrderDetailPage: React.FC = () => {
                 {effectiveStage === 5 && (
                   <div className="flex flex-col gap-2">
                     <button
-                      onClick={() => setIsRevisionModalOpen(true)}
-                      className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold shadow-md active:scale-95 transition-transform"
+                      type="button"
+                      onClick={() => customerApproveDesign(activeOrderId)}
+                      className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-md active:scale-95 transition-transform"
                     >
-                      <Icon name="rate_review" className="text-[18px]" />
-                      <span>Yêu cầu chỉnh sửa thiệp</span>
+                      <Icon name="check_circle" className="text-[18px]" />
+                      <span>Duyệt bản thiết kế này (Hoàn tất thiệp cưới)</span>
                     </button>
-                    <a
-                      href="https://nhacotiec.vn/demo/minh-anh"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-surface-card border border-burgundy-wine/40 text-deep-espresso text-xs font-semibold hover:bg-surface-subtle transition-colors"
-                    >
-                      <Icon name="visibility" className="text-[18px] text-burgundy-wine" />
-                      <span>Xem bản duyệt thiết kế</span>
-                    </a>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <a
+                        href={currentOrder.invitationUrl || "https://nhacotiec.vn/demo/minh-anh"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="h-11 flex items-center justify-center gap-2 rounded-full bg-surface-card border border-burgundy-wine/40 text-deep-espresso text-xs font-semibold hover:bg-surface-subtle transition-colors"
+                      >
+                        <Icon name="visibility" className="text-[18px] text-burgundy-wine" />
+                        <span>Xem bản duyệt thiết kế</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setIsRevisionModalOpen(true)}
+                        className="h-11 flex items-center justify-center gap-2 rounded-full bg-surface-subtle text-deep-espresso text-xs font-semibold border border-border-delicate hover:bg-surface-cream transition-colors"
+                      >
+                        <Icon name="rate_review" className="text-[18px] text-burgundy-wine" />
+                        <span>Yêu cầu chỉnh sửa thêm</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 
