@@ -2,11 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { useOrders } from '../../../mocks/orderStore';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 import { StatusChip } from '../../../components/common/StatusChip';
+import { useActivityLogs } from '../../../services/activityLogService';
 
 export const AdminOverviewPage: React.FC = () => {
   const orders = useOrders();
+  const activityLogs = useActivityLogs(10);
   const pendingPayments = orders.filter((o) => o.paymentStatus === 'pending_confirmation');
   return (
     <div className="flex flex-col gap-8">
@@ -227,6 +229,94 @@ export const AdminOverviewPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* 5. Real-time Activity Logs (Cloud Firestore) */}
+      <div className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate flex flex-col gap-4">
+        <div className="flex items-center justify-between pb-2 border-b border-border-delicate">
+          <div className="flex items-center gap-2">
+            <Icon name="history" className="text-[20px] text-burgundy-wine" />
+            <h2 className="font-serif text-lg font-bold text-deep-espresso">
+              Nhật ký hoạt động & Chỉnh sửa (Firebase Cloud Firestore)
+            </h2>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span>Thời gian thực (Live Sync)</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col divide-y divide-border-delicate">
+          {activityLogs.length === 0 ? (
+            <div className="py-6 text-center text-xs text-text-muted">
+              Chưa có nhật ký hoạt động nào được ghi nhận.
+            </div>
+          ) : (
+            activityLogs.map((log) => {
+              const isCustomer = log.actorRole === 'customer';
+              return (
+                <div key={log.id} className="py-3 flex items-start justify-between gap-3 text-xs">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        log.type === 'order_created'
+                          ? 'bg-blue-50 text-blue-700'
+                          : log.type === 'payment_approved'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : log.type === 'payment_rejected'
+                          ? 'bg-rose-50 text-rose-700'
+                          : log.type === 'payment_submitted'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-surface-subtle text-deep-espresso'
+                      }`}
+                    >
+                      <Icon
+                        name={
+                          log.type === 'order_created'
+                            ? 'shopping_bag'
+                            : log.type === 'payment_approved'
+                            ? 'verified'
+                            : log.type === 'payment_rejected'
+                            ? 'cancel'
+                            : log.type === 'payment_submitted'
+                            ? 'payments'
+                            : 'edit_note'
+                        }
+                        className="text-[18px]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-deep-espresso">{log.title}</span>
+                        <span
+                          className={`text-[10px] px-2 py-0.2 rounded-full font-bold uppercase tracking-wider ${
+                            isCustomer
+                              ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                              : 'bg-purple-50 text-purple-800 border border-purple-200'
+                          }`}
+                        >
+                          {log.actorName}
+                        </span>
+                        {log.orderId && (
+                          <Link
+                            to={`/admin/don-hang/${log.orderId}`}
+                            className="font-mono font-bold text-burgundy-wine hover:underline"
+                          >
+                            #{log.orderId}
+                          </Link>
+                        )}
+                      </div>
+                      <p className="text-text-muted leading-relaxed">{log.description}</p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap">
+                    {formatDateTime(log.timestamp)}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

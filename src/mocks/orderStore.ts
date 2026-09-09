@@ -10,6 +10,7 @@ import { MOCK_ORDERS } from './mockOrders';
 import { createSystemNotification } from './notificationStore';
 import { db } from '../services/firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { logActivity } from '../services/activityLogService';
 
 const STORAGE_KEY = 'nha_co_tiec_orders_v6';
 const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
@@ -219,6 +220,16 @@ export function createOrder(params: CreateOrderParams): Order {
     `/admin/don-hang/${orderId}`
   );
 
+  // Log activity to Firestore
+  logActivity({
+    type: 'order_created',
+    actorName: customerName,
+    actorRole: 'customer',
+    title: 'Khách hàng đặt thiệp cưới mới',
+    description: `Đơn hàng #${orderId} (${params.templateName}) đã hoàn tất thông tin cưới và chuyển sang thanh toán QR.`,
+    orderId,
+  });
+
   return newOrder;
 }
 
@@ -252,6 +263,17 @@ export function customerSubmitPaymentConfirmation(
   });
 
   notify(targetOrder);
+
+  // Log activity
+  logActivity({
+    type: 'payment_submitted',
+    actorName: targetOrder?.customerName || 'Khách hàng',
+    actorRole: 'customer',
+    title: 'Khách hàng gửi xác nhận chuyển khoản',
+    description: `Đơn hàng #${orderId} đã quét mã QR chuyển khoản và gửi yêu cầu đối soát thanh toán.`,
+    orderId,
+  });
+
   return getOrderById(orderId)!;
 }
 
@@ -293,6 +315,16 @@ export function adminConfirmPayment(orderId: string): Order {
     `/dashboard/don-hang/${orderId}`
   );
 
+  // Log activity to Firestore
+  logActivity({
+    type: 'payment_approved',
+    actorName: 'Admin (Nhà Có Tiệc)',
+    actorRole: 'admin',
+    title: 'Xác nhận thanh toán thành công',
+    description: `Admin đã duyệt chuyển khoản thành công cho đơn hàng #${orderId}. Chuyển sang giai đoạn Đã thanh toán.`,
+    orderId,
+  });
+
   return getOrderById(orderId)!;
 }
 
@@ -321,6 +353,17 @@ export function adminRejectPayment(orderId: string, reason?: string): Order {
   });
 
   notify(targetOrder);
+
+  // Log activity
+  logActivity({
+    type: 'payment_rejected',
+    actorName: 'Admin (Nhà Có Tiệc)',
+    actorRole: 'admin',
+    title: 'Yêu cầu kiểm tra lại thanh toán',
+    description: `Đơn #${orderId} bị từ chối duyệt: ${reason || 'Chưa nhận được chuyển khoản tương ứng'}.`,
+    orderId,
+  });
+
   return getOrderById(orderId)!;
 }
 
@@ -329,19 +372,32 @@ export function adminRejectPayment(orderId: string, reason?: string): Order {
  */
 export function adminAdvanceStage(orderId: string, nextStage: OrderStatusStage): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
-      return {
+      targetOrder = {
         ...ord,
         currentStage: nextStage,
         orderStatus: STAGE_TO_ORDER_STATUS[nextStage],
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
+
+  // Log activity
+  logActivity({
+    type: 'stage_advanced',
+    actorName: 'Admin (Nhà Có Tiệc)',
+    actorRole: 'admin',
+    title: 'Chuyển bước tiến trình đơn hàng',
+    description: `Đơn #${orderId} được Admin chuyển sang Giai đoạn ${nextStage} (${STAGE_TO_ORDER_STATUS[nextStage]}).`,
+    orderId,
+  });
+
   return getOrderById(orderId)!;
 }
 
