@@ -42,7 +42,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
     templateId: 'tpl-minh-anh',
     templateName: 'Minh Anh & Tuấn Kiệt (Suite Cao Cấp)',
     category: 'premium' as const,
-    price: 100000,
+    price: 79000,
     paymentStatus: 'unpaid' as const,
     orderStatus: 'pending_payment' as const,
     paymentMethod: 'vietqr' as const,

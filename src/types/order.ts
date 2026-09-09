@@ -135,7 +135,7 @@ export interface Order {
   templateId: string;
   templateName: string;
   category: 'basic' | 'premium';
-  price: number; // 50000 or 100000
+  price: number; // 59000 or 79000
   paymentStatus: PaymentStatus; // 'unpaid' | 'pending_confirmation' | 'paid' | 'rejected'
   orderStatus: OrderStatus;     // 'pending_payment' | 'paid' | ...
   paymentMethod: 'vietqr' | 'manual';

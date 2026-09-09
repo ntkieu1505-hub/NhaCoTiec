@@ -7,7 +7,7 @@ export interface Template {
   name: string; // e.g. "Mẫu Elegant", "Minh Anh Editorial"
   style: string; // e.g. "Thanh lịch", "Editorial Vintage", "Cổ điển Romance", "Tối giản Minimalist"
   description: string; // e.g. "Phong cách tối giản, sang trọng, thanh lịch"
-  price: number; // numeric value: 50000 or 100000
+  price: number; // numeric value: 59000 or 79000
   thumbnailUrl: string;
   thumbnailPosition?: string; // CSS object-position, e.g. "center 30%", "center top", "center center"
   previewUrl: string; // Dedicated demo URL, e.g. "https://nhacotiec.vn/demo/minh-anh"

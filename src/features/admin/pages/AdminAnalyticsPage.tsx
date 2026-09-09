@@ -173,7 +173,7 @@ export const AdminAnalyticsPage: React.FC = () => {
               <div className="font-serif text-2xl font-bold text-burgundy-wine mt-2">
                 {formatCurrency(MOCK_ANALYTICS.totalRevenue)}
               </div>
-              <span className="text-[11px] text-text-muted mt-1">Mô hình bán lẻ sản phẩm (50k - 100k)</span>
+              <span className="text-[11px] text-text-muted mt-1">Mô hình bán lẻ sản phẩm (59k - 79k)</span>
             </div>
             <div className="bg-surface-card p-4 rounded-2xl border border-border-delicate">
               <span className="text-[11px] text-text-muted uppercase font-label-caps">Tổng số đơn hàng</span>
@@ -185,9 +185,9 @@ export const AdminAnalyticsPage: React.FC = () => {
             <div className="bg-surface-card p-4 rounded-2xl border border-border-delicate">
               <span className="text-[11px] text-text-muted uppercase font-label-caps">Giá trị trung bình / đơn</span>
               <div className="font-serif text-2xl font-bold text-deep-espresso mt-2">
-                {formatCurrency(86800)}
+                {formatCurrency(73600)}
               </div>
-              <span className="text-[11px] text-gold-foil font-semibold mt-1">73% chọn gói Cao cấp 100k</span>
+              <span className="text-[11px] text-gold-foil font-semibold mt-1">73% chọn gói Cao cấp 79k</span>
             </div>
           </div>
         </div>

@@ -100,7 +100,7 @@ export const AdminTemplatesPage: React.FC = () => {
             04. Quản Lý Mẫu Thiệp
           </h1>
           <p className="text-xs text-text-muted mt-1 max-w-2xl leading-relaxed">
-            Quản lý và cập nhật toàn bộ mẫu thiệp cưới số độc bản bán lẻ của <strong>Nhà Có Tiệc</strong>. Thiết lập giá niêm yết (50.000đ - 100.000đ), chỉnh sửa ảnh thumbnail, link xem thử demo và trạng thái phát hành.
+            Quản lý và cập nhật toàn bộ mẫu thiệp cưới số độc bản bán lẻ của <strong>Nhà Có Tiệc</strong>. Thiết lập giá niêm yết (59.000đ - 79.000đ), chỉnh sửa ảnh thumbnail, link xem thử demo và trạng thái phát hành.
           </p>
         </div>
 
@@ -163,7 +163,7 @@ export const AdminTemplatesPage: React.FC = () => {
           </div>
           <div className="mt-2.5 pt-2 border-t border-border-delicate flex items-center justify-between text-[11px]">
             <span className="text-burgundy-wine font-semibold">84 đơn đặt</span>
-            <span className="text-gold-foil font-medium">100.000đ</span>
+            <span className="text-gold-foil font-medium">79.000đ</span>
           </div>
         </div>
 
@@ -174,7 +174,7 @@ export const AdminTemplatesPage: React.FC = () => {
             <Icon name="payments" className="text-[18px] text-emerald-700" />
           </div>
           <div className="mt-2">
-            <span className="font-serif text-2xl font-bold text-deep-espresso">50k - 100k</span>
+            <span className="font-serif text-2xl font-bold text-deep-espresso">59k - 79k</span>
           </div>
           <div className="mt-2.5 pt-2 border-t border-border-delicate flex items-center justify-between text-[11px] text-text-muted">
             <span>Mô hình</span>
@@ -296,8 +296,8 @@ export const AdminTemplatesPage: React.FC = () => {
               className="w-full px-3 py-2 rounded-xl bg-surface-subtle text-xs font-medium text-deep-espresso border border-border-delicate focus:outline-none focus:ring-1 focus:ring-burgundy-wine cursor-pointer"
             >
               <option value="">Mức giá: Tất cả</option>
-              <option value="50000">Đồng giá 50.000đ</option>
-              <option value="100000">Đồng giá 100.000đ</option>
+              <option value="59000">Đồng giá 59.000đ</option>
+              <option value="79000">Đồng giá 79.000đ</option>
             </select>
           </div>
         </div>

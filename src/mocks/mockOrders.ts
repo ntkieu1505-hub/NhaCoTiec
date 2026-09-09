@@ -9,7 +9,7 @@ export const MOCK_ORDERS: Order[] = [
     templateId: 'tpl-minh-anh',
     templateName: 'Minh Anh & Tuấn Kiệt (Suite Cao Cấp)',
     category: 'premium',
-    price: 100000,
+    price: 79000,
     paymentStatus: 'unpaid', // Customer starts at 'unpaid' so user can test full payment flow
     orderStatus: 'pending_payment',
     paymentMethod: 'vietqr',
@@ -41,7 +41,7 @@ export const MOCK_ORDERS: Order[] = [
     templateId: 'tpl-thanh-xuan',
     templateName: 'Thanh Xuân & Hoàng Nam',
     category: 'basic',
-    price: 50000,
+    price: 59000,
     paymentStatus: 'paid',
     orderStatus: 'designing',
     paymentMethod: 'vietqr',
@@ -59,12 +59,12 @@ export const MOCK_ORDERS: Order[] = [
     templateId: 'tpl-ngoc-lan',
     templateName: 'Ngọc Lan & Quang Huy',
     category: 'premium',
-    price: 100000,
+    price: 79000,
     paymentStatus: 'pending_confirmation', // Đang chờ Admin xác nhận
     orderStatus: 'pending_payment', // Vẫn là Chờ thanh toán
     paymentMethod: 'vietqr',
     paymentSubmissionTime: '2026-09-08T22:10:00Z',
-    paymentNote: 'Đã chuyển 100.000đ qua Vietcombank với nội dung NCT03',
+    paymentNote: 'Đã chuyển 79.000đ qua Vietcombank với nội dung NCT03',
     paymentProof: 'vietqr_receipt_nct03.jpg',
     currentStage: 1, // 1: Chờ thanh toán
     createdAt: '2026-09-08T21:45:00Z',
@@ -79,7 +79,7 @@ export const MOCK_ORDERS: Order[] = [
     templateId: 'tpl-moc-tra',
     templateName: 'Mộc Trà & Hải Đăng',
     category: 'basic',
-    price: 50000,
+    price: 59000,
     paymentStatus: 'paid',
     orderStatus: 'completed',
     paymentMethod: 'vietqr',

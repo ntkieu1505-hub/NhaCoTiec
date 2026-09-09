@@ -9,7 +9,7 @@ import {
 import { MOCK_ORDERS } from './mockOrders';
 import { createSystemNotification } from './notificationStore';
 
-const STORAGE_KEY = 'nha_co_tiec_orders_v4';
+const STORAGE_KEY = 'nha_co_tiec_orders_v5';
 
 // In-memory cache synced with localStorage
 let currentOrders: Order[] = (() => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Template, TemplateStatus } from '../types/template';
 import { MOCK_TEMPLATES } from './mockTemplates';
 
-const STORAGE_KEY = 'nha_co_tiec_templates_v2';
+const STORAGE_KEY = 'nha_co_tiec_templates_v3';
 
 // In-memory cache synced with localStorage
 let currentTemplates: Template[] = (() => {

@@ -183,7 +183,7 @@ export const PublicLayout: React.FC = () => {
                   <Icon name="verified" className="text-[14px]" /> Cam kết 24h
                 </span>
                 <span>•</span>
-                <span>Giá bán lẻ 50k - 100k</span>
+                <span>Giá bán lẻ 59k - 79k</span>
                 <span>•</span>
                 <span>Không phí duy trì</span>
               </div>

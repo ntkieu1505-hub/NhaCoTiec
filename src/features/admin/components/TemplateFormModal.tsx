@@ -52,7 +52,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const [slug, setSlug] = useState('');
   const [style, setStyle] = useState('Thanh Lịch');
   const [description, setDescription] = useState('');
-  const [price, setPrice] = useState<number>(100000);
+  const [price, setPrice] = useState<number>(79000);
   const [thumbnailUrl, setThumbnailUrl] = useState(SAMPLE_THUMBNAILS[0].url);
   const [thumbnailPosition, setThumbnailPosition] = useState('center 30%');
   const [previewUrl, setPreviewUrl] = useState('https://nhacotiec.vn/demo/mau-moi');
@@ -75,7 +75,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setSlug(initialData.slug || '');
       setStyle(initialData.style || 'Thanh Lịch');
       setDescription(initialData.description || '');
-      setPrice(initialData.price || 100000);
+      setPrice(initialData.price || 79000);
       setThumbnailUrl(initialData.thumbnailUrl || SAMPLE_THUMBNAILS[0].url);
       setThumbnailPosition(initialData.thumbnailPosition || 'center 30%');
       setPreviewUrl(initialData.previewUrl || 'https://nhacotiec.vn/demo/mau-moi');
@@ -86,7 +86,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setSlug('');
       setStyle('Thanh Lịch');
       setDescription('');
-      setPrice(100000);
+      setPrice(79000);
       setThumbnailUrl(SAMPLE_THUMBNAILS[0].url);
       setThumbnailPosition('center 30%');
       setPreviewUrl('https://nhacotiec.vn/demo/mau-moi');
@@ -152,15 +152,15 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       slug: slug.trim().toLowerCase(),
       style: style.trim(),
       description: description.trim(),
-      price: Number(price) || 100000,
+      price: Number(price) || 79000,
       thumbnailUrl,
       thumbnailPosition,
       previewUrl: previewUrl.trim(),
       status,
-      category: price >= 100000 ? 'premium' : 'basic',
+      category: price >= 79000 ? 'premium' : 'basic',
       rating: initialData?.rating || 5.0,
       reviewCount: initialData?.reviewCount || 1,
-      badgeText: price >= 100000 ? 'Cao cấp' : 'Cơ bản',
+      badgeText: price >= 79000 ? 'Cao cấp' : 'Cơ bản',
       features: initialData?.features || []
     });
 
@@ -292,21 +292,21 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                   />
                   <button
                     type="button"
-                    onClick={() => setPrice(50000)}
+                    onClick={() => setPrice(59000)}
                     className={`px-2.5 py-2 rounded-xl border text-[11px] font-semibold transition-colors ${
-                      price === 50000 ? 'bg-burgundy-wine text-white border-burgundy-wine' : 'bg-surface-subtle border-border-delicate text-text-muted hover:bg-surface-card'
+                      price === 59000 ? 'bg-burgundy-wine text-white border-burgundy-wine' : 'bg-surface-subtle border-border-delicate text-text-muted hover:bg-surface-card'
                     }`}
                   >
-                    50k
+                    59k
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPrice(100000)}
+                    onClick={() => setPrice(79000)}
                     className={`px-2.5 py-2 rounded-xl border text-[11px] font-semibold transition-colors ${
-                      price === 100000 ? 'bg-burgundy-wine text-white border-burgundy-wine' : 'bg-surface-subtle border-border-delicate text-text-muted hover:bg-surface-card'
+                      price === 79000 ? 'bg-burgundy-wine text-white border-burgundy-wine' : 'bg-surface-subtle border-border-delicate text-text-muted hover:bg-surface-card'
                     }`}
                   >
-                    100k
+                    79k
                   </button>
                 </div>
                 <span className="text-[10px] text-text-muted">

@@ -38,7 +38,7 @@ export const CustomerDashboardPage: React.FC = () => {
     templateId: 'tpl-minh-anh',
     templateName: 'Minh Anh & Tuấn Kiệt (Suite Cao Cấp)',
     category: 'premium' as const,
-    price: 100000,
+    price: 79000,
     paymentStatus: 'unpaid' as const,
     orderStatus: 'pending_payment' as const,
     paymentMethod: 'vietqr' as const,
@@ -405,7 +405,7 @@ export const CustomerDashboardPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Giá mẫu thiệp:</span>
                     <span className="font-serif font-bold text-burgundy-wine">
-                      {formatCurrency(liveOrder.price || 100000)}
+                      {formatCurrency(liveOrder.price || 79000)}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-1 mt-1">
@@ -782,7 +782,7 @@ export const CustomerDashboardPage: React.FC = () => {
               <div className="p-2.5 flex items-center justify-between">
                 <span className="text-text-muted">Tổng chi phí:</span>
                 <span className="font-serif font-bold text-deep-espresso">
-                  {formatCurrency(liveOrder.price || 100000)}
+                  {formatCurrency(liveOrder.price || 79000)}
                 </span>
               </div>
               <div className="p-2.5 flex items-center justify-between">

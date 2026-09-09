@@ -13,7 +13,7 @@ export const HomePage: React.FC = () => {
 
   const filteredTemplates = selectedCategory === 'all'
     ? publicTemplates
-    : publicTemplates.filter((t) => (t.category || (t.price >= 100000 ? 'premium' : 'basic')) === selectedCategory);
+    : publicTemplates.filter((t) => (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === selectedCategory);
 
   const activeFeatures = (cms.features || [])
     .filter((f) => f.enabled)
@@ -425,7 +425,7 @@ export const HomePage: React.FC = () => {
           {[
             {
               q: 'Chi phí mua thiệp cưới tại Nhà Có Tiệc được tính như thế nào?',
-              a: 'Nhà Có Tiệc áp dụng mô hình bán theo sản phẩm đơn chiếc (50.000đ cho mẫu Cơ bản, 100.000đ cho mẫu Cao cấp). Không có phí duy trì định kỳ, không subscription, thanh toán 1 lần duy nhất.'
+              a: 'Nhà Có Tiệc áp dụng mô hình bán theo sản phẩm đơn chiếc (59.000đ cho mẫu Cơ bản, 79.000đ cho mẫu Cao cấp). Không có phí duy trì định kỳ, không subscription, thanh toán 1 lần duy nhất.'
             },
             {
               q: 'Tôi có phải tự thiết kế thiệp hay canh chỉnh layout không?',

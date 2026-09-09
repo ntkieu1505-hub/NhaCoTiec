@@ -5,8 +5,8 @@ import { usePaymentSettings } from '../../../mocks/paymentSettingsStore';
 
 export const AdminSettingsPage: React.FC = () => {
   const paymentSettings = usePaymentSettings();
-  const [basicPrice, setBasicPrice] = useState('50.000');
-  const [premiumPrice, setPremiumPrice] = useState('100.000');
+  const [basicPrice, setBasicPrice] = useState('59.000');
+  const [premiumPrice, setPremiumPrice] = useState('79.000');
   const [slaHours, setSlaHours] = useState('24');
   const [freeRevisions, setFreeRevisions] = useState('3');
   const [saved, setSaved] = useState(false);
@@ -32,7 +32,7 @@ export const AdminSettingsPage: React.FC = () => {
             09. Cài Đặt Hệ Thống &amp; Vận Hành
           </h1>
           <p className="text-xs text-text-muted mt-1 max-w-xl">
-            Thiết lập thông số giá bán lẻ 50k - 100k, cam kết SLA thiết kế 24h và cấu hình tài khoản chuyển khoản ngân hàng qua mã QR tĩnh.
+            Thiết lập thông số giá bán lẻ 59k - 79k, cam kết SLA thiết kế 24h và cấu hình tài khoản chuyển khoản ngân hàng qua mã QR tĩnh.
           </p>
         </div>
 

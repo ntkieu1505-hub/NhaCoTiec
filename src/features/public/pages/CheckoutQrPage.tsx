@@ -17,7 +17,7 @@ export const CheckoutQrPage: React.FC = () => {
   const orderId = 'NCT01';
   const order = useOrder(orderId);
 
-  const amount = templateSlug.includes('thanh-xuan') || templateSlug.includes('moc-tra') ? 50000 : 100000;
+  const amount = templateSlug.includes('thanh-xuan') || templateSlug.includes('moc-tra') ? 59000 : 79000;
 
   // If order is already pending confirmation or paid
   useEffect(() => {

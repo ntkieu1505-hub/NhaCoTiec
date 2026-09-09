@@ -11,7 +11,7 @@ export const TemplatesPage: React.FC = () => {
 
   const filtered = filter === 'all'
     ? publicTemplates
-    : publicTemplates.filter((t) => (t.category || (t.price >= 100000 ? 'premium' : 'basic')) === filter);
+    : publicTemplates.filter((t) => (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === filter);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
