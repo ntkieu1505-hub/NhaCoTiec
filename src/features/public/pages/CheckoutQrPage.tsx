@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { formatCurrency } from '../../../utils/formatters';
 import { usePaymentSettings } from '../../../mocks/paymentSettingsStore';
@@ -7,17 +7,22 @@ import { customerSubmitPaymentConfirmation, useOrder } from '../../../mocks/orde
 
 export const CheckoutQrPage: React.FC = () => {
   const navigate = useNavigate();
+  const { orderId: routeOrderId } = useParams<{ orderId: string }>();
   const [searchParams] = useSearchParams();
   const templateSlug = searchParams.get('template') || 'minh-anh-tuan-kiet';
+
+  const orderId = routeOrderId || 'NCT01';
+  const order = useOrder(orderId);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const paymentSettings = usePaymentSettings();
-  const orderId = 'NCT01';
-  const order = useOrder(orderId);
 
-  const amount = templateSlug.includes('thanh-xuan') || templateSlug.includes('moc-tra') ? 59000 : 79000;
+  const amount = order?.price || (templateSlug.includes('thanh-xuan') || templateSlug.includes('moc-tra') ? 59000 : 79000);
+  const customerTitle = order?.weddingInfo
+    ? `${order.weddingInfo.groomName} & ${order.weddingInfo.brideName}`
+    : (order?.customerName || 'Đơn đặt thiệp cưới');
 
   // If order is already pending confirmation or paid
   useEffect(() => {
@@ -40,7 +45,7 @@ export const CheckoutQrPage: React.FC = () => {
     // Instead, sets paymentStatus to 'pending_confirmation' and keeps orderStatus as 'pending_payment'.
     customerSubmitPaymentConfirmation(orderId, {
       note: `Khách hàng đã chuyển khoản ${formatCurrency(amount)} qua ngân hàng ${paymentSettings.bankName}`,
-      proof: 'chuyen_khoan_receipt_nct01.jpg',
+      proof: 'chuyen_khoan_receipt.jpg',
     });
     setIsSubmitted(true);
   };
@@ -58,8 +63,63 @@ export const CheckoutQrPage: React.FC = () => {
         </Link>
       </div>
 
-      {/* Confirmation State UI when customer clicked "Tôi đã hoàn tất chuyển khoản" */}
-      {isSubmitted ? (
+      {/* STATE 1: ORDER IS APPROVED BY ADMIN (PAID) */}
+      {order?.paymentStatus === 'paid' ? (
+        <div className="bg-surface-card rounded-2xl p-6 shadow-xl border border-emerald-300 flex flex-col items-center gap-5 text-center animate-in fade-in zoom-in-95">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border-2 border-emerald-400 flex items-center justify-center shadow-xs">
+            <Icon name="check_circle" className="text-[36px]" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="font-label-caps text-[11px] px-3 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold tracking-wider mx-auto">
+              Đã thanh toán thành công
+            </span>
+            <h1 className="font-serif text-2xl font-bold text-deep-espresso mt-2">
+              Thanh toán đã được xác nhận! 🎉
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-emerald-800">
+              Admin Nhà Có Tiệc đã duyệt thanh toán thành công cho đơn hàng của bạn.
+            </p>
+          </div>
+
+          <div className="w-full bg-surface-subtle/70 p-4 rounded-xl border border-border-delicate text-xs text-left flex flex-col gap-2">
+            <div className="flex justify-between">
+              <span className="text-text-muted">Mã đơn hàng:</span>
+              <span className="font-mono font-bold text-deep-espresso">#{orderId}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-muted">Cặp đôi:</span>
+              <span className="font-medium text-deep-espresso">{customerTitle}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-muted">Mẫu thiệp cưới:</span>
+              <span className="font-medium text-deep-espresso">{order.templateName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-muted">Số tiền đã thanh toán:</span>
+              <span className="font-serif font-bold text-emerald-700">{formatCurrency(order.price)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-muted">Tiến trình hiện tại:</span>
+              <span className="font-semibold text-burgundy-wine">Đã nhận thông tin • Sẵn sàng thiết kế</span>
+            </div>
+            <div className="pt-2 border-t border-border-delicate text-[11px] text-text-muted leading-relaxed">
+              Thông tin đám cưới của bạn đã được chuyển đến Designer. Bạn có thể vào Cổng Khách Hàng để theo dõi tiến độ và nhận bản duyệt thiết kế thiệp.
+            </div>
+          </div>
+
+          <div className="w-full flex flex-col gap-2 pt-2">
+            <button
+              onClick={() => navigate(`/dashboard/don-hang/${orderId}`)}
+              className="w-full h-11 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-label-md text-xs font-semibold shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Icon name="visibility" className="text-[18px]" />
+              <span>Vào Cổng Khách Hàng & Xem tiến độ</span>
+            </button>
+          </div>
+        </div>
+      ) : isSubmitted || order?.paymentStatus === 'pending_confirmation' ? (
+        /* STATE 2: PENDING ADMIN CONFIRMATION */
         <div className="bg-surface-card rounded-2xl p-6 shadow-xl border border-border-delicate flex flex-col items-center gap-5 text-center animate-in fade-in zoom-in-95">
           <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-700 border-2 border-amber-400 flex items-center justify-center shadow-xs">
             <Icon name="hourglass_top" className="text-[32px] animate-pulse" />
@@ -83,6 +143,10 @@ export const CheckoutQrPage: React.FC = () => {
               <span className="font-mono font-bold text-deep-espresso">#{orderId}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-text-muted">Cặp đôi:</span>
+              <span className="font-medium text-deep-espresso">{customerTitle}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-text-muted">Số tiền chuyển khoản:</span>
               <span className="font-serif font-bold text-burgundy-wine">{formatCurrency(amount)}</span>
             </div>
@@ -95,7 +159,7 @@ export const CheckoutQrPage: React.FC = () => {
               <span className="font-medium text-deep-espresso">Vừa xong</span>
             </div>
             <div className="pt-2 border-t border-border-delicate text-[11px] text-text-muted leading-relaxed">
-              Thông tin chuyển khoản của bạn đã được ghi nhận vào hệ thống đối soát. Admin sẽ kiểm tra giao dịch và kích hoạt trạng thái "Đã thanh toán" để bạn bắt đầu điền thông tin cưới.
+              Thông tin chuyển khoản của bạn đã được ghi nhận vào hệ thống đối soát. Ngay khi Admin xác nhận, màn hình này sẽ tự động chuyển sang trạng thái "Đã thanh toán thành công".
             </div>
           </div>
 
@@ -121,7 +185,7 @@ export const CheckoutQrPage: React.FC = () => {
               Quét mã thanh toán dịch vụ.
             </h1>
             <p className="text-xs text-text-muted mt-1">
-              Mã đơn hàng: <strong className="text-burgundy-wine font-mono">#{orderId}</strong>
+              Mã đơn hàng: <strong className="text-burgundy-wine font-mono">#{orderId}</strong> • <span className="font-medium text-deep-espresso">{customerTitle}</span>
             </p>
           </div>
 

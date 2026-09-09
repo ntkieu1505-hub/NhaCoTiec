@@ -4,10 +4,13 @@ import { Icon } from '../../../components/common/Icon';
 import { Badge } from '../../../components/common/Badge';
 import { usePublicTemplates } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
+import { Template } from '../../../types/template';
+import { OrderFormModal } from '../components/OrderFormModal';
 
 export const TemplatesPage: React.FC = () => {
   const publicTemplates = usePublicTemplates();
   const [filter, setFilter] = useState<'all' | 'basic' | 'premium'>('all');
+  const [selectedTemplateForOrder, setSelectedTemplateForOrder] = useState<Template | null>(null);
 
   const filtered = filter === 'all'
     ? publicTemplates
@@ -117,18 +120,28 @@ export const TemplatesPage: React.FC = () => {
                   <Icon name="visibility" className="text-[17px]" />
                   <span>Xem chi tiết</span>
                 </Link>
-                <Link
-                  to={`/thanh-toan/NCT01?template=${template.slug}`}
+                <button
+                  type="button"
+                  onClick={() => setSelectedTemplateForOrder(template)}
                   className="flex-1 h-10 rounded-full bg-[#63141a] hover:bg-deep-espresso text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition-all"
                 >
                   <Icon name="shopping_bag" className="text-[17px]" />
                   <span>Chọn mẫu này</span>
-                </Link>
+                </button>
               </div>
             </div>
           </article>
         ))}
       </div>
+
+      {/* Mandatory Pre-checkout Order Information Modal */}
+      {selectedTemplateForOrder && (
+        <OrderFormModal
+          isOpen={Boolean(selectedTemplateForOrder)}
+          onClose={() => setSelectedTemplateForOrder(null)}
+          template={selectedTemplateForOrder}
+        />
+      )}
     </div>
   );
 };

@@ -8,8 +8,12 @@ import {
 } from '../types/order';
 import { MOCK_ORDERS } from './mockOrders';
 import { createSystemNotification } from './notificationStore';
+import { db } from '../services/firebase';
+import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 
-const STORAGE_KEY = 'nha_co_tiec_orders_v5';
+const STORAGE_KEY = 'nha_co_tiec_orders_v6';
+const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
+const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_orders_channel';
 
 // In-memory cache synced with localStorage
 let currentOrders: Order[] = (() => {
@@ -26,12 +30,104 @@ let currentOrders: Order[] = (() => {
 
 const listeners = new Set<() => void>();
 
-function notify() {
+// Cross-tab BroadcastChannel for 0ms instant multi-tab sync
+let broadcastChannel: BroadcastChannel | null = null;
+try {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+    broadcastChannel.onmessage = (event) => {
+      if (event.data?.type === 'ORDERS_UPDATED' && Array.isArray(event.data?.orders)) {
+        currentOrders = event.data.orders;
+        listeners.forEach((fn) => fn());
+      }
+    };
+  }
+} catch (e) {
+  console.warn('BroadcastChannel not supported in this environment', e);
+}
+
+// Window Storage Event listener for cross-tab sync
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEY && event.newValue) {
+      try {
+        currentOrders = JSON.parse(event.newValue);
+        listeners.forEach((fn) => fn());
+      } catch (e) {
+        console.error('Failed to parse orders from storage event', e);
+      }
+    }
+  });
+}
+
+// Optional Firestore Real-time Sync (for multi-browser / incognito / cross-device)
+let isFirestoreListening = false;
+function initFirestoreSync() {
+  if (isFirestoreListening || !db) return;
+  try {
+    isFirestoreListening = true;
+    onSnapshot(
+      collection(db, 'orders'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const map = new Map<string, Order>();
+          snapshot.forEach((docSnap) => {
+            map.set(docSnap.id, docSnap.data() as Order);
+          });
+
+          if (map.size > 0) {
+            let updated = [...currentOrders];
+            map.forEach((fsOrder, orderId) => {
+              const idx = updated.findIndex((o) => o.id === orderId);
+              if (idx >= 0) {
+                updated[idx] = { ...updated[idx], ...fsOrder };
+              } else {
+                updated.unshift(fsOrder);
+              }
+            });
+            currentOrders = updated;
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(currentOrders));
+            } catch (e) {}
+            listeners.forEach((fn) => fn());
+          }
+        }
+      },
+      (err) => {
+        // Quietly fallback to localStorage if Firestore rules or offline
+        console.info('Firestore live sync fallback to local storage:', err.message);
+      }
+    );
+  } catch (e) {
+    console.warn('Firestore sync setup error:', e);
+  }
+}
+
+// Start Firestore sync
+initFirestoreSync();
+
+function notify(updatedOrder?: Order) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentOrders));
   } catch (e) {
     console.error('Failed to save orders to localStorage', e);
   }
+
+  // Broadcast to other tabs in the same browser
+  try {
+    broadcastChannel?.postMessage({
+      type: 'ORDERS_UPDATED',
+      orders: currentOrders,
+    });
+  } catch (e) {}
+
+  // Sync to Firestore for multi-browser / incognito / mobile
+  if (updatedOrder && db) {
+    try {
+      setDoc(doc(db, 'orders', updatedOrder.id), updatedOrder, { merge: true }).catch(() => {});
+    } catch (e) {}
+  }
+
   listeners.forEach((fn) => fn());
 }
 
@@ -48,10 +144,87 @@ export function getOrderById(id: string): Order | undefined {
   return currentOrders.find((o) => o.id === id);
 }
 
+export function getLastCustomerOrderId(): string | null {
+  try {
+    return localStorage.getItem(LAST_ORDER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setLastCustomerOrderId(orderId: string): void {
+  try {
+    localStorage.setItem(LAST_ORDER_KEY, orderId);
+  } catch {}
+}
+
+export interface CreateOrderParams {
+  userId?: string;
+  templateId: string;
+  templateName: string;
+  category: 'basic' | 'premium';
+  price: number;
+  weddingInfo: WeddingInformation;
+}
+
+/**
+ * Creates a brand new order with mandatory wedding information submitted
+ */
+export function createOrder(params: CreateOrderParams): Order {
+  const now = new Date().toISOString();
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const orderId = `NCT${randomNum}`;
+
+  const customerName = `${params.weddingInfo.groomName} & ${params.weddingInfo.brideName}`;
+  const customerPhone = params.weddingInfo.customerPhone || '';
+  const customerEmail = params.weddingInfo.customerEmail || '';
+
+  const newOrder: Order = {
+    id: orderId,
+    userId: params.userId || `guest-${Date.now()}`,
+    customerName,
+    customerPhone,
+    customerEmail,
+    templateId: params.templateId,
+    templateName: params.templateName,
+    category: params.category,
+    price: params.price,
+    paymentStatus: 'unpaid',
+    orderStatus: 'pending_payment',
+    paymentMethod: 'vietqr',
+    currentStage: 1, // Stage 1: Chờ thanh toán
+    createdAt: now,
+    updatedAt: now,
+    weddingInfo: {
+      ...params.weddingInfo,
+      submittedAt: now,
+    },
+    weddingInfoSubmitted: true, // Crucial: Filled before checkout!
+    albumSubmitted: false,
+    revisionRequests: [],
+    slaRemainingHours: 24,
+  };
+
+  currentOrders = [newOrder, ...currentOrders];
+  setLastCustomerOrderId(orderId);
+  notify(newOrder);
+
+  // Trigger system notification to admin
+  createSystemNotification(
+    'order',
+    orderId,
+    'admin',
+    'Đơn hàng mới được khởi tạo',
+    `Đơn hàng #${orderId} (${customerName}) vừa điền thông tin cưới và chuyển sang thanh toán QR.`,
+    `/admin/don-hang/${orderId}`
+  );
+
+  return newOrder;
+}
+
 /**
  * Customer Action:
  * Customer clicks "Tôi đã hoàn tất chuyển khoản"
- * Must NOT change orderStatus to 'paid'!
  * Changes paymentStatus to 'pending_confirmation' and keeps orderStatus as 'pending_payment'.
  */
 export function customerSubmitPaymentConfirmation(
@@ -59,24 +232,26 @@ export function customerSubmitPaymentConfirmation(
   info?: { note?: string; proof?: string }
 ): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
+
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
-      return {
+      targetOrder = {
         ...ord,
         paymentStatus: 'pending_confirmation',
         paymentSubmissionTime: now,
         paymentNote: info?.note || 'Đã quét mã QR chuyển khoản thanh toán',
         paymentProof: info?.proof || 'qr_transfer_proof.jpg',
         updatedAt: now,
-        // Order remains in pending_payment stage (Chờ thanh toán)
         orderStatus: 'pending_payment',
         currentStage: 1,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
   return getOrderById(orderId)!;
 }
 
@@ -88,10 +263,12 @@ export function customerSubmitPaymentConfirmation(
 export function adminConfirmPayment(orderId: string): Order {
   const now = new Date().toISOString();
   let customerUserId = '01';
+  let targetOrder: Order | undefined;
+
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
       customerUserId = ord.userId || '01';
-      return {
+      targetOrder = {
         ...ord,
         paymentStatus: 'paid',
         orderStatus: 'paid',
@@ -99,11 +276,12 @@ export function adminConfirmPayment(orderId: string): Order {
         paymentDate: now,
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
 
   // Trigger system notification to customer
   createSystemNotification(
@@ -125,9 +303,11 @@ export function adminConfirmPayment(orderId: string): Order {
  */
 export function adminRejectPayment(orderId: string, reason?: string): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
+
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
-      return {
+      targetOrder = {
         ...ord,
         paymentStatus: 'rejected',
         orderStatus: 'pending_payment',
@@ -135,11 +315,12 @@ export function adminRejectPayment(orderId: string, reason?: string): Order {
         paymentNote: reason || 'Số tiền hoặc nội dung chuyển khoản chưa trùng khớp, vui lòng kiểm tra lại.',
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
   return getOrderById(orderId)!;
 }
 
@@ -402,11 +583,12 @@ export function customerApproveDesign(orderId: string): Order {
  * Custom React Hook for live reactivity
  */
 export function useOrder(orderId: string) {
-  const [order, setOrder] = useState<Order | undefined>(() => getOrderById(orderId) || currentOrders[0]);
+  const [order, setOrder] = useState<Order | undefined>(() => getOrderById(orderId));
 
   useEffect(() => {
+    setOrder(getOrderById(orderId));
     const handleUpdate = () => {
-      setOrder(getOrderById(orderId) || currentOrders[0]);
+      setOrder(getOrderById(orderId));
     };
     listeners.add(handleUpdate);
     return () => {

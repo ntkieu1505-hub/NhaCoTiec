@@ -33,6 +33,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
     user?.role === 'admin' ||
     !order.userId ||
     order.userId === user?.id ||
+    order.userId.startsWith('guest-') ||
     (user?.id === '01' && activeOrderId === 'NCT01');
 
   // Fallback if not loaded yet

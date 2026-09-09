@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { useOrder } from '../../../mocks/orderStore';
+import { useOrders, getLastCustomerOrderId } from '../../../mocks/orderStore';
 import { useZaloSupportUrl } from '../../../mocks/cmsStore';
 import { useAuth } from '../../../mocks/authStore';
 
@@ -9,7 +9,13 @@ export const CustomerAccountPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const zaloUrl = useZaloSupportUrl();
-  const liveOrder = useOrder('NCT01');
+  const allOrders = useOrders();
+  const lastOrderId = getLastCustomerOrderId();
+  const liveOrder =
+    (user ? allOrders.find((o) => o.userId === user.id) : undefined) ||
+    (lastOrderId ? allOrders.find((o) => o.id === lastOrderId) : undefined) ||
+    allOrders.find((o) => o.id === 'NCT01') ||
+    allOrders[0];
 
   // Customer Profile State
   const [customerName, setCustomerName] = useState(

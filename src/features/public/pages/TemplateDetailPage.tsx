@@ -4,6 +4,7 @@ import { Icon } from '../../../components/common/Icon';
 import { Badge } from '../../../components/common/Badge';
 import { useTemplates } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
+import { OrderFormModal } from '../components/OrderFormModal';
 
 export const TemplateDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -11,6 +12,7 @@ export const TemplateDetailPage: React.FC = () => {
   const template = templates.find((t) => t.slug === slug) || templates[0];
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col gap-6">
@@ -173,13 +175,14 @@ export const TemplateDetailPage: React.FC = () => {
 
           {/* Primary CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-            <Link
-              to={`/thanh-toan/NCT01?template=${template.slug}`}
+            <button
+              type="button"
+              onClick={() => setIsOrderModalOpen(true)}
               className="w-full sm:flex-1 h-12 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-label-md text-sm font-semibold flex items-center justify-center gap-2 shadow-md shadow-rose-950/20 active:scale-95 transition-all"
             >
               <Icon name="shopping_bag" className="text-[20px]" />
               <span>Chọn mẫu này • {formatCurrency(template.price)}</span>
-            </Link>
+            </button>
             <a
               href="https://zalo.me"
               target="_blank"
@@ -192,6 +195,15 @@ export const TemplateDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mandatory Pre-checkout Order Information Modal */}
+      {isOrderModalOpen && (
+        <OrderFormModal
+          isOpen={isOrderModalOpen}
+          onClose={() => setIsOrderModalOpen(false)}
+          template={template}
+        />
+      )}
     </div>
   );
 };

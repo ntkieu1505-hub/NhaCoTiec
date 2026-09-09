@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import {
-  useOrder,
+  useOrders,
+  getLastCustomerOrderId,
   useCustomerExport,
   customerSubmitPaymentConfirmation,
   customerSubmitWeddingInfo,
   customerSubmitAlbum,
   customerSubmitRevision,
 } from '../../../mocks/orderStore';
+import { useAuth } from '../../../mocks/authStore';
 import { getTemplateById, getTemplateBySlug, getAllTemplates } from '../../../mocks/templateStore';
 import { MOCK_GUESTS, MOCK_WISHES } from '../../../mocks/index';
 import { RevisionModal } from '../components/RevisionModal';
@@ -19,6 +21,10 @@ import { OrderStatusStage, ORDER_STATUS_MAP, WeddingInformation } from '../../..
 import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 
 export const CustomerDashboardPage: React.FC = () => {
+  const { user } = useAuth();
+  const allOrders = useOrders();
+  const lastOrderId = getLastCustomerOrderId();
+
   const [activeSection, setActiveSection] = useState('overview');
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [isWeddingInfoModalOpen, setIsWeddingInfoModalOpen] = useState(false);
@@ -30,7 +36,18 @@ export const CustomerDashboardPage: React.FC = () => {
   const [previewTab, setPreviewTab] = useState<'guests' | 'wishes'>('guests');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
-  const liveOrder = useOrder('NCT01') || {
+  // Dynamically resolve customer active order:
+  // 1. By logged-in user ID
+  // 2. By last created order ID
+  // 3. NCT01
+  // 4. First order in the store
+  const activeOrder =
+    (user ? allOrders.find((o) => o.userId === user.id) : undefined) ||
+    (lastOrderId ? allOrders.find((o) => o.id === lastOrderId) : undefined) ||
+    allOrders.find((o) => o.id === 'NCT01') ||
+    allOrders[0];
+
+  const liveOrder = activeOrder || {
     id: 'NCT01',
     customerName: 'Nguyễn Minh Anh & Trần Đức Minh',
     customerPhone: '0982 123 456',
