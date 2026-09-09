@@ -11,10 +11,67 @@ import { createSystemNotification } from './notificationStore';
 import { db } from '../services/firebase';
 import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { logActivity } from '../services/activityLogService';
+import { toIsoDateString } from '../utils/formatters';
 
 const STORAGE_KEY = 'nha_co_tiec_orders_v6';
 const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
 const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_orders_channel';
+
+/**
+ * Normalizes an order from any source (Firestore, localStorage, JSON)
+ * ensuring all dates are ISO strings and no Timestamp objects exist.
+ */
+export function normalizeOrder(raw: any, idFallback = 'NCT-UNKNOWN'): Order {
+  const id = String(raw?.id || idFallback);
+  const stage = (typeof raw?.currentStage === 'number' && raw.currentStage >= 1 && raw.currentStage <= 8)
+    ? (raw.currentStage as OrderStatusStage)
+    : 1;
+
+  let weddingInfo: WeddingInformation | undefined;
+  if (raw?.weddingInfo) {
+    const wi = raw.weddingInfo;
+    weddingInfo = {
+      ...wi,
+      groomName: String(wi.groomName || ''),
+      brideName: String(wi.brideName || ''),
+      customerPhone: String(wi.customerPhone || raw?.customerPhone || ''),
+      customerEmail: String(wi.customerEmail || raw?.customerEmail || ''),
+      weddingDate: typeof wi.weddingDate === 'string' ? wi.weddingDate : toIsoDateString(wi.weddingDate, '2026-12-28'),
+      weddingTime: String(wi.weddingTime || '18:00'),
+      venueName: String(wi.venueName || ''),
+      venueAddress: String(wi.venueAddress || ''),
+      submittedAt: wi.submittedAt ? toIsoDateString(wi.submittedAt) : undefined,
+    };
+  }
+
+  const defaultCustomerName = weddingInfo?.groomName && weddingInfo?.brideName
+    ? `${weddingInfo.groomName} & ${weddingInfo.brideName}`
+    : 'Khách hàng';
+
+  return {
+    userId: '01',
+    templateId: 'tpl-01',
+    templateName: 'Mẫu thiệp cưới',
+    customerName: typeof raw?.customerName === 'string' && raw.customerName.trim()
+      ? raw.customerName
+      : defaultCustomerName,
+    customerPhone: String(raw?.customerPhone || weddingInfo?.customerPhone || ''),
+    customerEmail: String(raw?.customerEmail || weddingInfo?.customerEmail || ''),
+    price: typeof raw?.price === 'number' ? raw.price : 79000,
+    orderStatus: typeof raw?.orderStatus === 'string' ? raw.orderStatus : (STAGE_TO_ORDER_STATUS[stage] || 'pending_payment'),
+    paymentStatus: typeof raw?.paymentStatus === 'string' ? raw.paymentStatus : 'unpaid',
+    paymentMethod: typeof raw?.paymentMethod === 'string' ? raw.paymentMethod : 'vietqr',
+    category: raw?.category === 'premium' ? 'premium' : 'basic',
+    ...raw,
+    id,
+    currentStage: stage,
+    createdAt: toIsoDateString(raw?.createdAt),
+    updatedAt: toIsoDateString(raw?.updatedAt),
+    paymentSubmissionTime: raw?.paymentSubmissionTime ? toIsoDateString(raw.paymentSubmissionTime) : undefined,
+    paymentDate: raw?.paymentDate ? toIsoDateString(raw.paymentDate) : undefined,
+    weddingInfo,
+  };
+}
 
 // In-memory cache synced with localStorage
 let currentOrders: Order[] = (() => {
@@ -23,18 +80,13 @@ let currentOrders: Order[] = (() => {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((o) => ({
-          ...o,
-          currentStage: (typeof o.currentStage === 'number' && o.currentStage >= 1 && o.currentStage <= 8)
-            ? o.currentStage
-            : 1,
-        }));
+        return parsed.map((o) => normalizeOrder(o, o?.id));
       }
     }
   } catch (e) {
     console.error('Failed to load orders from localStorage', e);
   }
-  return MOCK_ORDERS;
+  return MOCK_ORDERS.map((o) => normalizeOrder(o, o?.id));
 })();
 
 const listeners = new Set<() => void>();
@@ -46,7 +98,7 @@ try {
     broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
     broadcastChannel.onmessage = (event) => {
       if (event.data?.type === 'ORDERS_UPDATED' && Array.isArray(event.data?.orders)) {
-        currentOrders = event.data.orders;
+        currentOrders = event.data.orders.map((o: any) => normalizeOrder(o, o?.id));
         listeners.forEach((fn) => fn());
       }
     };
@@ -60,8 +112,11 @@ if (typeof window !== 'undefined') {
   window.addEventListener('storage', (event) => {
     if (event.key === STORAGE_KEY && event.newValue) {
       try {
-        currentOrders = JSON.parse(event.newValue);
-        listeners.forEach((fn) => fn());
+        const parsed = JSON.parse(event.newValue);
+        if (Array.isArray(parsed)) {
+          currentOrders = parsed.map((o) => normalizeOrder(o, o?.id));
+          listeners.forEach((fn) => fn());
+        }
       } catch (e) {
         console.error('Failed to parse orders from storage event', e);
       }
@@ -81,30 +136,8 @@ function initFirestoreSync() {
         if (!snapshot.empty) {
           const map = new Map<string, Order>();
           snapshot.forEach((docSnap) => {
-            const raw = docSnap.data() as Partial<Order>;
-            const stage = (typeof raw.currentStage === 'number' && raw.currentStage >= 1 && raw.currentStage <= 8)
-              ? (raw.currentStage as OrderStatusStage)
-              : 1;
-
-            const normalizedOrder: Order = {
-              userId: '01',
-              templateId: 'tpl-01',
-              templateName: 'Mẫu thiệp cưới',
-              customerName: raw.weddingInfo ? `${raw.weddingInfo.groomName} & ${raw.weddingInfo.brideName}` : 'Khách hàng',
-              customerPhone: raw.weddingInfo?.customerPhone || '',
-              customerEmail: raw.weddingInfo?.customerEmail || '',
-              price: 79000,
-              orderStatus: 'pending_payment',
-              paymentStatus: 'unpaid',
-              paymentMethod: 'vietqr',
-              category: 'basic',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              ...raw,
-              id: docSnap.id,
-              currentStage: stage,
-            };
-            map.set(docSnap.id, normalizedOrder);
+            const raw = docSnap.data();
+            map.set(docSnap.id, normalizeOrder(raw, docSnap.id));
           });
 
           if (map.size > 0) {
@@ -773,7 +806,17 @@ let currentExports: Record<string, CustomerExport> = (() => {
   try {
     const saved = localStorage.getItem(EXPORTS_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      const normalized: Record<string, CustomerExport> = {};
+      Object.keys(parsed).forEach((k) => {
+        const exp = parsed[k];
+        normalized[k] = {
+          ...exp,
+          uploadedAt: exp?.uploadedAt ? toIsoDateString(exp.uploadedAt) : undefined,
+          sentAt: exp?.sentAt ? toIsoDateString(exp.sentAt) : undefined,
+        };
+      });
+      return normalized;
     }
   } catch (e) {
     console.error('Failed to load exports from localStorage', e);
@@ -794,7 +837,13 @@ function initFirestoreExportsSync() {
       (snapshot) => {
         if (!snapshot.empty) {
           snapshot.forEach((docSnap) => {
-            currentExports[docSnap.id] = docSnap.data() as CustomerExport;
+            const raw = docSnap.data() as any;
+            currentExports[docSnap.id] = {
+              ...raw,
+              id: docSnap.id,
+              uploadedAt: raw?.uploadedAt ? toIsoDateString(raw.uploadedAt) : undefined,
+              sentAt: raw?.sentAt ? toIsoDateString(raw.sentAt) : undefined,
+            };
           });
           try {
             localStorage.setItem(EXPORTS_STORAGE_KEY, JSON.stringify(currentExports));

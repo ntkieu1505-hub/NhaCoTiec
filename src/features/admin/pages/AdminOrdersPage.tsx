@@ -138,8 +138,12 @@ export const AdminOrdersPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-[11px] text-text-muted block">Khách hàng:</span>
-                      <span className="font-medium text-deep-espresso block">{ord.customerName}</span>
-                      <span className="text-[10px] text-text-muted block">{ord.customerPhone}</span>
+                      <span className="font-medium text-deep-espresso block">
+                        {typeof ord.customerName === 'string' ? ord.customerName : 'Khách hàng'}
+                      </span>
+                      <span className="text-[10px] text-text-muted block">
+                        {typeof ord.customerPhone === 'string' ? ord.customerPhone : ''}
+                      </span>
                     </div>
                     <div>
                       <span className="text-[11px] text-text-muted block">Thời gian gửi xác nhận:</span>
@@ -259,11 +263,11 @@ export const AdminOrdersPage: React.FC = () => {
                     #{ord.id}
                   </td>
                   <td className="py-3.5 px-4 font-medium text-deep-espresso">
-                    <div>{ord.customerName}</div>
-                    <div className="text-[11px] text-text-muted">{ord.customerPhone}</div>
+                    <div>{typeof ord.customerName === 'string' ? ord.customerName : 'Khách hàng'}</div>
+                    <div className="text-[11px] text-text-muted">{typeof ord.customerPhone === 'string' ? ord.customerPhone : ''}</div>
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="text-deep-espresso font-medium">{ord.templateName}</div>
+                    <div className="text-deep-espresso font-medium">{typeof ord.templateName === 'string' ? ord.templateName : 'Mẫu thiệp'}</div>
                     <div className="text-burgundy-wine font-serif font-bold text-xs">
                       {formatCurrency(ord.price)}
                     </div>

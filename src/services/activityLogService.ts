@@ -32,6 +32,8 @@ export interface ActivityLog {
   details?: Record<string, any>;
 }
 
+import { toIsoDateString } from '../utils/formatters';
+
 const STORAGE_KEY = 'nha_co_tiec_activity_logs_v1';
 
 // Initial mock activities
@@ -71,7 +73,13 @@ let currentLogs: ActivityLog[] = (() => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item: any) => ({
+          ...item,
+          timestamp: toIsoDateString(item?.timestamp),
+        }));
+      }
     }
   } catch (e) {}
   return DEFAULT_ACTIVITIES;
@@ -145,7 +153,12 @@ export function useActivityLogs(limitCount = 20) {
             if (!snapshot.empty) {
               const remoteLogs: ActivityLog[] = [];
               snapshot.forEach((docSnap) => {
-                remoteLogs.push(docSnap.data() as ActivityLog);
+                const raw = docSnap.data() as any;
+                remoteLogs.push({
+                  ...raw,
+                  id: docSnap.id,
+                  timestamp: toIsoDateString(raw?.timestamp),
+                });
               });
               currentLogs = remoteLogs;
               try {

@@ -13,7 +13,7 @@ import {
 } from '../../../mocks/orderStore';
 import { MOCK_GUESTS, MOCK_WISHES } from '../../../mocks/index';
 import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/constants';
-import { formatCurrency, formatDateTime } from '../../../utils/formatters';
+import { formatCurrency, formatDateTime, formatDate } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
 
 export const AdminOrderDetailPage: React.FC = () => {
@@ -469,7 +469,7 @@ export const AdminOrderDetailPage: React.FC = () => {
                 <div className="p-2.5 rounded-xl bg-surface-subtle/30 border border-border-delicate">
                   <span className="text-text-muted text-[10px] block">Thời gian làm lễ</span>
                   <span className="font-semibold text-deep-espresso">
-                    {order.weddingInfo.weddingTime} • {order.weddingInfo.weddingDate}
+                    {order.weddingInfo.weddingTime} • {formatDate(order.weddingInfo.weddingDate) || String(order.weddingInfo.weddingDate || '')}
                   </span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-surface-subtle/30 border border-border-delicate">

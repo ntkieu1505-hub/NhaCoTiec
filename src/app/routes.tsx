@@ -34,12 +34,14 @@ import { AdminSettingsPage } from '../features/admin/pages/AdminSettingsPage';
 import { AdminPaymentSettingsPage } from '../features/admin/pages/AdminPaymentSettingsPage';
 import { AdminNotificationsPage } from '../features/admin/pages/AdminNotificationsPage';
 import { AdminRoute, CustomerRoute } from '../components/auth/ProtectedRoute';
+import { RouteErrorBoundary } from '../components/common/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
   // 1. PUBLIC WEBSITE
   {
     path: '/',
     element: <PublicLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: <HomePage /> },
       { path: 'mau-thiep', element: <TemplatesPage /> },
@@ -61,6 +63,7 @@ export const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: <CustomerRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         element: <CustomerLayout />,
@@ -77,6 +80,7 @@ export const router = createBrowserRouter([
   {
     path: '/admin',
     element: <AdminRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         element: <AdminLayout />,
