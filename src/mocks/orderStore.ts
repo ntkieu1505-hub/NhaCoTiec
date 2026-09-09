@@ -752,12 +752,50 @@ let currentExports: Record<string, CustomerExport> = (() => {
 
 const exportListeners = new Set<() => void>();
 
-function notifyExports() {
+// Firestore Real-time Sync for Customer Exports
+let isFirestoreExportsListening = false;
+function initFirestoreExportsSync() {
+  if (isFirestoreExportsListening || !db) return;
+  try {
+    isFirestoreExportsListening = true;
+    onSnapshot(
+      collection(db, 'customerExports'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          snapshot.forEach((docSnap) => {
+            currentExports[docSnap.id] = docSnap.data() as CustomerExport;
+          });
+          try {
+            localStorage.setItem(EXPORTS_STORAGE_KEY, JSON.stringify(currentExports));
+          } catch (e) {}
+          exportListeners.forEach((fn) => fn());
+        }
+      },
+      (err) => {
+        console.info('Firestore customer exports live sync fallback:', err.message);
+      }
+    );
+  } catch (e) {
+    console.warn('Firestore customer exports sync setup error:', e);
+  }
+}
+
+initFirestoreExportsSync();
+
+function notifyExports(updatedOrderId?: string) {
   try {
     localStorage.setItem(EXPORTS_STORAGE_KEY, JSON.stringify(currentExports));
   } catch (e) {
     console.error('Failed to save exports to localStorage', e);
   }
+
+  // Sync to Firestore
+  if (updatedOrderId && db && currentExports[updatedOrderId]) {
+    setDoc(doc(db, 'customerExports', updatedOrderId), currentExports[updatedOrderId], { merge: true }).catch((err) => {
+      console.warn('Failed to sync customer export to Firestore:', err);
+    });
+  }
+
   exportListeners.forEach((fn) => fn());
 }
 
@@ -775,7 +813,7 @@ export function getCustomerExport(orderId: string): CustomerExport {
       wishCount: 5,
       message: 'Nhà Có Tiệc sẽ gửi file dữ liệu khách mời sau khi hoàn tất tổng hợp.'
     };
-    notifyExports();
+    notifyExports(orderId);
   }
   return currentExports[orderId];
 }
@@ -800,7 +838,17 @@ export function adminUploadExcel(
     uploadedAt: now,
   };
 
-  notifyExports();
+  notifyExports(orderId);
+
+  logActivity({
+    type: 'admin_setting_changed',
+    actorName: 'Admin',
+    actorRole: 'admin',
+    title: 'Tải lên file Excel khách mời',
+    description: `Admin đã tải lên file "${fileData.fileName}" (${fileData.fileSize}) cho đơn hàng #${orderId}`,
+    orderId,
+  }).catch(() => {});
+
   return currentExports[orderId];
 }
 
@@ -819,7 +867,7 @@ export function adminSendExcelToCustomer(orderId: string): CustomerExport {
     sentAt: now,
   };
 
-  notifyExports();
+  notifyExports(orderId);
 
   const ord = getOrderById(orderId);
   const targetUserId = ord?.userId || existing.userId || '01';
@@ -831,6 +879,15 @@ export function adminSendExcelToCustomer(orderId: string): CustomerExport {
     `Admin đã gửi file Excel danh sách khách mời và lời chúc cho đơn hàng #${orderId}. Bạn có thể tải xuống trên Cổng Khách Hàng.`,
     `/dashboard/don-hang/${orderId}`
   );
+
+  logActivity({
+    type: 'admin_setting_changed',
+    actorName: 'Admin',
+    actorRole: 'admin',
+    title: 'Bàn giao file Excel cho khách',
+    description: `Admin đã chính thức bàn giao file Excel khách mời cho đơn hàng #${orderId}`,
+    orderId,
+  }).catch(() => {});
 
   return currentExports[orderId];
 }

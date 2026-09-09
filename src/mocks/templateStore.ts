@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Template, TemplateStatus } from '../types/template';
 import { MOCK_TEMPLATES } from './mockTemplates';
+import { db } from '../services/firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { logActivity } from '../services/activityLogService';
 
 const STORAGE_KEY = 'nha_co_tiec_templates_v3';
+const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_templates_channel';
 
 // In-memory cache synced with localStorage
 let currentTemplates: Template[] = (() => {
@@ -19,12 +23,88 @@ let currentTemplates: Template[] = (() => {
 
 const listeners = new Set<() => void>();
 
+// Cross-tab BroadcastChannel for 0ms multi-tab sync
+let broadcastChannel: BroadcastChannel | null = null;
+try {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+    broadcastChannel.onmessage = (event) => {
+      if (event.data?.type === 'TEMPLATES_UPDATED' && Array.isArray(event.data?.templates)) {
+        currentTemplates = event.data.templates;
+        listeners.forEach((fn) => fn());
+      }
+    };
+  }
+} catch (e) {}
+
+// Window Storage Event listener for cross-tab sync
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEY && event.newValue) {
+      try {
+        currentTemplates = JSON.parse(event.newValue);
+        listeners.forEach((fn) => fn());
+      } catch (e) {}
+    }
+  });
+}
+
+// Firestore Real-time Sync (for multi-browser / incognito / cross-device)
+let isFirestoreTemplatesListening = false;
+function initFirestoreTemplatesSync() {
+  if (isFirestoreTemplatesListening || !db) return;
+  try {
+    isFirestoreTemplatesListening = true;
+    onSnapshot(
+      collection(db, 'templates'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const remoteList: Template[] = [];
+          snapshot.forEach((docSnap) => {
+            remoteList.push(docSnap.data() as Template);
+          });
+
+          if (remoteList.length > 0) {
+            const remoteMap = new Map<string, Template>(remoteList.map((t) => [t.id, t]));
+            const merged = remoteList.slice();
+            currentTemplates.forEach((localTpl) => {
+              if (!remoteMap.has(localTpl.id)) {
+                merged.push(localTpl);
+              }
+            });
+            currentTemplates = merged;
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(currentTemplates));
+            } catch (e) {}
+            listeners.forEach((fn) => fn());
+          }
+        }
+      },
+      (err) => {
+        console.info('Firestore templates live sync fallback to local storage:', err.message);
+      }
+    );
+  } catch (e) {
+    console.warn('Firestore templates sync setup error:', e);
+  }
+}
+
+initFirestoreTemplatesSync();
+
 function notify() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentTemplates));
   } catch (e) {
     console.error('Failed to save templates to localStorage', e);
   }
+
+  try {
+    broadcastChannel?.postMessage({
+      type: 'TEMPLATES_UPDATED',
+      templates: currentTemplates,
+    });
+  } catch (e) {}
+
   listeners.forEach((fn) => fn());
 }
 
@@ -69,6 +149,24 @@ export function createTemplate(
 
   currentTemplates = [newTemplate, ...currentTemplates];
   notify();
+
+  // Sync to Firestore
+  if (db) {
+    setDoc(doc(db, 'templates', id), newTemplate, { merge: true }).catch((err) => {
+      console.warn('Failed to save template to Firestore:', err);
+    });
+  }
+
+  // Log activity
+  logActivity({
+    type: 'admin_setting_changed',
+    actorName: 'Admin',
+    actorRole: 'admin',
+    title: 'Thêm mẫu thiệp mới',
+    description: `Admin đã tạo mẫu thiệp "${newTemplate.title}" (#${newTemplate.id})`,
+    details: { templateId: newTemplate.id, name: newTemplate.title },
+  }).catch(() => {});
+
   return newTemplate;
 }
 
@@ -96,6 +194,21 @@ export function updateTemplate(
   });
 
   notify();
+
+  if (updatedItem && db) {
+    setDoc(doc(db, 'templates', id), updatedItem, { merge: true }).catch((err) => {
+      console.warn('Failed to update template in Firestore:', err);
+    });
+    logActivity({
+      type: 'admin_setting_changed',
+      actorName: 'Admin',
+      actorRole: 'admin',
+      title: 'Cập nhật mẫu thiệp',
+      description: `Admin đã chỉnh sửa mẫu thiệp "${updatedItem.title}" (#${updatedItem.id})`,
+      details: { templateId: updatedItem.id, updates },
+    }).catch(() => {});
+  }
+
   return updatedItem;
 }
 
@@ -114,6 +227,22 @@ export function deleteTemplate(id: string): boolean {
   currentTemplates = currentTemplates.filter((t) => t.id !== id);
   if (currentTemplates.length !== before) {
     notify();
+
+    if (db) {
+      deleteDoc(doc(db, 'templates', id)).catch((err) => {
+        console.warn('Failed to delete template from Firestore:', err);
+      });
+    }
+
+    logActivity({
+      type: 'admin_setting_changed',
+      actorName: 'Admin',
+      actorRole: 'admin',
+      title: 'Xóa mẫu thiệp',
+      description: `Admin đã xóa mẫu thiệp ID: ${id}`,
+      details: { templateId: id },
+    }).catch(() => {});
+
     return true;
   }
   return false;

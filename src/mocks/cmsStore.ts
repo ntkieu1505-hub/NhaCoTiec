@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { db } from '../services/firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { logActivity } from '../services/activityLogService';
 import {
   CmsContent,
   HomepageHero,
@@ -14,6 +17,7 @@ import {
 } from '../types/cms';
 
 const STORAGE_KEY = 'nha_co_tiec_cms_v8';
+const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_cms_channel';
 
 export const DEFAULT_CMS_CONTENT: CmsContent = {
   hero: {
@@ -306,12 +310,99 @@ let currentCmsContent: CmsContent = (() => {
 
 const listeners = new Set<() => void>();
 
-function notify() {
+// Cross-tab BroadcastChannel for 0ms multi-tab sync
+let broadcastChannel: BroadcastChannel | null = null;
+try {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+    broadcastChannel.onmessage = (event) => {
+      if (event.data?.type === 'CMS_UPDATED' && event.data?.cms) {
+        currentCmsContent = event.data.cms;
+        listeners.forEach((fn) => fn());
+      }
+    };
+  }
+} catch (e) {}
+
+// Window Storage Event listener for cross-tab sync
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEY && event.newValue) {
+      try {
+        currentCmsContent = JSON.parse(event.newValue);
+        listeners.forEach((fn) => fn());
+      } catch (e) {}
+    }
+  });
+}
+
+// Firestore Real-time Sync for settings/cms document
+let isFirestoreCmsListening = false;
+function initFirestoreCmsSync() {
+  if (isFirestoreCmsListening || !db) return;
+  try {
+    isFirestoreCmsListening = true;
+    onSnapshot(
+      doc(db, 'settings', 'cms'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const remoteData = docSnap.data() as Partial<CmsContent>;
+          currentCmsContent = {
+            ...DEFAULT_CMS_CONTENT,
+            ...remoteData,
+            hero: { ...DEFAULT_CMS_CONTENT.hero, ...(remoteData.hero || {}) },
+            intro: { ...DEFAULT_CMS_CONTENT.intro, ...(remoteData.intro || {}) },
+            featuredTemplates: { ...DEFAULT_CMS_CONTENT.featuredTemplates, ...(remoteData.featuredTemplates || {}) },
+            footer: { ...DEFAULT_CMS_CONTENT.footer, ...(remoteData.footer || {}) },
+            contact: { ...DEFAULT_CMS_CONTENT.contact, ...(remoteData.contact || {}) },
+            settings: { ...DEFAULT_CMS_CONTENT.settings, ...(remoteData.settings || {}) },
+          };
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentCmsContent));
+          } catch (e) {}
+          listeners.forEach((fn) => fn());
+        }
+      },
+      (err) => {
+        console.info('Firestore CMS live sync fallback:', err.message);
+      }
+    );
+  } catch (e) {
+    console.warn('Firestore CMS sync error:', e);
+  }
+}
+
+initFirestoreCmsSync();
+
+function notify(logReason?: string) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentCmsContent));
   } catch (e) {
     console.error('Failed to save CMS content to localStorage', e);
   }
+
+  try {
+    broadcastChannel?.postMessage({
+      type: 'CMS_UPDATED',
+      cms: currentCmsContent,
+    });
+  } catch (e) {}
+
+  // Sync to Firestore
+  if (db && logReason) {
+    setDoc(doc(db, 'settings', 'cms'), currentCmsContent, { merge: true }).catch((err) => {
+      console.warn('Failed to sync CMS to Firestore:', err);
+    });
+
+    logActivity({
+      type: 'admin_setting_changed',
+      actorName: 'Admin',
+      actorRole: 'admin',
+      title: 'Cập nhật nội dung website (CMS)',
+      description: logReason,
+    }).catch(() => {});
+  }
+
   listeners.forEach((fn) => fn());
 }
 
@@ -324,7 +415,7 @@ export function updateHero(data: Partial<HomepageHero>): HomepageHero {
     ...currentCmsContent,
     hero: { ...currentCmsContent.hero, ...data },
   };
-  notify();
+  notify('Cập nhật nội dung banner Hero trang chủ');
   return { ...currentCmsContent.hero };
 }
 
@@ -333,7 +424,7 @@ export function updateIntro(data: Partial<HomepageIntro>): HomepageIntro {
     ...currentCmsContent,
     intro: { ...currentCmsContent.intro, ...data },
   };
-  notify();
+  notify('Cập nhật nội dung giới thiệu & quy trình 4 bước');
   return { ...currentCmsContent.intro };
 }
 
@@ -344,7 +435,7 @@ export function updateFeaturedTemplates(
     ...currentCmsContent,
     featuredTemplates: { ...currentCmsContent.featuredTemplates, ...data },
   };
-  notify();
+  notify('Cập nhật danh sách mẫu thiệp nổi bật trang chủ');
   return { ...currentCmsContent.featuredTemplates };
 }
 
@@ -353,7 +444,7 @@ export function updateFeatures(features: HomepageFeature[]): HomepageFeature[] {
     ...currentCmsContent,
     features: [...features],
   };
-  notify();
+  notify('Cập nhật danh sách tính năng nổi bật');
   return [...currentCmsContent.features];
 }
 
@@ -362,7 +453,7 @@ export function updateTestimonials(testimonials: Testimonial[]): Testimonial[] {
     ...currentCmsContent,
     testimonials: [...testimonials],
   };
-  notify();
+  notify('Cập nhật đánh giá của khách hàng');
   return [...currentCmsContent.testimonials];
 }
 
@@ -371,7 +462,7 @@ export function updateCta(data: Partial<HomepageCta>): HomepageCta {
     ...currentCmsContent,
     cta: { ...currentCmsContent.cta, ...data },
   };
-  notify();
+  notify('Cập nhật lời kêu gọi hành động CTA');
   return { ...currentCmsContent.cta };
 }
 
@@ -380,7 +471,7 @@ export function updateFooter(data: Partial<SiteFooter>): SiteFooter {
     ...currentCmsContent,
     footer: { ...currentCmsContent.footer, ...data },
   };
-  notify();
+  notify('Cập nhật thông tin chân trang Footer');
   return { ...currentCmsContent.footer };
 }
 
@@ -389,7 +480,7 @@ export function updateContactContent(data: Partial<ContactPageContent>): Contact
     ...currentCmsContent,
     contact: { ...currentCmsContent.contact, ...data },
   };
-  notify();
+  notify('Cập nhật thông tin trang Liên hệ & hỗ trợ Zalo');
   return { ...currentCmsContent.contact };
 }
 
@@ -398,7 +489,7 @@ export function updateSiteSettings(data: Partial<SiteSettings>): SiteSettings {
     ...currentCmsContent,
     settings: { ...currentCmsContent.settings, ...data },
   };
-  notify();
+  notify('Cập nhật cấu hình website & kênh hỗ trợ Zalo');
   return { ...currentCmsContent.settings };
 }
 
@@ -412,7 +503,7 @@ export function updateSocialLinks(data: Partial<SocialLinksConfig>): SocialLinks
     ...currentCmsContent,
     socialLinks: updated,
   };
-  notify();
+  notify('Cập nhật liên kết mạng xã hội');
   return { ...updated };
 }
 
@@ -421,13 +512,13 @@ export function updateEntireCms(data: Partial<CmsContent>): CmsContent {
     ...currentCmsContent,
     ...data,
   };
-  notify();
+  notify('Cập nhật toàn bộ nội dung CMS');
   return { ...currentCmsContent };
 }
 
 export function resetCmsContent(): CmsContent {
   currentCmsContent = { ...DEFAULT_CMS_CONTENT };
-  notify();
+  notify('Khôi phục nội dung CMS về mặc định');
   return { ...currentCmsContent };
 }
 

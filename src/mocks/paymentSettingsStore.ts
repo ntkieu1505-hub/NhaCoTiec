@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { PaymentSettings } from '../types/payment';
+import { db } from '../services/firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { logActivity } from '../services/activityLogService';
 
 const STORAGE_KEY = 'nha_co_tiec_payment_settings_v1';
+const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_payment_settings_channel';
 
 // Clean, high-fidelity default static QR image (SVG encoded as Data URL for offline reliability)
 export const DEFAULT_STATIC_QR_IMAGE =
@@ -65,12 +69,78 @@ let currentPaymentSettings: PaymentSettings = (() => {
 
 const listeners = new Set<() => void>();
 
+// Cross-tab BroadcastChannel for 0ms multi-tab sync
+let broadcastChannel: BroadcastChannel | null = null;
+try {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+    broadcastChannel.onmessage = (event) => {
+      if (event.data?.type === 'PAYMENT_SETTINGS_UPDATED' && event.data?.settings) {
+        currentPaymentSettings = event.data.settings;
+        listeners.forEach((fn) => fn());
+      }
+    };
+  }
+} catch (e) {}
+
+// Window Storage Event listener for cross-tab sync
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEY && event.newValue) {
+      try {
+        currentPaymentSettings = JSON.parse(event.newValue);
+        listeners.forEach((fn) => fn());
+      } catch (e) {}
+    }
+  });
+}
+
+// Firestore Real-time Sync for settings/payment document
+let isFirestorePaymentListening = false;
+function initFirestorePaymentSync() {
+  if (isFirestorePaymentListening || !db) return;
+  try {
+    isFirestorePaymentListening = true;
+    onSnapshot(
+      doc(db, 'settings', 'payment'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const remoteData = docSnap.data() as PaymentSettings;
+          currentPaymentSettings = {
+            ...DEFAULT_PAYMENT_SETTINGS,
+            ...remoteData,
+          };
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPaymentSettings));
+          } catch (e) {}
+          listeners.forEach((fn) => fn());
+        }
+      },
+      (err) => {
+        console.info('Firestore payment settings live sync fallback:', err.message);
+      }
+    );
+  } catch (e) {
+    console.warn('Firestore payment settings sync error:', e);
+  }
+}
+
+initFirestorePaymentSync();
+
 function notify() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPaymentSettings));
   } catch (e) {
     console.error('Failed to save payment settings to localStorage', e);
   }
+
+  try {
+    broadcastChannel?.postMessage({
+      type: 'PAYMENT_SETTINGS_UPDATED',
+      settings: currentPaymentSettings,
+    });
+  } catch (e) {}
+
   listeners.forEach((fn) => fn());
 }
 
@@ -85,6 +155,24 @@ export function updatePaymentSettings(data: Partial<PaymentSettings>): PaymentSe
     updatedAt: new Date().toISOString(),
   };
   notify();
+
+  // Sync to Firestore
+  if (db) {
+    setDoc(doc(db, 'settings', 'payment'), currentPaymentSettings, { merge: true }).catch((err) => {
+      console.warn('Failed to update payment settings to Firestore:', err);
+    });
+  }
+
+  // Log activity
+  logActivity({
+    type: 'admin_setting_changed',
+    actorName: 'Admin',
+    actorRole: 'admin',
+    title: 'Cập nhật cấu hình thanh toán',
+    description: `Admin đã thay đổi thông tin tài khoản ngân hàng ${currentPaymentSettings.bankName} - ${currentPaymentSettings.accountNumber}`,
+    details: { bank: currentPaymentSettings.bankName, account: currentPaymentSettings.accountNumber },
+  }).catch(() => {});
+
   return { ...currentPaymentSettings };
 }
 
@@ -95,6 +183,23 @@ export function uploadQrImage(dataUrl: string): PaymentSettings {
     updatedAt: new Date().toISOString(),
   };
   notify();
+
+  // Sync to Firestore
+  if (db) {
+    setDoc(doc(db, 'settings', 'payment'), currentPaymentSettings, { merge: true }).catch((err) => {
+      console.warn('Failed to upload QR to Firestore:', err);
+    });
+  }
+
+  // Log activity
+  logActivity({
+    type: 'admin_setting_changed',
+    actorName: 'Admin',
+    actorRole: 'admin',
+    title: 'Cập nhật mã QR thanh toán',
+    description: 'Admin đã tải lên ảnh mã QR VietQR mới cho tài khoản nhận tiền.',
+  }).catch(() => {});
+
   return { ...currentPaymentSettings };
 }
 
