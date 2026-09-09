@@ -46,9 +46,48 @@ export const AdminCmsPage: React.FC = () => {
   const heroImageInputRef = useRef<HTMLInputElement>(null);
   const testimonialAvatarInputRef = useRef<HTMLInputElement>(null);
 
-  // Synchronize initial form data
+  // Helper to compress uploaded image before storing into localStorage
+  const compressImageFile = (file: File, maxWidth = 1200, quality = 0.75): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } else {
+            resolve(e.target?.result as string);
+          }
+        };
+        img.onerror = () => resolve(e.target?.result as string);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Track if user has unsaved edits
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(currentCms);
+  const isDirtyRef = useRef(false);
+  isDirtyRef.current = isDirty;
+
+  // Synchronize form data when currentCms updates (only if user does NOT have unsaved edits)
   useEffect(() => {
-    setFormData(currentCms);
+    if (!isDirtyRef.current) {
+      setFormData(currentCms);
+    }
   }, [currentCms]);
 
   // Handle saving
@@ -59,39 +98,35 @@ export const AdminCmsPage: React.FC = () => {
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  // Handle image upload for Hero
-  const handleHeroImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle image upload for Hero with automatic compression
+  const handleHeroImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
+      const compressed = await compressImageFile(file, 1400, 0.8);
+      if (compressed) {
         setFormData((prev) => ({
           ...prev,
-          hero: { ...prev.hero, coverImageUrl: result },
+          hero: { ...prev.hero, coverImageUrl: compressed },
         }));
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
-  // Handle image upload for Testimonial
-  const handleTestimonialAvatarChange = (
+  // Handle image upload for Testimonial with automatic compression
+  const handleTestimonialAvatarChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     isEdit: boolean
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
+      const compressed = await compressImageFile(file, 400, 0.8);
+      if (compressed) {
         if (isEdit && editingTestimonial) {
-          setEditingTestimonial({ ...editingTestimonial, avatarUrl: result });
+          setEditingTestimonial({ ...editingTestimonial, avatarUrl: compressed });
         } else {
-          setNewTestimonial((prev) => ({ ...prev, avatarUrl: result }));
+          setNewTestimonial((prev) => ({ ...prev, avatarUrl: compressed }));
         }
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -2026,6 +2061,26 @@ export const AdminCmsPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Floating Sticky Save Bar when user has unsaved changes */}
+      {isDirty && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 flex items-center gap-3 px-5 py-3 rounded-2xl bg-[#1f1b19] text-white shadow-2xl border border-gold-foil/40 ring-4 ring-black/10">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+            <span className="text-xs font-semibold text-white/90">
+              Bạn có thay đổi chưa lưu
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSave()}
+            className="px-4 py-1.5 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <Icon name="save" className="text-[15px]" />
+            <span>Lưu ngay</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
