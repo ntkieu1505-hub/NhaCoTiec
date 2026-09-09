@@ -13,11 +13,11 @@ import {
   SocialLinksConfig,
 } from '../types/cms';
 
-const STORAGE_KEY = 'nha_co_tiec_cms_v7';
+const STORAGE_KEY = 'nha_co_tiec_cms_v8';
 
 export const DEFAULT_CMS_CONTENT: CmsContent = {
   hero: {
-    headline: 'Lưu giữ khoảnh khắc\nthiêng liêng với website thiệp cưới.',
+    headline: 'Lưu giữ khoảnh khắc\nthiêng liêng với website thiệp cưới',
     subtext:
       'Một lời mời đẹp, một câu chuyện riêng\nvà những khoảnh khắc được lưu giữ\ntheo cách của bạn.',
     description: 'Nền tảng phát hành và vận hành website thiệp cưới cao cấp chỉn chu.',
@@ -37,7 +37,7 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
     enabled: true,
   },
   intro: {
-    title: '4 bước sở hữu website thiệp cưới.',
+    title: '4 bước sở hữu website thiệp cưới',
     subtitle: 'Về Nhà Có Tiệc',
     eyebrow: 'Quy trình hoàn thiện',
     description:
@@ -71,7 +71,7 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
     enabled: true,
   },
   featuredTemplates: {
-    title: 'Mẫu thiệp cưới độc bản.',
+    title: 'Mẫu thiệp cưới độc bản',
     subtitle: 'Bộ sưu tập tuyển chọn',
     eyebrow: 'Bộ sưu tập tuyển chọn',
     description:

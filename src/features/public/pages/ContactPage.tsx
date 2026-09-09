@@ -34,53 +34,113 @@ export const ContactPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Hotline */}
-        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col gap-3 shadow-xs items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-surface-subtle text-burgundy-wine flex items-center justify-center">
-            <Icon name="call" className="text-[24px]" />
+        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col justify-between gap-5 shadow-xs hover:border-gold-foil/40 hover:shadow-md transition-all duration-300">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center border border-burgundy-wine/15">
+                <Icon name="call" className="text-[24px]" />
+              </div>
+              <span className="text-[11px] font-semibold text-burgundy-wine bg-burgundy-wine/10 px-2.5 py-1 rounded-full border border-burgundy-wine/20">
+                Hỗ trợ trực tiếp
+              </span>
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-deep-espresso">Hotline trực tiếp</h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                Hỗ trợ khẩn cấp ngày tiệc, tư vấn dịch vụ và giải đáp nhanh mọi thắc mắc.
+              </p>
+            </div>
           </div>
-          <h3 className="font-serif text-lg font-bold text-deep-espresso">Hotline trực tiếp</h3>
-          <p className="text-xs text-text-muted">Hỗ trợ khẩn cấp ngày tiệc và tư vấn nhanh</p>
-          <a
-            href={`tel:${(contact.hotline || contact.phone || '0982 123 456').replace(/\s+/g, '')}`}
-            className="text-base font-bold text-burgundy-wine hover:underline mt-2 font-serif"
-          >
-            {contact.hotline || contact.phone || '0982 123 456'}
-          </a>
-          <span className="text-[11px] text-text-muted">{contact.workingHours}</span>
+
+          <div className="pt-4 border-t border-border-delicate/70 flex flex-col gap-1.5">
+            <span className="text-[10px] text-text-muted font-label-caps uppercase font-semibold tracking-wider">
+              Số điện thoại tư vấn
+            </span>
+            <a
+              href={`tel:${(contact.hotline || contact.phone || '0982 123 456').replace(/\s+/g, '')}`}
+              className="text-lg font-serif font-bold text-burgundy-wine hover:text-[#851622] transition-colors inline-flex items-center gap-2"
+            >
+              <Icon name="phone_in_talk" className="text-[18px]" />
+              <span>{contact.hotline || contact.phone || '0982 123 456'}</span>
+            </a>
+            <span className="text-[11px] text-text-muted flex items-center gap-1.5 mt-0.5">
+              <Icon name="schedule" className="text-[14px] text-gold-foil shrink-0" />
+              <span>{contact.workingHours || '08:30 - 22:00 hàng ngày'}</span>
+            </span>
+          </div>
         </div>
 
         {/* Card 2: Zalo */}
-        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col gap-3 shadow-xs items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-surface-subtle text-gold-foil flex items-center justify-center">
-            <Icon name="chat" className="text-[24px]" />
+        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col justify-between gap-5 shadow-xs hover:border-gold-foil/40 hover:shadow-md transition-all duration-300">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-gold-foil/15 text-deep-espresso flex items-center justify-center border border-gold-foil/25">
+                <Icon name="chat" className="text-[24px] text-gold-foil" />
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                Phản hồi nhanh
+              </span>
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-deep-espresso">Zalo CSKH 24/7</h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                Gửi ảnh cưới độ nét cao, trao đổi ý tưởng và duyệt layout trực tiếp cùng Designer.
+              </p>
+            </div>
           </div>
-          <h3 className="font-serif text-lg font-bold text-deep-espresso">Zalo CSKH 24/7</h3>
-          <p className="text-xs text-text-muted">Gửi ảnh cưới, trao đổi trực tiếp với Designer</p>
-          <a
-            href={contact.zaloUrl || 'https://zalo.me/0982123456'}
-            target="_blank"
-            rel="noreferrer"
-            className="px-5 py-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold shadow-xs hover:bg-[#851622] transition-colors mt-2"
-          >
-            Nhắn Zalo ngay
-          </a>
-          <span className="text-[11px] text-text-muted">{contact.zaloHandle || 'Phản hồi ≤ 15 phút'}</span>
+
+          <div className="pt-4 border-t border-border-delicate/70 flex flex-col gap-2">
+            <a
+              href={contact.zaloUrl || 'https://zalo.me/0982123456'}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full h-10 px-4 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              <Icon name="chat" className="text-[16px]" />
+              <span>Nhắn tin Zalo ngay</span>
+            </a>
+            <span className="text-[11px] text-text-muted flex items-center gap-1.5">
+              <Icon name="bolt" className="text-[14px] text-emerald-600 shrink-0" />
+              <span>{contact.zaloHandle || 'Phản hồi trong vòng ≤ 15 phút'}</span>
+            </span>
+          </div>
         </div>
 
         {/* Card 3: Email & Studio */}
-        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col gap-3 shadow-xs items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-surface-subtle text-deep-espresso flex items-center justify-center">
-            <Icon name="mail" className="text-[24px]" />
+        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col justify-between gap-5 shadow-xs hover:border-gold-foil/40 hover:shadow-md transition-all duration-300">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-surface-subtle text-deep-espresso flex items-center justify-center border border-border-delicate">
+                <Icon name="mail" className="text-[24px]" />
+              </div>
+              <span className="text-[11px] font-semibold text-text-muted bg-surface-subtle px-2.5 py-1 rounded-full border border-border-delicate">
+                Hòm thư Studio
+              </span>
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-deep-espresso">Hòm thư Studio</h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                Tiếp nhận file dung lượng lớn, link Google Drive ảnh cưới và hợp tác đối tác.
+              </p>
+            </div>
           </div>
-          <h3 className="font-serif text-lg font-bold text-deep-espresso">Hòm thư Studio</h3>
-          <p className="text-xs text-text-muted">Gửi file dung lượng lớn và hợp tác thương hiệu</p>
-          <a
-            href={`mailto:${contact.email}`}
-            className="text-sm font-semibold text-deep-espresso hover:underline mt-2"
-          >
-            {contact.email}
-          </a>
-          <span className="text-[11px] text-text-muted">{contact.address || 'nhacotiec.vn'}</span>
+
+          <div className="pt-4 border-t border-border-delicate/70 flex flex-col gap-1.5">
+            <span className="text-[10px] text-text-muted font-label-caps uppercase font-semibold tracking-wider">
+              Địa chỉ hòm thư
+            </span>
+            <a
+              href={`mailto:${contact.email || 'chao@nhacotiec.vn'}`}
+              className="text-sm font-semibold text-deep-espresso hover:text-burgundy-wine transition-colors inline-flex items-center gap-2 truncate"
+            >
+              <Icon name="alternate_email" className="text-[16px] text-gold-foil shrink-0" />
+              <span className="truncate">{contact.email || 'chao@nhacotiec.vn'}</span>
+            </a>
+            <span className="text-[11px] text-text-muted flex items-start gap-1.5 mt-0.5">
+              <Icon name="place" className="text-[14px] text-gold-foil shrink-0 mt-0.5" />
+              <span className="line-clamp-1">{contact.address || 'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh'}</span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -89,7 +149,7 @@ export const ContactPage: React.FC = () => {
         <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
           <div className="flex flex-col text-center sm:text-left">
             <h4 className="font-serif text-sm font-bold text-deep-espresso">
-              Kết nối mạng xã hội với Nhà Có Tiệc.
+              Kết nối mạng xã hội với Nhà Có Tiệc
             </h4>
             <p className="text-xs text-text-muted">
               Theo dõi các mẫu thiệp mới nhất và câu chuyện tình yêu truyền cảm hứng.
@@ -120,7 +180,7 @@ export const ContactPage: React.FC = () => {
             <Icon name="verified" className="text-[22px]" />
           </div>
           <div>
-            <h4 className="font-serif font-bold text-base">{contact.slaCommitmentTitle || 'Cam kết thời gian bàn giao (SLA) 24h.'}</h4>
+            <h4 className="font-serif font-bold text-base">{contact.slaCommitmentTitle ? contact.slaCommitmentTitle.replace(/\.+$/, '') : 'Cam kết thời gian bàn giao (SLA) 24h'}</h4>
             <p className="text-xs text-surface-cream/80">
               {contact.slaCommitmentDesc || 'Nhà Có Tiệc cam kết gửi link website thiệp cưới xem thử trong vòng 24 giờ kể từ khi nhận đủ ảnh và nội dung.'}
             </p>

@@ -50,17 +50,18 @@ export const HomePage: React.FC = () => {
             const rawHeadline = cms.hero.headline?.trim() || '';
             let lines = [
               'Lưu giữ khoảnh khắc',
-              'thiêng liêng với website thiệp cưới.',
+              'thiêng liêng với website thiệp cưới',
             ];
 
             if (rawHeadline) {
-              if (rawHeadline.includes('\n')) {
-                lines = rawHeadline.split('\n').map((l) => l.trim()).filter(Boolean);
-              } else if (rawHeadline.includes('thiêng liêng')) {
-                const idx = rawHeadline.indexOf('thiêng liêng');
-                lines = [rawHeadline.substring(0, idx).trim(), rawHeadline.substring(idx).trim()];
+              const cleanHeadline = rawHeadline.replace(/\.+$/, '');
+              if (cleanHeadline.includes('\n')) {
+                lines = cleanHeadline.split('\n').map((l) => l.trim().replace(/\.+$/, '')).filter(Boolean);
+              } else if (cleanHeadline.includes('thiêng liêng')) {
+                const idx = cleanHeadline.indexOf('thiêng liêng');
+                lines = [cleanHeadline.substring(0, idx).trim(), cleanHeadline.substring(idx).trim().replace(/\.+$/, '')];
               } else {
-                lines = [rawHeadline];
+                lines = [cleanHeadline];
               }
             }
 
@@ -120,7 +121,7 @@ export const HomePage: React.FC = () => {
             {cms.featuredTemplates.eyebrow}
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso">
-            {cms.featuredTemplates.title}
+            {cms.featuredTemplates.title ? cms.featuredTemplates.title.replace(/\.+$/, '') : 'Mẫu thiệp cưới độc bản'}
           </h2>
           <p className="text-sm text-text-muted max-w-md">
             {cms.featuredTemplates.description}
@@ -241,7 +242,7 @@ export const HomePage: React.FC = () => {
               Cam kết giá trị trọn vẹn
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso">
-              Tất cả những gì cặp đôi cần cho ngày chung đôi.
+              Tất cả những gì cặp đôi cần cho ngày chung đôi
             </h2>
             <p className="text-sm text-text-muted">
               Không chỉ dừng lại ở một tấm thiệp điện tử, Nhà Có Tiệc mang đến trải nghiệm toàn diện và lưu giữ trọn vẹn kỷ niệm ngày cưới.
@@ -292,7 +293,7 @@ export const HomePage: React.FC = () => {
             {cms.intro.eyebrow}
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso">
-            {cms.intro.title}
+            {cms.intro.title ? cms.intro.title.replace(/\.+$/, '') : '4 bước sở hữu website thiệp cưới'}
           </h2>
           <p className="text-sm text-text-muted">
             {cms.intro.description}
@@ -350,7 +351,7 @@ export const HomePage: React.FC = () => {
               Hạnh phúc lan tỏa
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso">
-              Lời chúc &amp; phản hồi từ các cặp đôi.
+              Lời chúc &amp; phản hồi từ các cặp đôi
             </h2>
             <p className="text-sm text-text-muted">
               Lắng nghe cảm xúc thật từ những cặp đôi đã đồng hành cùng Nhà Có Tiệc để trao gửi tấm thiệp ngày chung đôi đến những người thân thương.
@@ -417,7 +418,7 @@ export const HomePage: React.FC = () => {
             Thắc mắc phổ biến
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso mt-1">
-            Câu hỏi thường gặp.
+            Câu hỏi thường gặp
           </h2>
         </div>
 
