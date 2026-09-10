@@ -2,12 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Default font theme: Modern / Minimalist */
+  --font-heading: 'Montserrat', 'Be Vietnam Pro', sans-serif;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
+}
+
+html[data-font="classic"] {
+  --font-heading: 'Playfair Display', 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+html[data-font="modern"] {
+  --font-heading: 'Montserrat', 'Be Vietnam Pro', sans-serif;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
+}
+
 @layer base {
   html, body {
     width: 100%;
     margin: 0;
     padding: 0;
     background-color: #fdf9f3;
+    font-family: var(--font-body);
   }
   
   .pb-safe {
@@ -28,9 +45,14 @@
   scrollbar-width: none;
 }
 
-/* Serif font override matching Google Stitch */
+/* Heading font */
 .font-serif, h1, h2, h3 {
-  font-family: 'Playfair Display', 'Cormorant Garamond', 'Times New Roman', serif;
+  font-family: var(--font-heading);
   font-feature-settings: 'lnum', 'pnum';
   text-rendering: optimizeLegibility;
 }
+
+.font-sans {
+  font-family: var(--font-body);
+}
+
