@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 
-export type FontTheme = 'romantic' | 'royal' | 'modern' | 'classic';
+export type FontTheme = 'korean' | 'romantic' | 'royal' | 'modern' | 'classic';
 
 const STORAGE_KEY = 'nha_co_tiec_font_theme';
 
@@ -9,11 +9,11 @@ export const FontSwitcher: React.FC = () => {
   const [currentFont, setCurrentFont] = useState<FontTheme>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as FontTheme;
-      if (saved === 'romantic' || saved === 'royal' || saved === 'modern' || saved === 'classic') {
+      if (saved === 'korean' || saved === 'romantic' || saved === 'royal' || saved === 'modern' || saved === 'classic') {
         return saved;
       }
     } catch {}
-    return 'romantic'; // Default to Romantic Calligraphy
+    return 'korean'; // Default to Korean Aesthetic
   });
 
   const [isOpen, setIsOpen] = useState(true);
@@ -26,6 +26,7 @@ export const FontSwitcher: React.FC = () => {
   }, [currentFont]);
 
   const getThemeLabel = (theme: FontTheme) => {
+    if (theme === 'korean') return 'Hàn Quốc';
     if (theme === 'romantic') return 'Viết tay';
     if (theme === 'royal') return 'Quý tộc';
     if (theme === 'modern') return 'Hiện đại';
@@ -42,7 +43,7 @@ export const FontSwitcher: React.FC = () => {
                 Aa
               </span>
               <span className="text-xs font-bold text-deep-espresso">
-                Thử nghiệm Font chữ (4 Phong cách)
+                Thử nghiệm Font chữ (5 Phong cách)
               </span>
             </div>
             <button
@@ -56,7 +57,42 @@ export const FontSwitcher: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            {/* Option 1: Viết tay uốn lượn lãng mạn */}
+            {/* Option 1: Thơ mộng / Trong veo Hàn Quốc (Mới) */}
+            <button
+              type="button"
+              onClick={() => setCurrentFont('korean')}
+              className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
+                currentFont === 'korean'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                  : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
+              }`}
+            >
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
+                  <span>🌸 Thơ mộng Hàn Quốc</span>
+                  {currentFont === 'korean' && (
+                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
+                      Đang bật
+                    </span>
+                  )}
+                </span>
+                <span className="text-[12px] text-burgundy-wine mt-0.5 font-medium" style={{ fontFamily: "'Lora', serif" }}>
+                  Lora • Be Vietnam Pro
+                </span>
+                <span className="text-[10px] text-text-muted italic mt-0.5">
+                  Dịu dàng, trong veo, thanh khiết như phim điện ảnh
+                </span>
+              </div>
+              <div className="mt-0.5">
+                <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                  currentFont === 'korean' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
+                }`}>
+                  {currentFont === 'korean' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                </span>
+              </div>
+            </button>
+
+            {/* Option 2: Viết tay uốn lượn lãng mạn */}
             <button
               type="button"
               onClick={() => setCurrentFont('romantic')}
@@ -79,7 +115,7 @@ export const FontSwitcher: React.FC = () => {
                   Alex Brush • Great Vibes
                 </span>
                 <span className="text-[10px] text-text-muted italic mt-0.5">
-                  Nét chữ mềm mại, bay bổng, lãng mạn tình yêu
+                  Nét chữ mềm mại, bay bổng, thư pháp tình yêu
                 </span>
               </div>
               <div className="mt-0.5">
@@ -91,7 +127,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 2: Quý tộc / Hoàng gia */}
+            {/* Option 3: Quý tộc / Hoàng gia */}
             <button
               type="button"
               onClick={() => setCurrentFont('royal')}
@@ -126,7 +162,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 3: Hiện đại / Tối giản */}
+            {/* Option 4: Hiện đại / Tối giản */}
             <button
               type="button"
               onClick={() => setCurrentFont('modern')}
@@ -161,7 +197,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 4: Cổ điển / Sang trọng (Gốc) */}
+            {/* Option 5: Cổ điển / Sang trọng (Gốc) */}
             <button
               type="button"
               onClick={() => setCurrentFont('classic')}

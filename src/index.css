@@ -3,8 +3,13 @@
 @tailwind utilities;
 
 :root {
-  /* Default font theme: Viết tay uốn lượn lãng mạn */
-  --font-heading: 'Alex Brush', 'Great Vibes', 'Playfair Display', cursive;
+  /* Default font theme: Thơ mộng / Trong veo Hàn Quốc */
+  --font-heading: 'Lora', 'Cormorant Garamond', 'Playfair Display', serif;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
+}
+
+html[data-font="korean"] {
+  --font-heading: 'Lora', 'Cormorant Garamond', 'Playfair Display', serif;
   --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
 }
 
