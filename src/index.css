@@ -3,9 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* Default font theme: Quý tộc / Hoàng gia */
-  --font-heading: 'Bodoni Moda', 'Cormorant Garamond', 'Playfair Display', serif;
-  --font-body: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+  /* Default font theme: Viết tay uốn lượn lãng mạn */
+  --font-heading: 'Alex Brush', 'Great Vibes', 'Playfair Display', cursive;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
+}
+
+html[data-font="romantic"] {
+  --font-heading: 'Alex Brush', 'Great Vibes', 'Playfair Display', cursive;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
 }
 
 html[data-font="royal"] {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 
-export type FontTheme = 'royal' | 'modern' | 'classic';
+export type FontTheme = 'romantic' | 'royal' | 'modern' | 'classic';
 
 const STORAGE_KEY = 'nha_co_tiec_font_theme';
 
@@ -9,9 +9,11 @@ export const FontSwitcher: React.FC = () => {
   const [currentFont, setCurrentFont] = useState<FontTheme>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as FontTheme;
-      if (saved === 'royal' || saved === 'modern' || saved === 'classic') return saved;
+      if (saved === 'romantic' || saved === 'royal' || saved === 'modern' || saved === 'classic') {
+        return saved;
+      }
     } catch {}
-    return 'royal'; // Default to Royal luxury
+    return 'romantic'; // Default to Romantic Calligraphy
   });
 
   const [isOpen, setIsOpen] = useState(true);
@@ -24,6 +26,7 @@ export const FontSwitcher: React.FC = () => {
   }, [currentFont]);
 
   const getThemeLabel = (theme: FontTheme) => {
+    if (theme === 'romantic') return 'Viết tay';
     if (theme === 'royal') return 'Quý tộc';
     if (theme === 'modern') return 'Hiện đại';
     return 'Cổ điển';
@@ -32,14 +35,14 @@ export const FontSwitcher: React.FC = () => {
   return (
     <aside aria-label="Bộ chọn giao diện font" className="fixed bottom-5 right-5 z-[9999]">
       {isOpen ? (
-        <div className="bg-surface-card/95 backdrop-blur-md border border-border-delicate rounded-2xl shadow-xl p-3.5 sm:p-4 w-[310px] flex flex-col gap-3 transition-all animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="bg-surface-card/95 backdrop-blur-md border border-border-delicate rounded-2xl shadow-xl p-3.5 sm:p-4 w-[320px] max-h-[90vh] overflow-y-auto no-scrollbar flex flex-col gap-3 transition-all animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div className="flex items-center justify-between border-b border-border-delicate pb-2">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-burgundy-wine text-white flex items-center justify-center text-xs font-bold font-serif">
                 Aa
               </span>
               <span className="text-xs font-bold text-deep-espresso">
-                Thử nghiệm Font chữ
+                Thử nghiệm Font chữ (4 Phong cách)
               </span>
             </div>
             <button
@@ -53,7 +56,42 @@ export const FontSwitcher: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            {/* Option 1: Quý tộc / Hoàng gia (Mới) */}
+            {/* Option 1: Viết tay uốn lượn lãng mạn */}
+            <button
+              type="button"
+              onClick={() => setCurrentFont('romantic')}
+              className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
+                currentFont === 'romantic'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                  : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
+              }`}
+            >
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
+                  <span>💖 Viết tay lãng mạn</span>
+                  {currentFont === 'romantic' && (
+                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
+                      Đang bật
+                    </span>
+                  )}
+                </span>
+                <span className="text-base text-burgundy-wine mt-0.5 leading-tight" style={{ fontFamily: "'Alex Brush', cursive" }}>
+                  Alex Brush • Great Vibes
+                </span>
+                <span className="text-[10px] text-text-muted italic mt-0.5">
+                  Nét chữ mềm mại, bay bổng, lãng mạn tình yêu
+                </span>
+              </div>
+              <div className="mt-0.5">
+                <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                  currentFont === 'romantic' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
+                }`}>
+                  {currentFont === 'romantic' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                </span>
+              </div>
+            </button>
+
+            {/* Option 2: Quý tộc / Hoàng gia */}
             <button
               type="button"
               onClick={() => setCurrentFont('royal')}
@@ -67,7 +105,7 @@ export const FontSwitcher: React.FC = () => {
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
                   <span>👑 Quý tộc / Hoàng gia</span>
                   {currentFont === 'royal' && (
-                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full">
+                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
                       Đang bật
                     </span>
                   )}
@@ -88,7 +126,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 2: Hiện đại / Tối giản */}
+            {/* Option 3: Hiện đại / Tối giản */}
             <button
               type="button"
               onClick={() => setCurrentFont('modern')}
@@ -102,7 +140,7 @@ export const FontSwitcher: React.FC = () => {
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
                   <span>✨ Hiện đại / Tối giản</span>
                   {currentFont === 'modern' && (
-                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full">
+                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
                       Đang bật
                     </span>
                   )}
@@ -123,7 +161,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 3: Cổ điển / Sang trọng (Gốc) */}
+            {/* Option 4: Cổ điển / Sang trọng (Gốc) */}
             <button
               type="button"
               onClick={() => setCurrentFont('classic')}
@@ -137,7 +175,7 @@ export const FontSwitcher: React.FC = () => {
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
                   <span>📜 Cổ điển / Trang nhã</span>
                   {currentFont === 'classic' && (
-                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full">
+                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
                       Đang bật
                     </span>
                   )}
