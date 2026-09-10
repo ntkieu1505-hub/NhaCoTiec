@@ -3,7 +3,17 @@
 @tailwind utilities;
 
 :root {
-  /* Default font theme: Modern / Minimalist */
+  /* Default font theme: Quý tộc / Hoàng gia */
+  --font-heading: 'Bodoni Moda', 'Cormorant Garamond', 'Playfair Display', serif;
+  --font-body: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+}
+
+html[data-font="royal"] {
+  --font-heading: 'Bodoni Moda', 'Cormorant Garamond', 'Playfair Display', serif;
+  --font-body: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+}
+
+html[data-font="modern"] {
   --font-heading: 'Montserrat', 'Be Vietnam Pro', sans-serif;
   --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
 }
@@ -11,11 +21,6 @@
 html[data-font="classic"] {
   --font-heading: 'Playfair Display', 'Cormorant Garamond', 'Times New Roman', serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
-}
-
-html[data-font="modern"] {
-  --font-heading: 'Montserrat', 'Be Vietnam Pro', sans-serif;
-  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
 }
 
 @layer base {
