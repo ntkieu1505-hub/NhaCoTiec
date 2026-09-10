@@ -20,7 +20,8 @@ import {
 export const ADMIN_EMAILS: string[] = [
   'kieumllnn@gmail.com',
   'vutrang280805@gmail.com',
-  'hang07122005@gmail.com',
+  'haiyenng4598@gmail.com',
+  'tranthihuyentrang07122005@gmail.com',
   'admin@nhacotiec.vn',
   ...((import.meta as any).env?.VITE_ADMIN_EMAILS
     ? String((import.meta as any).env.VITE_ADMIN_EMAILS).split(',').map((e: string) => e.trim().toLowerCase())
