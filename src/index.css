@@ -3,8 +3,13 @@
 @tailwind utilities;
 
 :root {
-  /* Default font theme: Thơ mộng / Trong veo Hàn Quốc */
-  --font-heading: 'Lora', 'Cormorant Garamond', 'Playfair Display', serif;
+  /* Default font theme: Vintage Serif + Be Vietnam Pro */
+  --font-heading: 'Fraunces', 'Cormorant Garamond', serif;
+  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
+}
+
+html[data-font="vintage"] {
+  --font-heading: 'Fraunces', 'Cormorant Garamond', serif;
   --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
 }
 

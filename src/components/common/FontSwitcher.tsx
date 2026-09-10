@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 
-export type FontTheme = 'korean' | 'romantic' | 'royal' | 'modern' | 'classic';
+export type FontTheme = 'vintage' | 'korean' | 'romantic' | 'royal' | 'modern' | 'classic';
 
 const STORAGE_KEY = 'nha_co_tiec_font_theme';
 
@@ -9,11 +9,18 @@ export const FontSwitcher: React.FC = () => {
   const [currentFont, setCurrentFont] = useState<FontTheme>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as FontTheme;
-      if (saved === 'korean' || saved === 'romantic' || saved === 'royal' || saved === 'modern' || saved === 'classic') {
+      if (
+        saved === 'vintage' ||
+        saved === 'korean' ||
+        saved === 'romantic' ||
+        saved === 'royal' ||
+        saved === 'modern' ||
+        saved === 'classic'
+      ) {
         return saved;
       }
     } catch {}
-    return 'korean'; // Default to Korean Aesthetic
+    return 'vintage'; // Default to Vintage Serif + Be Vietnam Pro
   });
 
   const [isOpen, setIsOpen] = useState(true);
@@ -26,6 +33,7 @@ export const FontSwitcher: React.FC = () => {
   }, [currentFont]);
 
   const getThemeLabel = (theme: FontTheme) => {
+    if (theme === 'vintage') return 'Vintage Serif';
     if (theme === 'korean') return 'Hàn Quốc';
     if (theme === 'romantic') return 'Viết tay';
     if (theme === 'royal') return 'Quý tộc';
@@ -43,7 +51,7 @@ export const FontSwitcher: React.FC = () => {
                 Aa
               </span>
               <span className="text-xs font-bold text-deep-espresso">
-                Thử nghiệm Font chữ (5 Phong cách)
+                Thử nghiệm Font chữ (6 Phong cách)
               </span>
             </div>
             <button
@@ -57,7 +65,42 @@ export const FontSwitcher: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            {/* Option 1: Thơ mộng / Trong veo Hàn Quốc (Mới) */}
+            {/* Option 1: Vintage Serif + Be Vietnam Pro (Mới theo yêu cầu) */}
+            <button
+              type="button"
+              onClick={() => setCurrentFont('vintage')}
+              className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
+                currentFont === 'vintage'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                  : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
+              }`}
+            >
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
+                  <span>📜 Vintage Serif • Be Vietnam Pro</span>
+                  {currentFont === 'vintage' && (
+                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
+                      Đang bật
+                    </span>
+                  )}
+                </span>
+                <span className="text-[12px] text-burgundy-wine mt-0.5 font-medium" style={{ fontFamily: "'Fraunces', serif" }}>
+                  Fraunces (Vintage) • Be Vietnam Pro
+                </span>
+                <span className="text-[10px] text-text-muted italic mt-0.5">
+                  Ấm áp, hoài niệm, cổ điển quý phái & dễ đọc
+                </span>
+              </div>
+              <div className="mt-0.5">
+                <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                  currentFont === 'vintage' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
+                }`}>
+                  {currentFont === 'vintage' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                </span>
+              </div>
+            </button>
+
+            {/* Option 2: Thơ mộng / Trong veo Hàn Quốc */}
             <button
               type="button"
               onClick={() => setCurrentFont('korean')}
@@ -92,7 +135,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 2: Viết tay uốn lượn lãng mạn */}
+            {/* Option 3: Viết tay uốn lượn lãng mạn */}
             <button
               type="button"
               onClick={() => setCurrentFont('romantic')}
@@ -127,7 +170,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 3: Quý tộc / Hoàng gia */}
+            {/* Option 4: Quý tộc / Hoàng gia */}
             <button
               type="button"
               onClick={() => setCurrentFont('royal')}
@@ -162,7 +205,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 4: Hiện đại / Tối giản */}
+            {/* Option 5: Hiện đại / Tối giản */}
             <button
               type="button"
               onClick={() => setCurrentFont('modern')}
@@ -197,7 +240,7 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 5: Cổ điển / Sang trọng (Gốc) */}
+            {/* Option 6: Cổ điển / Sang trọng (Gốc) */}
             <button
               type="button"
               onClick={() => setCurrentFont('classic')}
@@ -209,7 +252,7 @@ export const FontSwitcher: React.FC = () => {
             >
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
-                  <span>📜 Cổ điển / Trang nhã</span>
+                  <span>🏛️ Cổ điển / Trang nhã</span>
                   {currentFont === 'classic' && (
                     <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
                       Đang bật
