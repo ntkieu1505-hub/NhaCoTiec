@@ -41,7 +41,7 @@ export const HomePage: React.FC = () => {
         {/* Centered, balanced Hero content with widened container (800–1000px) */}
         <div className="relative z-10 w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24 flex flex-col items-center text-center">
           {/* 1. Tên thương hiệu - Dòng riêng nằm ngay bên trên tiêu đề */}
-          <p className="font-serif text-sm sm:text-base md:text-lg text-gold-foil font-medium tracking-[0.15em] mb-3 sm:mb-4 select-none drop-shadow-sm">
+          <p className="font-playfair text-sm sm:text-base md:text-lg text-gold-foil font-semibold tracking-[0.15em] mb-3 sm:mb-4 select-none drop-shadow-sm">
             Nhà Có Tiệc
           </p>
 

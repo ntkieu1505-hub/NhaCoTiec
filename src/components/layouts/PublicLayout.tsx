@@ -33,21 +33,14 @@ export const PublicLayout: React.FC = () => {
       {/* 1. Header / Navbar */}
       <header className="fixed top-0 inset-x-0 z-50 bg-[#5c0b14]/95 backdrop-blur-md border-b border-white/15 transition-colors shadow-md pt-safe">
         <div className="h-16 px-4 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
-          {/* Left: Brand Logo with twin rings - ONLY "Nhà Có Tiệc" (No tagline) */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <svg
-              className="w-8 h-8 shrink-0 drop-shadow-sm text-white"
-              fill="none"
-              viewBox="0 0 40 36"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <ellipse cx="15" cy="20" fill="none" opacity="0.95" rx="11" ry="11" stroke="currentColor" strokeWidth="1.5" />
-              <ellipse cx="25" cy="20" fill="none" opacity="0.95" rx="11" ry="11" stroke="currentColor" strokeWidth="1.5" />
-              <ellipse cx="15" cy="20" fill="none" opacity="0.6" rx="9.2" ry="9.2" stroke="currentColor" strokeDasharray="1 2" strokeWidth="0.6" />
-              <path d="M20 5 L21.2 9 L25 10.2 L21.2 11.4 L20 15 L18.8 11.4 L15 10.2 L18.8 9 Z" fill="currentColor" />
-              <circle cx="20" cy="10.2" fill="currentColor" r="1.2" />
-            </svg>
-            <span className="font-serif text-[22px] font-bold tracking-tight text-white leading-none">
+          {/* Left: Brand Logo & Title with Playfair Display */}
+          <Link to="/" className="flex items-center gap-3 group">
+            <img
+              src="/logo.png"
+              alt="Nhà Có Tiệc Logo"
+              className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-sm border border-white/25 group-hover:scale-105 transition-transform shrink-0"
+            />
+            <span className="font-playfair text-[22px] md:text-[25px] font-bold tracking-tight text-white leading-none">
               Nhà Có Tiệc
             </span>
           </Link>
@@ -169,8 +162,13 @@ export const PublicLayout: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-white/10">
             {/* Col 1: Brand info */}
             <div className="md:col-span-2 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span className="font-serif text-2xl font-bold text-surface-cream">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/logo.png"
+                  alt="Nhà Có Tiệc Logo"
+                  className="w-9 h-9 rounded-full object-cover shadow-sm border border-gold-foil/30 shrink-0"
+                />
+                <span className="font-playfair text-2xl font-bold text-surface-cream">
                   {cms.footer.brandName || 'Nhà Có Tiệc'}
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-gold-foil"></span>

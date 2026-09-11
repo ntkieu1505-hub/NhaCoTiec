@@ -84,22 +84,13 @@ export const CustomerLayout: React.FC = () => {
       {/* 1. Mobile Header */}
       <header className="sticky top-0 z-50 bg-burgundy-wine text-white px-4 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2.5">
-          <Link to="/" className="flex items-center gap-2">
-            <svg
-              className="w-7 h-7 text-white flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-              viewBox="0 0 24 24"
-            >
-              <circle cx="8" cy="12" r="5.5" />
-              <circle cx="15" cy="12" r="5.5" />
-              <path d="M11.5 8.5v3" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M10 10h3" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            <div className="flex items-center gap-1 font-serif text-[19px] font-medium tracking-tight text-white">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <img
+              src="/logo.png"
+              alt="Nhà Có Tiệc Logo"
+              className="w-8 h-8 rounded-full object-cover shadow-xs border border-white/25 group-hover:scale-105 transition-transform shrink-0"
+            />
+            <div className="flex items-center gap-1 font-playfair text-[20px] font-bold tracking-tight text-white leading-none">
               <span>Nhà Có Tiệc</span>
               <span className="text-gold-foil font-bold text-base">•</span>
             </div>

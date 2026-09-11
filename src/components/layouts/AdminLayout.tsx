@@ -172,8 +172,13 @@ export const AdminLayout: React.FC = () => {
           {/* Brand Header */}
           <div className="px-3 pt-1 flex flex-col gap-1 border-b border-border-delicate/80 pb-4">
             <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2">
-                <span className="font-serif text-xl font-bold text-deep-espresso tracking-tight">
+              <Link to="/" className="flex items-center gap-2.5">
+                <img
+                  src="/logo.png"
+                  alt="Nhà Có Tiệc Logo"
+                  className="w-9 h-9 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
+                />
+                <span className="font-playfair text-xl font-bold text-deep-espresso tracking-tight">
                   Nhà Có Tiệc
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-burgundy-wine"></span>
@@ -265,6 +270,16 @@ export const AdminLayout: React.FC = () => {
             >
               <Icon name="menu" className="text-[22px]" />
             </button>
+            <Link to="/" className="lg:hidden flex items-center gap-1.5 mr-1">
+              <img
+                src="/logo.png"
+                alt="Nhà Có Tiệc Logo"
+                className="w-7 h-7 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
+              />
+              <span className="font-playfair font-bold text-sm text-deep-espresso tracking-tight">
+                Nhà Có Tiệc
+              </span>
+            </Link>
             <span className="hidden sm:inline font-label-md text-xs text-text-muted">Quản trị</span>
             <Icon name="chevron_right" className="hidden sm:inline text-[16px] text-text-muted" />
             <span className="font-label-md text-sm text-deep-espresso font-semibold">

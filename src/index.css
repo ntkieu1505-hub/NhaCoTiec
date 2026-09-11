@@ -42,6 +42,12 @@
   text-rendering: optimizeLegibility;
 }
 
+.font-playfair {
+  font-family: 'Playfair Display', 'Lora', serif;
+  font-feature-settings: 'lnum', 'pnum';
+  text-rendering: optimizeLegibility;
+}
+
 .font-sans {
   font-family: var(--font-body);
 }
