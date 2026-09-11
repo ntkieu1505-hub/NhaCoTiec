@@ -33,6 +33,7 @@ export default {
         "burgundy-wine": "#6D141A",
         "logo-wine": "#400D12",
         "logo-cream": "#FDF8EB",
+        "hero-dark": "#12100f",
         "inverse-primary": "#cfc4c0",
         "tertiary-container": "#372306",
         "text-muted": "#7A726D",

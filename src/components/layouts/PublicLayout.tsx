@@ -30,8 +30,8 @@ export const PublicLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-cream text-on-surface font-sans">
-      {/* 1. Header / Navbar - Exact Logo Wine Color (#400D12) */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-[#400D12]/95 backdrop-blur-md border-b border-white/10 transition-colors shadow-md pt-safe">
+      {/* 1. Header / Navbar - Matching Hero Background Color (#12100f) */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-[#12100f]/95 backdrop-blur-md border-b border-white/10 transition-colors shadow-md pt-safe">
         <div className="h-16 px-4 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
           {/* Left: Brand Logo & Title with Playfair Display matching logo font */}
           <Link to="/" className="flex items-center gap-3 group">
@@ -105,7 +105,7 @@ export const PublicLayout: React.FC = () => {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#34080c] border-t border-white/10 px-4 py-4 flex flex-col gap-3 animate-in fade-in">
+          <div className="md:hidden bg-[#12100f] border-t border-white/10 px-4 py-4 flex flex-col gap-3 animate-in fade-in">
             {navLinks.map((link) => (
               <Link
                 key={link.path}

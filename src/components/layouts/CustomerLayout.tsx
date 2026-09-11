@@ -81,8 +81,8 @@ export const CustomerLayout: React.FC = () => {
 
   return (
     <div className="bg-surface-cream text-on-surface antialiased min-h-screen flex flex-col selection:bg-burgundy-wine selection:text-white">
-      {/* 1. Header - Exact Logo Wine Color (#400D12) */}
-      <header className="sticky top-0 z-50 bg-[#400D12] text-[#FDF8EB] px-4 py-3 flex items-center justify-between shadow-md border-b border-white/10">
+      {/* 1. Header - Matching Hero Color (#12100f) */}
+      <header className="sticky top-0 z-50 bg-[#12100f] text-[#FDF8EB] px-4 py-3 flex items-center justify-between shadow-md border-b border-white/10">
         <div className="flex items-center gap-2.5">
           <Link to="/" className="flex items-center gap-2.5 group">
             <img
