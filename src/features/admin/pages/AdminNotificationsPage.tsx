@@ -1,14 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Icon } from '../../../components/common/Icon';
 import { useNotifications } from '../../../mocks/notificationStore';
+import { useOrders } from '../../../mocks/orderStore';
 import { NotificationType } from '../../../types/notification';
-
-const MOCK_CUSTOMERS = [
-  { id: '01', name: 'Nguyễn Minh Anh & Trần Đức Minh', orderId: 'NCT01' },
-  { id: '02', name: 'Lê Hải Đăng & Vũ Mộc Trà', orderId: 'NCT02' },
-  { id: '03', name: 'Phạm Hoàng Nam & Đỗ Thanh Thảo', orderId: 'NCT03' },
-  { id: '04', name: 'Đỗ Quang Huy & Vũ Ngọc Lan', orderId: 'NCT04' },
-];
 
 const TYPE_CONFIG: Record<NotificationType, { label: string; icon: string; badgeClass: string }> = {
   payment: {
@@ -50,6 +44,15 @@ const TYPE_CONFIG: Record<NotificationType, { label: string; icon: string; badge
 
 export const AdminNotificationsPage: React.FC = () => {
   const { notifications, createNotification, deleteNotification } = useNotifications();
+  const orders = useOrders();
+
+  const dynamicCustomers = useMemo(() => {
+    return orders.map((o) => ({
+      id: o.userId || o.id,
+      name: o.customerName || `Khách đơn #${o.id}`,
+      orderId: o.id,
+    }));
+  }, [orders]);
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,12 +62,12 @@ export const AdminNotificationsPage: React.FC = () => {
   // Create Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    userId: '01',
-    orderId: 'NCT01',
+    userId: 'all',
+    orderId: '',
     title: '',
     message: '',
-    type: 'payment' as NotificationType,
-    actionUrl: '/dashboard/don-hang/NCT01',
+    type: 'order' as NotificationType,
+    actionUrl: '/dashboard',
   });
   const [successToast, setSuccessToast] = useState('');
 
@@ -87,7 +90,7 @@ export const AdminNotificationsPage: React.FC = () => {
   });
 
   const handleCustomerChange = (userId: string) => {
-    const matched = MOCK_CUSTOMERS.find((c) => c.id === userId);
+    const matched = dynamicCustomers.find((c) => c.id === userId);
     setFormData((prev) => ({
       ...prev,
       userId,
@@ -304,7 +307,7 @@ export const AdminNotificationsPage: React.FC = () => {
               <tbody className="divide-y divide-border-delicate text-xs text-deep-espresso">
                 {filteredNotifications.map((item) => {
                   const typeMeta = TYPE_CONFIG[item.type] || TYPE_CONFIG.system;
-                  const customer = MOCK_CUSTOMERS.find((c) => c.id === item.userId);
+                  const customer = dynamicCustomers.find((c) => c.id === item.userId || c.orderId === item.orderId);
 
                   return (
                     <tr key={item.id} className="hover:bg-surface-subtle/50 transition-colors">
@@ -433,8 +436,9 @@ export const AdminNotificationsPage: React.FC = () => {
                   onChange={(e) => handleCustomerChange(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface text-xs text-deep-espresso font-medium focus:outline-none focus:border-burgundy-wine"
                 >
-                  {MOCK_CUSTOMERS.map((c) => (
-                    <option key={c.id} value={c.id}>
+                  <option value="all">Tất cả khách hàng</option>
+                  {dynamicCustomers.map((c) => (
+                    <option key={`${c.id}-${c.orderId}`} value={c.id}>
                       {c.name} (Đơn #{c.orderId})
                     </option>
                   ))}

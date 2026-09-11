@@ -12,7 +12,7 @@ import {
 } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
 import { getTemplateById, getTemplateBySlug, getAllTemplates } from '../../../mocks/templateStore';
-import { MOCK_GUESTS, MOCK_WISHES } from '../../../mocks/index';
+import { Guest, Wish } from '../../../types';
 import { RevisionModal } from '../components/RevisionModal';
 import { WeddingInfoModal } from '../components/WeddingInfoModal';
 import { PhotoAlbumModal } from '../components/PhotoAlbumModal';
@@ -29,8 +29,8 @@ export const CustomerDashboardPage: React.FC = () => {
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [isWeddingInfoModalOpen, setIsWeddingInfoModalOpen] = useState(false);
   const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
-  const [wishes, setWishes] = useState(MOCK_WISHES);
-  const [guests] = useState(MOCK_GUESTS);
+  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [guests] = useState<Guest[]>([]);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showDataPreview, setShowDataPreview] = useState(false);
   const [previewTab, setPreviewTab] = useState<'guests' | 'wishes'>('guests');
@@ -1176,69 +1176,85 @@ export const CustomerDashboardPage: React.FC = () => {
 
                     {/* Tab 1: Guest List */}
                     {previewTab === 'guests' && (
-                      <div className="flex flex-col gap-2">
-                        {guests.map((g) => (
-                          <div
-                            key={g.id}
-                            className="p-2.5 rounded-xl bg-surface-subtle/50 border border-border-delicate flex items-center justify-between text-xs"
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-deep-espresso">{g.name}</span>
-                              <span className="text-[11px] text-text-muted">
-                                {g.phone || 'Không có số ĐT'} {g.companionCount > 0 && `• +${g.companionCount} người`}
-                              </span>
-                              {g.notes && (
-                                <span className="text-[10px] text-gold-foil italic mt-0.5">Ghi chú: {g.notes}</span>
-                              )}
-                            </div>
-
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-label-caps font-semibold border ${
-                                g.rsvpStatus === 'attending'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                  : g.rsvpStatus === 'declined'
-                                  ? 'bg-rose-50 text-burgundy-wine border-rose-200'
-                                  : 'bg-amber-50 text-amber-800 border-amber-200'
-                              }`}
+                      guests.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-text-muted flex flex-col items-center justify-center gap-2">
+                          <Icon name="person_off" className="text-[26px] text-text-muted/60" />
+                          <span className="font-medium text-deep-espresso">Chưa có khách mời phản hồi</span>
+                          <span className="text-[11px] text-text-muted">Khi khách mời xác nhận tham dự qua link thiệp, danh sách sẽ hiển thị tại đây.</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          {guests.map((g) => (
+                            <div
+                              key={g.id}
+                              className="p-2.5 rounded-xl bg-surface-subtle/50 border border-border-delicate flex items-center justify-between text-xs"
                             >
-                              {g.rsvpStatus === 'attending' ? 'Tham dự' : g.rsvpStatus === 'declined' ? 'Bận việc' : 'Chờ xác nhận'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-deep-espresso">{g.name}</span>
+                                <span className="text-[11px] text-text-muted">
+                                  {g.phone || 'Không có số ĐT'} {g.companionCount > 0 && `• +${g.companionCount} người`}
+                                </span>
+                                {g.notes && (
+                                  <span className="text-[10px] text-gold-foil italic mt-0.5">Ghi chú: {g.notes}</span>
+                                )}
+                              </div>
+
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-label-caps font-semibold border ${
+                                  g.rsvpStatus === 'attending'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                    : g.rsvpStatus === 'declined'
+                                    ? 'bg-rose-50 text-burgundy-wine border-rose-200'
+                                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                                }`}
+                              >
+                                {g.rsvpStatus === 'attending' ? 'Tham dự' : g.rsvpStatus === 'declined' ? 'Bận việc' : 'Chờ xác nhận'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )
                     )}
 
                     {/* Tab 2: Wishes List */}
                     {previewTab === 'wishes' && (
-                      <div className="flex flex-col gap-2.5">
-                        {wishes.map((w) => (
-                          <div
-                            key={w.id}
-                            className="p-3 rounded-xl bg-surface-subtle/60 border border-border-delicate flex flex-col gap-1.5 text-xs"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-semibold text-deep-espresso">{w.senderName}</span>
-                                {w.relationship && (
-                                  <span className="text-[10px] text-text-muted bg-surface-card px-1.5 py-0.2 rounded border border-border-delicate">
-                                    {w.relationship}
-                                  </span>
-                                )}
+                      wishes.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-text-muted flex flex-col items-center justify-center gap-2">
+                          <Icon name="chat_bubble_outline" className="text-[26px] text-text-muted/60" />
+                          <span className="font-medium text-deep-espresso">Chưa có lời chúc nào</span>
+                          <span className="text-[11px] text-text-muted">Những lời chúc tốt đẹp từ khách mời gửi qua thiệp sẽ xuất hiện tại đây.</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2.5">
+                          {wishes.map((w) => (
+                            <div
+                              key={w.id}
+                              className="p-3 rounded-xl bg-surface-subtle/60 border border-border-delicate flex flex-col gap-1.5 text-xs"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-semibold text-deep-espresso">{w.senderName}</span>
+                                  {w.relationship && (
+                                    <span className="text-[10px] text-text-muted bg-surface-card px-1.5 py-0.2 rounded border border-border-delicate">
+                                      {w.relationship}
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => togglePinWish(w.id)}
+                                  className="text-gold-foil hover:scale-110 transition-transform"
+                                  title={w.isPinned ? 'Bỏ ghim' : 'Ghim lời chúc lên đầu thiệp'}
+                                >
+                                  <Icon name={w.isPinned ? 'star' : 'star_outline'} className="text-[16px]" />
+                                </button>
                               </div>
-                              <button
-                                onClick={() => togglePinWish(w.id)}
-                                className="text-gold-foil hover:scale-110 transition-transform"
-                                title={w.isPinned ? 'Bỏ ghim' : 'Ghim lời chúc lên đầu thiệp'}
-                              >
-                                <Icon name={w.isPinned ? 'star' : 'star_outline'} className="text-[16px]" />
-                              </button>
+                              <p className="text-text-muted italic leading-relaxed bg-surface-card p-2 rounded-lg border border-border-delicate">
+                                "{w.message}"
+                              </p>
                             </div>
-                            <p className="text-text-muted italic leading-relaxed bg-surface-card p-2 rounded-lg border border-border-delicate">
-                              "{w.message}"
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )
                     )}
                   </div>
                 )}

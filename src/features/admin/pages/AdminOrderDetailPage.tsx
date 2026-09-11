@@ -11,7 +11,6 @@ import {
   adminSendExcelToCustomer,
   useCustomerExport,
 } from '../../../mocks/orderStore';
-import { MOCK_GUESTS, MOCK_WISHES } from '../../../mocks/index';
 import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/constants';
 import { formatCurrency, formatDateTime, formatDate } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
@@ -862,52 +861,6 @@ export const AdminOrderDetailPage: React.FC = () => {
                 <span>Chưa có file nào được tải lên. Hãy chọn file ở ô bên trái.</span>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Preview of data contained in export */}
-        <div className="mt-2 pt-4 border-t border-border-delicate flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="font-label-caps text-[10px] uppercase font-bold text-text-muted">
-              Xem trước tập dữ liệu sẽ bàn giao cho khách:
-            </span>
-            <span className="text-[11px] text-burgundy-wine font-semibold">
-              {MOCK_GUESTS.length} khách mời • {MOCK_WISHES.length} lời chúc
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-            {/* Column 1: Sample Guests */}
-            <div className="p-3 rounded-xl bg-surface-subtle/40 border border-border-delicate flex flex-col gap-2">
-              <span className="font-semibold text-deep-espresso flex items-center gap-1">
-                <Icon name="recent_actors" className="text-[16px] text-burgundy-wine" />
-                Danh sách khách tham dự ({MOCK_GUESTS.length})
-              </span>
-              <div className="divide-y divide-border-delicate/60">
-                {MOCK_GUESTS.slice(0, 3).map((g) => (
-                  <div key={g.id} className="py-1.5 flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-deep-espresso">{g.name}</span>
-                    <span className="text-text-muted">{g.rsvpStatus === 'attending' ? 'Tham dự' : 'Chờ phản hồi'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Column 2: Sample Wishes */}
-            <div className="p-3 rounded-xl bg-surface-subtle/40 border border-border-delicate flex flex-col gap-2">
-              <span className="font-semibold text-deep-espresso flex items-center gap-1">
-                <Icon name="favorite" className="text-[16px] text-burgundy-wine" />
-                Lời chúc mừng ({MOCK_WISHES.length})
-              </span>
-              <div className="divide-y divide-border-delicate/60">
-                {MOCK_WISHES.slice(0, 3).map((w) => (
-                  <div key={w.id} className="py-1.5 flex items-center justify-between text-[11px]">
-                    <span className="font-medium text-deep-espresso truncate max-w-[140px]">{w.senderName}</span>
-                    <span className="italic text-text-muted truncate max-w-[150px]">"{w.message}"</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </section>

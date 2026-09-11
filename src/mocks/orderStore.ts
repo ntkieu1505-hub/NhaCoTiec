@@ -6,14 +6,13 @@ import {
   CustomerExport,
   WeddingInformation
 } from '../types/order';
-import { MOCK_ORDERS } from './mockOrders';
 import { createSystemNotification } from './notificationStore';
 import { db } from '../services/firebase';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { logActivity } from '../services/activityLogService';
 import { toIsoDateString } from '../utils/formatters';
 
-const STORAGE_KEY = 'nha_co_tiec_orders_v6';
+const STORAGE_KEY = 'nha_co_tiec_orders_v7_realtime';
 const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
 const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_orders_channel';
 
@@ -76,17 +75,20 @@ export function normalizeOrder(raw: any, idFallback = 'NCT-UNKNOWN'): Order {
 // In-memory cache synced with localStorage
 let currentOrders: Order[] = (() => {
   try {
+    // Purge old mock storage key if present
+    localStorage.removeItem('nha_co_tiec_orders_v6');
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed.map((o) => normalizeOrder(o, o?.id));
       }
     }
   } catch (e) {
     console.error('Failed to load orders from localStorage', e);
   }
-  return MOCK_ORDERS.map((o) => normalizeOrder(o, o?.id));
+  // Zero mock orders: fully real-time mode
+  return [];
 })();
 
 const listeners = new Set<() => void>();
@@ -133,30 +135,18 @@ function initFirestoreSync() {
     onSnapshot(
       collection(db, 'orders'),
       (snapshot) => {
-        if (!snapshot.empty) {
-          const map = new Map<string, Order>();
-          snapshot.forEach((docSnap) => {
-            const raw = docSnap.data();
-            map.set(docSnap.id, normalizeOrder(raw, docSnap.id));
-          });
+        const firestoreOrders: Order[] = [];
+        snapshot.forEach((docSnap) => {
+          const raw = docSnap.data();
+          firestoreOrders.push(normalizeOrder(raw, docSnap.id));
+        });
 
-          if (map.size > 0) {
-            let updated = [...currentOrders];
-            map.forEach((fsOrder, orderId) => {
-              const idx = updated.findIndex((o) => o.id === orderId);
-              if (idx >= 0) {
-                updated[idx] = { ...updated[idx], ...fsOrder };
-              } else {
-                updated.unshift(fsOrder);
-              }
-            });
-            currentOrders = updated;
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(currentOrders));
-            } catch (e) {}
-            listeners.forEach((fn) => fn());
-          }
-        }
+        // If Firestore has data or is confirmed empty, reflect exact remote state
+        currentOrders = firestoreOrders;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(currentOrders));
+        } catch (e) {}
+        listeners.forEach((fn) => fn());
       },
       (err) => {
         // Quietly fallback to localStorage if Firestore rules or offline
@@ -196,9 +186,35 @@ function notify(updatedOrder?: Order) {
   listeners.forEach((fn) => fn());
 }
 
-export function resetOrders(): void {
-  currentOrders = [...MOCK_ORDERS];
+export function deleteOrder(id: string): void {
+  currentOrders = currentOrders.filter((o) => o.id !== id);
   notify();
+  if (db) {
+    try {
+      deleteDoc(doc(db, 'orders', id)).catch(() => {});
+    } catch (e) {}
+  }
+}
+
+export function clearAllOrders(): void {
+  const oldIds = currentOrders.map((o) => o.id);
+  currentOrders = [];
+  notify();
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('nha_co_tiec_orders_v6');
+  } catch {}
+  if (db) {
+    oldIds.forEach((id) => {
+      try {
+        deleteDoc(doc(db, 'orders', id)).catch(() => {});
+      } catch (e) {}
+    });
+  }
+}
+
+export function resetOrders(): void {
+  clearAllOrders();
 }
 
 export function getAllOrders(): Order[] {
@@ -229,20 +245,23 @@ export interface CreateOrderParams {
   templateName: string;
   category: 'basic' | 'premium';
   price: number;
-  weddingInfo: WeddingInformation;
+  weddingInfo?: WeddingInformation;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
 }
 
 /**
- * Creates a brand new order with mandatory wedding information submitted
+ * Creates a brand new order with real-time operational status
  */
 export function createOrder(params: CreateOrderParams): Order {
   const now = new Date().toISOString();
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   const orderId = `NCT${randomNum}`;
 
-  const customerName = `${params.weddingInfo.groomName} & ${params.weddingInfo.brideName}`;
-  const customerPhone = params.weddingInfo.customerPhone || '';
-  const customerEmail = params.weddingInfo.customerEmail || '';
+  const customerName = params.customerName || (params.weddingInfo ? `${params.weddingInfo.groomName} & ${params.weddingInfo.brideName}` : 'Khách hàng');
+  const customerPhone = params.customerPhone || params.weddingInfo?.customerPhone || '';
+  const customerEmail = params.customerEmail || params.weddingInfo?.customerEmail || '';
 
   const newOrder: Order = {
     id: orderId,
@@ -260,11 +279,11 @@ export function createOrder(params: CreateOrderParams): Order {
     currentStage: 1, // Stage 1: Chờ thanh toán
     createdAt: now,
     updatedAt: now,
-    weddingInfo: {
+    weddingInfo: params.weddingInfo ? {
       ...params.weddingInfo,
       submittedAt: now,
-    },
-    weddingInfoSubmitted: true, // Crucial: Filled before checkout!
+    } : undefined,
+    weddingInfoSubmitted: Boolean(params.weddingInfo),
     albumSubmitted: false,
     revisionRequests: [],
     slaRemainingHours: 24,

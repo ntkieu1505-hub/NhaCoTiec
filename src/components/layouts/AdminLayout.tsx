@@ -4,7 +4,6 @@ import { Icon } from '../common/Icon';
 import { useAuth } from '../../mocks/authStore';
 import { useOrders } from '../../mocks/orderStore';
 import { getAllTemplates } from '../../mocks/templateStore';
-import { MOCK_USERS } from '../../mocks/index';
 import { ORDER_STAGES } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 import { matchOrder, matchQuery } from '../../utils/searchHelper';
@@ -19,10 +18,20 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const orders = useOrders();
+  const templates = getAllTemplates();
+
+  const pendingCount = orders.filter((o) => o.paymentStatus === 'pending_confirmation').length;
 
   const navItems = [
     { number: '01', name: 'Tổng quan', path: '/admin/tong-quan', icon: 'dashboard' },
-    { number: '02', name: 'Đơn hàng', path: '/admin/don-hang', icon: 'shopping_bag', badge: '3 Mới' },
+    {
+      number: '02',
+      name: 'Đơn hàng',
+      path: '/admin/don-hang',
+      icon: 'shopping_bag',
+      badge: pendingCount > 0 ? `${pendingCount} Chờ duyệt` : undefined,
+    },
     { number: '03', name: 'Thiệp', path: '/admin/thiep', icon: 'mail' },
     { number: '04', name: 'Mẫu thiệp', path: '/admin/mau-thiep', icon: 'style' },
     { number: '05', name: 'Người dùng', path: '/admin/nguoi-dung', icon: 'group' },
@@ -39,8 +48,6 @@ export const AdminLayout: React.FC = () => {
     return current ? `${current.number}. ${current.name}` : 'Bảng điều hành Nhà Có Tiệc';
   };
 
-  const orders = useOrders();
-  const templates = getAllTemplates();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -79,7 +86,31 @@ export const AdminLayout: React.FC = () => {
       );
     }).slice(0, 4);
 
-    const matchedUsers = MOCK_USERS.filter((u) => {
+    const realUsers: { id: string; fullName: string; phone: string; email: string; role: string; orderCount: number }[] = [
+      {
+        id: user?.id || 'admin-01',
+        fullName: user?.name || 'Admin Tuyết Nga',
+        phone: user?.phone || '0901 000 999',
+        email: user?.email || 'admin@nhacotiec.vn',
+        role: 'admin',
+        orderCount: 0,
+      },
+    ];
+    orders.forEach((o) => {
+      if (o.customerName && !realUsers.some((u) => u.fullName === o.customerName)) {
+        const orderCount = orders.filter((x) => x.customerName === o.customerName).length;
+        realUsers.push({
+          id: `usr-${o.id}`,
+          fullName: o.customerName,
+          phone: o.customerPhone || '',
+          email: o.customerEmail || '',
+          role: 'customer',
+          orderCount,
+        });
+      }
+    });
+
+    const matchedUsers = realUsers.filter((u) => {
       return (
         matchQuery(u.fullName, q) ||
         matchQuery(u.phone, q) ||

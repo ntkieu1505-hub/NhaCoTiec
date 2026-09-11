@@ -7,7 +7,9 @@ import {
   adminConfirmPayment,
   adminRejectPayment,
   adminAdvanceStage,
-  resetOrders
+  deleteOrder,
+  clearAllOrders,
+  createOrder
 } from '../../../mocks/orderStore';
 import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/constants';
 import { formatCurrency, formatDateTime } from '../../../utils/formatters';
@@ -99,26 +101,42 @@ export const AdminOrdersPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {orders.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ đơn hàng hiện có để đưa bảng về trống 100% (chế độ sẵn sàng nhận đơn thật)?')) {
+                  clearAllOrders();
+                }
+              }}
+              className="px-3.5 py-2 rounded-full bg-surface-card hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors"
+              title="Xóa toàn bộ các đơn giả định / đơn thử nghiệm"
+            >
+              <Icon name="delete_sweep" className="text-[16px]" />
+              <span>Xóa tất cả đơn</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Đặt lại toàn bộ dữ liệu đơn hàng về trạng thái mẫu ban đầu?')) {
-                resetOrders();
-              }
+              const customerName = window.prompt('Nhập tên dâu rể hoặc khách hàng:', 'Trần Tuấn Anh & Mai Phương');
+              if (!customerName || !customerName.trim()) return;
+              const phone = window.prompt('Nhập số điện thoại khách hàng:', '0912 888 999') || '0912 888 999';
+              createOrder({
+                templateId: 'tpl-thanh-xuan',
+                templateName: 'Thanh Xuân & Hoàng Nam',
+                category: 'premium',
+                customerName: customerName.trim(),
+                customerPhone: phone.trim(),
+                customerEmail: 'khachhang@gmail.com',
+                price: 79000,
+              });
             }}
-            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors"
-            title="Đặt lại dữ liệu mẫu để thử nghiệm quy trình từ đầu"
+            className="px-4 py-2 rounded-full bg-burgundy-wine hover:bg-secondary text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all"
+            title="Tạo đơn hàng thực tế hoặc đơn kiểm thử mới"
           >
-            <Icon name="refresh" className="text-[15px]" />
-            <span>Đặt lại mẫu</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => alert('Xuất danh sách đơn hàng ra file Excel')}
-            className="px-4 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-          >
-            <Icon name="file_download" className="text-[16px] text-text-muted" />
-            <span>Xuất danh sách</span>
+            <Icon name="add" className="text-[16px]" />
+            <span>+ Tạo đơn mới</span>
           </button>
         </div>
       </div>
@@ -336,7 +354,23 @@ export const AdminOrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-delicate">
-              {filteredOrders.length === 0 ? (
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-14 text-center text-text-muted">
+                    <div className="flex flex-col items-center gap-2.5 max-w-md mx-auto">
+                      <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <Icon name="cloud_done" className="text-2xl" />
+                      </div>
+                      <span className="font-semibold text-deep-espresso text-sm">
+                        Hệ thống hoạt động ở chế độ thời gian thực (0 dữ liệu giả định)
+                      </span>
+                      <p className="text-xs text-text-muted leading-relaxed">
+                        Hiện tại chưa có đơn hàng nào trong hệ thống. Khi khách hàng đặt thiệp trên website, đơn hàng sẽ ngay lập tức xuất hiện tại đây theo thời gian thực.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-text-muted">
                     <div className="flex flex-col items-center gap-2">
@@ -443,6 +477,18 @@ export const AdminOrdersPage: React.FC = () => {
                       >
                         Chi tiết
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Xác nhận xóa vĩnh viễn đơn hàng #${ord.id}?`)) {
+                            deleteOrder(ord.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-full text-text-muted hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                        title={`Xóa đơn hàng #${ord.id}`}
+                      >
+                        <Icon name="delete" className="text-[15px]" />
+                      </button>
                     </div>
                   </td>
                 </tr>

@@ -1,16 +1,68 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { MOCK_USERS } from '../../../mocks/index';
+import { useOrders } from '../../../mocks/orderStore';
+import { useAuth } from '../../../mocks/authStore';
+import { User } from '../../../types';
 import { formatDateTime } from '../../../utils/formatters';
 import { matchQuery } from '../../../utils/searchHelper';
 import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminUsersPage: React.FC = () => {
   const outletCtx = useOutletContext<AdminOutletContext>() || {};
+  const orders = useOrders();
+  const { user: currentAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || outletCtx.searchQuery || '';
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  // Dynamic real-time user list generated from actual orders + current admin
+  const realUsers = useMemo<User[]>(() => {
+    const list: User[] = [];
+
+    // 1. Current Administrator
+    list.push({
+      id: currentAdmin?.id || 'admin-01',
+      fullName: currentAdmin?.name || 'Admin Tuyết Nga (Quản trị viên)',
+      phone: currentAdmin?.phone || '0901 000 999',
+      email: currentAdmin?.email || 'admin@nhacotiec.vn',
+      role: 'admin',
+      orderCount: 0,
+      status: 'active',
+      createdAt: '2026-01-01T00:00:00Z',
+      lastLogin: new Date().toISOString(),
+    });
+
+    // 2. Real customer accounts derived from actual orders
+    const customerMap = new Map<string, User>();
+    orders.forEach((ord) => {
+      const key = (ord.customerPhone || ord.customerEmail || ord.customerName || '').trim();
+      if (!key) return;
+
+      if (!customerMap.has(key)) {
+        customerMap.set(key, {
+          id: `usr-${ord.id}`,
+          fullName: ord.customerName || 'Khách hàng',
+          phone: ord.customerPhone || 'Chưa cung cấp',
+          email: ord.customerEmail || 'Chưa cung cấp',
+          role: 'customer',
+          orderCount: 1,
+          status: 'active',
+          createdAt: ord.createdAt,
+          lastLogin: ord.updatedAt || ord.createdAt,
+        });
+      } else {
+        const item = customerMap.get(key)!;
+        item.orderCount += 1;
+        if (new Date(ord.createdAt) < new Date(item.createdAt)) {
+          item.createdAt = ord.createdAt;
+        }
+      }
+    });
+
+    customerMap.forEach((cust) => list.push(cust));
+    return list;
+  }, [orders, currentAdmin]);
 
   useEffect(() => {
     if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
@@ -37,7 +89,7 @@ export const AdminUsersPage: React.FC = () => {
   };
 
   const filteredUsers = useMemo(() => {
-    return MOCK_USERS.filter((usr) => {
+    return realUsers.filter((usr) => {
       if (searchQuery.trim()) {
         const q = searchQuery.trim();
         const matchName = matchQuery(usr.fullName, q);
@@ -48,7 +100,7 @@ export const AdminUsersPage: React.FC = () => {
       }
       return true;
     });
-  }, [searchQuery]);
+  }, [realUsers, searchQuery]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,7 +140,7 @@ export const AdminUsersPage: React.FC = () => {
 
         <div className="flex items-center gap-2 text-xs text-text-muted">
           <span>
-            Hiển thị: <strong>{filteredUsers.length}</strong> / {MOCK_USERS.length} người dùng
+            Hiển thị: <strong>{filteredUsers.length}</strong> / {realUsers.length} người dùng
           </span>
           {searchQuery && (
             <button

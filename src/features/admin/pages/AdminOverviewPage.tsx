@@ -117,7 +117,7 @@ export const AdminOverviewPage: React.FC = () => {
         )}
       </section>
 
-      {/* 3. Executive Summary KPIs */}
+      {/* 3. Executive Summary KPIs (Real-time Live Metrics) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Card 1 */}
         <div className="rounded-2xl bg-surface-card p-4 shadow-xs border border-border-delicate flex flex-col justify-between">
@@ -129,12 +129,16 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="font-serif text-2xl font-bold text-deep-espresso">12</span>
+              <span className="font-serif text-2xl font-bold text-deep-espresso">
+                {orders.filter((o) => (o.createdAt || '').slice(0, 10) === new Date().toISOString().slice(0, 10)).length}
+              </span>
               <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-full">
-                +4 đơn
+                Thời gian thực
               </span>
             </div>
-            <p className="text-[11px] text-text-muted mt-1">100% thanh toán chuyển khoản</p>
+            <p className="text-[11px] text-text-muted mt-1">
+              Tổng {orders.length} đơn hàng trong hệ thống
+            </p>
           </div>
         </div>
 
@@ -148,7 +152,9 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-1">
-              <span className="font-serif text-2xl font-bold text-deep-espresso">6</span>
+              <span className="font-serif text-2xl font-bold text-deep-espresso">
+                {orders.filter((o) => o.currentStage === 4).length}
+              </span>
               <span className="text-xs text-text-muted">bản thảo</span>
             </div>
             <p className="text-[11px] text-text-muted mt-1">Cam kết hoàn thiện &le; 24h</p>
@@ -165,27 +171,32 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-1">
-              <span className="font-serif text-2xl font-bold text-deep-espresso">48</span>
+              <span className="font-serif text-2xl font-bold text-deep-espresso">
+                {orders.filter((o) => o.currentStage >= 5 || Boolean(o.invitationUrl)).length}
+              </span>
               <span className="text-xs text-text-muted">thiệp</span>
             </div>
-            <p className="text-[11px] text-text-muted mt-1">Đang đón nhận phản hồi RSVP</p>
+            <p className="text-[11px] text-text-muted mt-1">Đang hoạt động trên web</p>
           </div>
         </div>
 
         {/* Card 4 */}
         <div className="rounded-2xl bg-surface-card p-4 shadow-xs border border-border-delicate flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="font-label-caps text-[11px] text-text-muted uppercase">Doanh thu tháng</span>
+            <span className="font-label-caps text-[11px] text-text-muted uppercase">Doanh thu thực tế</span>
             <span className="p-1.5 rounded-full bg-rose-50 text-burgundy-wine">
               <Icon name="payments" className="text-[18px]" />
             </span>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-1">
-              <span className="font-serif text-2xl font-bold text-burgundy-wine">15.8M</span>
-              <span className="text-[11px] text-text-muted">VNĐ</span>
+              <span className="font-serif text-2xl font-bold text-burgundy-wine">
+                {formatCurrency(orders.filter((o) => o.paymentStatus === 'paid').reduce((sum, o) => sum + (o.price || 0), 0))}
+              </span>
             </div>
-            <p className="text-[11px] text-emerald-700 font-semibold mt-1">+18.4% so tháng trước</p>
+            <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+              {orders.filter((o) => o.paymentStatus === 'paid').length} đơn đã thanh toán
+            </p>
           </div>
         </div>
       </div>
@@ -257,7 +268,23 @@ export const AdminOverviewPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-delicate">
-              {filteredOrders.length === 0 ? (
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-text-muted">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <Icon name="cloud_done" className="text-xl" />
+                      </div>
+                      <span className="font-semibold text-deep-espresso text-xs">
+                        Hệ thống hoạt động ở chế độ thời gian thực (0 đơn giả định)
+                      </span>
+                      <p className="text-[11px] text-text-muted">
+                        Hiện chưa có đơn hàng nào. Khi khách hàng đặt thiệp trên website, đơn hàng sẽ ngay lập tức xuất hiện tại đây theo thời gian thực.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-text-muted">
                     <div className="flex flex-col items-center gap-1.5">
