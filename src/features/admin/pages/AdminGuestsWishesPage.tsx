@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import {
   useOrders,
@@ -7,14 +8,23 @@ import {
   useAllCustomerExports,
 } from '../../../mocks/orderStore';
 import { formatDateTime } from '../../../utils/formatters';
+import { matchOrder, matchQuery } from '../../../utils/searchHelper';
+import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminGuestsWishesPage: React.FC = () => {
+  const outletCtx = useOutletContext<AdminOutletContext>() || {};
   const orders = useOrders();
   const allExports = useAllCustomerExports();
 
   // Filter & Search state
   const [selectedOrderId, setSelectedOrderId] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>(outletCtx.searchQuery || '');
+
+  useEffect(() => {
+    if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
+      setSearchQuery(outletCtx.searchQuery);
+    }
+  }, [outletCtx.searchQuery]);
 
   // Excel Upload Modal State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -65,14 +75,11 @@ export const AdminGuestsWishesPage: React.FC = () => {
     return orders.filter((ord) => {
       if (selectedOrderId !== 'all' && ord.id !== selectedOrderId) return false;
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
+        const q = searchQuery.trim();
         const exp = allExports[ord.id];
-        const matchId = ord.id.toLowerCase().includes(q);
-        const matchName = ord.customerName.toLowerCase().includes(q);
-        const matchTpl = ord.templateName.toLowerCase().includes(q);
-        const matchFile = (exp?.fileName || '').toLowerCase().includes(q);
-        const matchPhone = (ord.customerPhone || '').toLowerCase().includes(q);
-        if (!matchId && !matchName && !matchTpl && !matchFile && !matchPhone) {
+        const matchOrd = matchOrder(ord, q);
+        const matchFile = matchQuery(exp?.fileName, q);
+        if (!matchOrd && !matchFile) {
           return false;
         }
       }
@@ -225,13 +232,19 @@ export const AdminGuestsWishesPage: React.FC = () => {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  outletCtx.setSearchQuery?.(e.target.value);
+                }}
                 placeholder="Nhập tên khách mời, số điện thoại hoặc từ khóa..."
                 className="w-full h-10 pl-9 pr-8 rounded-xl bg-surface-subtle border border-border-delicate text-xs text-deep-espresso placeholder:text-text-muted/70 focus:outline-none focus:border-burgundy-wine focus:ring-1 focus:ring-burgundy-wine"
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    outletCtx.setSearchQuery?.('');
+                  }}
                   className="absolute right-2.5 top-2.5 text-text-muted hover:text-deep-espresso"
                 >
                   <Icon name="close" className="text-[16px]" />

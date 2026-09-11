@@ -1,23 +1,34 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { MOCK_USERS } from '../../../mocks/index';
 import { formatDateTime } from '../../../utils/formatters';
+import { matchQuery } from '../../../utils/searchHelper';
+import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminUsersPage: React.FC = () => {
+  const outletCtx = useOutletContext<AdminOutletContext>() || {};
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialSearch = searchParams.get('search') || '';
+  const initialSearch = searchParams.get('search') || outletCtx.searchQuery || '';
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  useEffect(() => {
+    if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
+      setSearchQuery(outletCtx.searchQuery);
+    }
+  }, [outletCtx.searchQuery]);
 
   useEffect(() => {
     const q = searchParams.get('search');
     if (q !== null && q !== searchQuery) {
       setSearchQuery(q);
+      outletCtx.setSearchQuery?.(q);
     }
   }, [searchParams]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
+    outletCtx.setSearchQuery?.(val);
     if (val.trim()) {
       setSearchParams({ search: val.trim() }, { replace: true });
     } else {
@@ -28,11 +39,11 @@ export const AdminUsersPage: React.FC = () => {
   const filteredUsers = useMemo(() => {
     return MOCK_USERS.filter((usr) => {
       if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchName = usr.fullName.toLowerCase().includes(q);
-        const matchPhone = (usr.phone || '').toLowerCase().includes(q);
-        const matchEmail = (usr.email || '').toLowerCase().includes(q);
-        const matchRole = usr.role === 'admin' ? 'quản trị viên'.includes(q) || 'admin'.includes(q) : 'khách hàng'.includes(q);
+        const q = searchQuery.trim();
+        const matchName = matchQuery(usr.fullName, q);
+        const matchPhone = matchQuery(usr.phone, q);
+        const matchEmail = matchQuery(usr.email, q);
+        const matchRole = matchQuery(usr.role === 'admin' ? 'Quản trị viên Admin' : 'Khách hàng', q);
         if (!matchName && !matchPhone && !matchEmail && !matchRole) return false;
       }
       return true;

@@ -1,15 +1,37 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { useOrders } from '../../../mocks/orderStore';
 import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 import { StatusChip } from '../../../components/common/StatusChip';
 import { useActivityLogs } from '../../../services/activityLogService';
+import { matchOrder, matchQuery } from '../../../utils/searchHelper';
+import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminOverviewPage: React.FC = () => {
+  const { searchQuery = '', setSearchQuery } = useOutletContext<AdminOutletContext>() || {};
   const orders = useOrders();
   const activityLogs = useActivityLogs(10);
   const pendingPayments = orders.filter((o) => o.paymentStatus === 'pending_confirmation');
+
+  const filteredOrders = useMemo(() => {
+    const q = searchQuery.trim();
+    if (!q) return orders;
+    return orders.filter((ord) => matchOrder(ord, q));
+  }, [orders, searchQuery]);
+
+  const filteredActivityLogs = useMemo(() => {
+    const q = searchQuery.trim();
+    if (!q) return activityLogs;
+    return activityLogs.filter((log) => {
+      return (
+        matchQuery(log.orderId, q) ||
+        matchQuery(log.actorName, q) ||
+        matchQuery(log.title, q) ||
+        matchQuery(log.description, q)
+      );
+    });
+  }, [activityLogs, searchQuery]);
   return (
     <div className="flex flex-col gap-8">
       {/* 1. Top Header & Title */}
@@ -171,19 +193,56 @@ export const AdminOverviewPage: React.FC = () => {
       {/* 4. Recent Orders Table */}
       <div className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate flex flex-col gap-4">
         <div className="flex items-center justify-between pb-2 border-b border-border-delicate">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Icon name="receipt_long" className="text-[20px] text-burgundy-wine" />
             <h2 className="font-serif text-lg font-bold text-deep-espresso">
               Đơn hàng gần đây (Luồng 8 giai đoạn)
             </h2>
+            {searchQuery.trim() && (
+              <span className="text-[11px] font-semibold bg-burgundy-wine/10 text-burgundy-wine px-2.5 py-0.5 rounded-full">
+                Khớp {filteredOrders.length}/{orders.length} đơn
+              </span>
+            )}
           </div>
-          <Link
-            to="/admin/don-hang"
-            className="text-xs text-burgundy-wine font-semibold hover:underline"
-          >
-            Xem tất cả &rarr;
-          </Link>
+          <div className="flex items-center gap-3">
+            {searchQuery.trim() && setSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-xs text-rose-700 hover:text-rose-900 font-medium flex items-center gap-1"
+              >
+                <Icon name="close" className="text-[14px]" />
+                <span>Bỏ lọc</span>
+              </button>
+            )}
+            <Link
+              to="/admin/don-hang"
+              className="text-xs text-burgundy-wine font-semibold hover:underline"
+            >
+              Xem tất cả &rarr;
+            </Link>
+          </div>
         </div>
+
+        {searchQuery.trim() && (
+          <div className="flex items-center justify-between px-3 py-2 bg-burgundy-wine/5 rounded-xl text-xs text-deep-espresso border border-burgundy-wine/15">
+            <div className="flex items-center gap-2">
+              <Icon name="filter_list" className="text-burgundy-wine text-[16px]" />
+              <span>
+                Đang lọc trên trang hiện tại theo: <strong className="font-mono text-burgundy-wine">"{searchQuery}"</strong> ({filteredOrders.length} kết quả)
+              </span>
+            </div>
+            {setSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-xs text-text-muted hover:text-deep-espresso underline"
+              >
+                Xóa từ khóa
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -198,35 +257,55 @@ export const AdminOverviewPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-delicate">
-              {orders.map((ord) => (
-                <tr key={ord.id} className="hover:bg-surface-subtle/40 transition-colors">
-                  <td className="py-3 px-3 font-mono font-bold text-deep-espresso">
-                    #{ord.id}
-                  </td>
-                  <td className="py-3 px-3 font-medium text-deep-espresso">
-                    {ord.customerName}
-                    <div className="text-[11px] text-text-muted">{ord.customerPhone}</div>
-                  </td>
-                  <td className="py-3 px-3 text-deep-espresso">
-                    {ord.templateName}
-                  </td>
-                  <td className="py-3 px-3 font-serif font-bold text-burgundy-wine">
-                    {formatCurrency(ord.price)}
-                  </td>
-                  <td className="py-3 px-3">
-                    <StatusChip stage={ord.currentStage} />
-                  </td>
-                  <td className="py-3 px-3 text-right">
-                    <Link
-                      to={`/dashboard/don-hang/${ord.id}`}
-                      className="px-3 py-1 rounded-full bg-surface-subtle hover:bg-surface-container-high text-deep-espresso text-xs font-semibold inline-flex items-center gap-1 border border-border-delicate"
-                    >
-                      <Icon name="visibility" className="text-[14px]" />
-                      <span>Xem</span>
-                    </Link>
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-text-muted">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <Icon name="search_off" className="text-2xl text-text-muted/60" />
+                      <span>Không tìm thấy đơn hàng nào khớp với từ khóa "{searchQuery}"</span>
+                      {setSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="text-xs text-burgundy-wine font-semibold hover:underline mt-1"
+                        >
+                          Xóa từ khóa tìm kiếm
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredOrders.map((ord) => (
+                  <tr key={ord.id} className="hover:bg-surface-subtle/40 transition-colors">
+                    <td className="py-3 px-3 font-mono font-bold text-deep-espresso">
+                      #{ord.id}
+                    </td>
+                    <td className="py-3 px-3 font-medium text-deep-espresso">
+                      {ord.customerName}
+                      <div className="text-[11px] text-text-muted">{ord.customerPhone}</div>
+                    </td>
+                    <td className="py-3 px-3 text-deep-espresso">
+                      {ord.templateName}
+                    </td>
+                    <td className="py-3 px-3 font-serif font-bold text-burgundy-wine">
+                      {formatCurrency(ord.price)}
+                    </td>
+                    <td className="py-3 px-3">
+                      <StatusChip stage={ord.currentStage} />
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <Link
+                        to={`/dashboard/don-hang/${ord.id}`}
+                        className="px-3 py-1 rounded-full bg-surface-subtle hover:bg-surface-container-high text-deep-espresso text-xs font-semibold inline-flex items-center gap-1 border border-border-delicate"
+                      >
+                        <Icon name="visibility" className="text-[14px]" />
+                        <span>Xem</span>
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -248,12 +327,14 @@ export const AdminOverviewPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col divide-y divide-border-delicate">
-          {activityLogs.length === 0 ? (
+          {filteredActivityLogs.length === 0 ? (
             <div className="py-6 text-center text-xs text-text-muted">
-              Chưa có nhật ký hoạt động nào được ghi nhận.
+              {searchQuery.trim()
+                ? `Không có nhật ký hoạt động nào khớp với "${searchQuery}".`
+                : 'Chưa có nhật ký hoạt động nào được ghi nhận.'}
             </div>
           ) : (
-            activityLogs.map((log) => {
+            filteredActivityLogs.map((log) => {
               const isCustomer = log.actorRole === 'customer';
               return (
                 <div key={log.id} className="py-3 flex items-start justify-between gap-3 text-xs">

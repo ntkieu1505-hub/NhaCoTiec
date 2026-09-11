@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { StatusChip } from '../../../components/common/StatusChip';
 import {
@@ -12,24 +12,36 @@ import {
 import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/constants';
 import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
+import { matchOrder } from '../../../utils/searchHelper';
+import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminOrdersPage: React.FC = () => {
+  const outletCtx = useOutletContext<AdminOutletContext>() || {};
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialSearch = searchParams.get('search') || '';
+  const initialSearch = searchParams.get('search') || outletCtx.searchQuery || '';
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedStage, setSelectedStage] = useState<number | 'all'>('all');
   const orders = useOrders();
+
+  // Sync if outletCtx.searchQuery changes
+  useEffect(() => {
+    if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
+      setSearchQuery(outletCtx.searchQuery);
+    }
+  }, [outletCtx.searchQuery]);
 
   // Sync if URL search param changes
   useEffect(() => {
     const q = searchParams.get('search');
     if (q !== null && q !== searchQuery) {
       setSearchQuery(q);
+      outletCtx.setSearchQuery?.(q);
     }
   }, [searchParams]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
+    outletCtx.setSearchQuery?.(val);
     if (val.trim()) {
       setSearchParams({ search: val.trim() }, { replace: true });
     } else {
@@ -43,15 +55,7 @@ export const AdminOrdersPage: React.FC = () => {
         return false;
       }
       if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchId = o.id.toLowerCase().includes(q);
-        const matchName = (o.customerName || '').toLowerCase().includes(q);
-        const matchPhone = (o.customerPhone || '').toLowerCase().includes(q);
-        const matchEmail = (o.customerEmail || '').toLowerCase().includes(q);
-        const matchTpl = (o.templateName || '').toLowerCase().includes(q);
-        if (!matchId && !matchName && !matchPhone && !matchEmail && !matchTpl) {
-          return false;
-        }
+        return matchOrder(o, searchQuery);
       }
       return true;
     });

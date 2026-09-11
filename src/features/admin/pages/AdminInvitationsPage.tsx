@@ -1,21 +1,34 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { useOrders } from '../../../mocks/orderStore';
+import { matchOrder, matchQuery } from '../../../utils/searchHelper';
+import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminInvitationsPage: React.FC = () => {
+  const outletCtx = useOutletContext<AdminOutletContext>() || {};
   const orders = useOrders();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(outletCtx.searchQuery || '');
+
+  useEffect(() => {
+    if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
+      setSearchQuery(outletCtx.searchQuery);
+    }
+  }, [outletCtx.searchQuery]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    outletCtx.setSearchQuery?.(val);
+  };
 
   const publishedInvitations = useMemo(() => {
     return orders.filter((o) => {
       if (o.currentStage < 5 && !o.invitationUrl) return false;
       if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchId = o.id.toLowerCase().includes(q);
-        const matchName = (o.customerName || '').toLowerCase().includes(q);
-        const matchTpl = (o.templateName || '').toLowerCase().includes(q);
-        const matchUrl = (o.invitationUrl || '').toLowerCase().includes(q);
-        if (!matchId && !matchName && !matchTpl && !matchUrl) return false;
+        const q = searchQuery.trim();
+        const matchOrd = matchOrder(o, q);
+        const matchUrl = matchQuery(o.invitationUrl, q);
+        if (!matchOrd && !matchUrl) return false;
       }
       return true;
     });
@@ -44,14 +57,14 @@ export const AdminInvitationsPage: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Tìm theo mã thiệp (#NCT01), tên dâu rể, mẫu thiệp..."
             className="w-full h-10 pl-10 pr-9 rounded-xl bg-surface-subtle border border-border-delicate text-xs text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine focus:border-burgundy-wine"
           />
           {searchQuery && (
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
+              onClick={() => handleSearchChange('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
               title="Xóa tìm kiếm"
             >

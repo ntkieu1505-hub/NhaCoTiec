@@ -7,6 +7,12 @@ import { getAllTemplates } from '../../mocks/templateStore';
 import { MOCK_USERS } from '../../mocks/index';
 import { ORDER_STAGES } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
+import { matchOrder, matchQuery } from '../../utils/searchHelper';
+
+export interface AdminOutletContext {
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+}
 
 export const AdminLayout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -51,40 +57,41 @@ export const AdminLayout: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // When switching pages via sidebar, reset search query
+  useEffect(() => {
+    setSearchQuery('');
+    setIsSearchFocused(false);
+  }, [location.pathname]);
+
   // Compute search matches across orders, templates, users, and admin pages
   const searchResults = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     if (!q) return null;
 
-    const matchedOrders = orders.filter((o) => {
-      const matchId = o.id.toLowerCase().includes(q);
-      const matchName = (o.customerName || '').toLowerCase().includes(q);
-      const matchPhone = (o.customerPhone || '').toLowerCase().includes(q);
-      const matchEmail = (o.customerEmail || '').toLowerCase().includes(q);
-      const matchTpl = (o.templateName || '').toLowerCase().includes(q);
-      return matchId || matchName || matchPhone || matchEmail || matchTpl;
-    }).slice(0, 5);
+    const matchedOrders = orders.filter((o) => matchOrder(o, q)).slice(0, 6);
 
     const matchedTemplates = templates.filter((t) => {
       return (
-        t.name.toLowerCase().includes(q) ||
-        t.slug.toLowerCase().includes(q) ||
-        (t.style || '').toLowerCase().includes(q)
+        matchQuery(t.name, q) ||
+        matchQuery(t.slug, q) ||
+        matchQuery(t.style, q) ||
+        matchQuery(t.description, q)
       );
     }).slice(0, 4);
 
     const matchedUsers = MOCK_USERS.filter((u) => {
       return (
-        u.fullName.toLowerCase().includes(q) ||
-        u.phone.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
+        matchQuery(u.fullName, q) ||
+        matchQuery(u.phone, q) ||
+        matchQuery(u.email, q) ||
+        matchQuery(u.role === 'admin' ? 'Quản trị viên Admin' : 'Khách hàng', q)
       );
     }).slice(0, 3);
 
     const matchedPages = navItems.filter((item) => {
       return (
-        item.name.toLowerCase().includes(q) ||
-        item.number.includes(q)
+        matchQuery(item.name, q) ||
+        matchQuery(item.number, q)
       );
     });
 
@@ -105,20 +112,7 @@ export const AdminLayout: React.FC = () => {
 
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      const q = searchQuery.trim();
-      if (!q) return;
-
-      if (searchResults && searchResults.matchedOrders.length > 0) {
-        const exact = searchResults.matchedOrders.find((o) => o.id.toLowerCase() === q.toLowerCase());
-        if (exact) {
-          navigate(`/admin/don-hang/${exact.id}`);
-          setIsSearchFocused(false);
-          setMobileSearchOpen(false);
-          return;
-        }
-      }
-
-      navigate(`/admin/don-hang?search=${encodeURIComponent(q)}`);
+      // On Enter, close dropdown so user can immediately view and interact with filtered items on current page
       setIsSearchFocused(false);
       setMobileSearchOpen(false);
     } else if (e.key === 'Escape') {
@@ -278,27 +272,33 @@ export const AdminLayout: React.FC = () => {
               {/* Instant Search Results Dropdown */}
               {isSearchFocused && searchQuery.trim() && searchResults && (
                 <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 md:w-[450px] bg-surface-card rounded-2xl shadow-2xl border border-border-delicate overflow-hidden z-50 animate-in fade-in zoom-in-95">
-                  <div className="px-4 py-2.5 bg-surface-subtle/80 border-b border-border-delicate flex items-center justify-between text-xs">
-                    <span className="font-semibold text-deep-espresso">
-                      Kết quả tìm kiếm cho "{searchQuery}"
-                    </span>
-                    <span className="text-[11px] text-text-muted font-medium">
-                      {searchResults.totalCount} kết quả
-                    </span>
+                  <div className="px-4 py-2.5 bg-surface-subtle/90 border-b border-border-delicate flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 font-semibold text-deep-espresso">
+                      <span>Kết quả tìm kiếm cho "{searchQuery}"</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-text-muted font-medium">
+                        {searchResults.totalCount} kết quả
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsSearchFocused(false)}
+                        className="p-1 text-text-muted hover:text-deep-espresso rounded-md"
+                        title="Đóng bảng gợi ý (Esc)"
+                      >
+                        <Icon name="close" className="text-[14px]" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="max-h-[380px] overflow-y-auto divide-y divide-border-delicate/60 text-xs">
                     {searchResults.totalCount === 0 ? (
                       <div className="p-6 text-center text-text-muted flex flex-col items-center gap-2">
                         <Icon name="search_off" className="text-3xl text-text-muted/60" />
-                        <span>Không tìm thấy dữ liệu nào phù hợp</span>
-                        <Link
-                          to={`/admin/don-hang?search=${encodeURIComponent(searchQuery)}`}
-                          onClick={() => setIsSearchFocused(false)}
-                          className="mt-1 text-xs text-burgundy-wine font-semibold hover:underline"
-                        >
-                          Tìm trong trang Quản lý đơn hàng &rarr;
-                        </Link>
+                        <span className="font-semibold text-deep-espresso">Không tìm thấy dữ liệu nào khớp với "{searchQuery}"</span>
+                        <p className="text-[11px] text-text-muted max-w-xs">
+                          Gợi ý: Tìm theo mã đơn (ví dụ: NCT1136 hoặc #NCT1136), tên dâu rể, số điện thoại hoặc tên mẫu thiệp.
+                        </p>
                       </div>
                     ) : (
                       <>
@@ -444,19 +444,17 @@ export const AdminLayout: React.FC = () => {
                   </div>
 
                   {/* Dropdown Footer */}
-                  <div className="p-2 bg-surface-subtle border-t border-border-delicate flex items-center justify-between text-[11px]">
-                    <span className="text-text-muted">
-                      Nhấn <strong>Enter</strong> để mở kết quả
+                  <div className="p-2.5 bg-surface-subtle border-t border-border-delicate flex items-center justify-between text-[11px]">
+                    <span className="text-text-muted flex items-center gap-1.5">
+                      <Icon name="info" className="text-[14px] text-burgundy-wine" />
+                      <span>Đang lọc đồng thời trên trang <strong>{getCurrentTitle()}</strong></span>
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        navigate(`/admin/don-hang?search=${encodeURIComponent(searchQuery.trim())}`);
-                        setIsSearchFocused(false);
-                      }}
+                      onClick={() => setIsSearchFocused(false)}
                       className="text-burgundy-wine font-semibold hover:underline"
                     >
-                      Mở trong Quản lý đơn hàng &rarr;
+                      Đóng gợi ý (Esc)
                     </button>
                   </div>
                 </div>
@@ -532,21 +530,18 @@ export const AdminLayout: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                if (searchQuery.trim()) {
-                  navigate(`/admin/don-hang?search=${encodeURIComponent(searchQuery.trim())}`);
-                }
                 setMobileSearchOpen(false);
               }}
               className="px-3.5 py-2 rounded-xl bg-burgundy-wine text-white text-xs font-semibold shrink-0"
             >
-              Tìm
+              Lọc
             </button>
           </div>
         )}
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1160px] mx-auto">
-          <Outlet />
+          <Outlet context={{ searchQuery, setSearchQuery } satisfies AdminOutletContext} />
         </main>
       </div>
     </div>

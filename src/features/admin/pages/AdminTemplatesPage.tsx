@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { Template, TemplateStatus } from '../../../types/template';
 import {
@@ -11,14 +12,23 @@ import {
 } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { TemplateFormModal } from '../components/TemplateFormModal';
+import { matchQuery } from '../../../utils/searchHelper';
+import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
 
 export const AdminTemplatesPage: React.FC = () => {
+  const outletCtx = useOutletContext<AdminOutletContext>() || {};
   const templates = useTemplates();
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(outletCtx.searchQuery || '');
   const [selectedStatusTab, setSelectedStatusTab] = useState<'all' | TemplateStatus>('all');
   const [selectedStyleFilter, setSelectedStyleFilter] = useState('');
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('');
+
+  useEffect(() => {
+    if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
+      setSearchQuery(outletCtx.searchQuery);
+    }
+  }, [outletCtx.searchQuery]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,11 +50,11 @@ export const AdminTemplatesPage: React.FC = () => {
 
     // Search query
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchName = tpl.name.toLowerCase().includes(q);
-      const matchSlug = tpl.slug.toLowerCase().includes(q);
-      const matchStyle = (tpl.style || '').toLowerCase().includes(q);
-      const matchDesc = tpl.description.toLowerCase().includes(q);
+      const q = searchQuery.trim();
+      const matchName = matchQuery(tpl.name, q);
+      const matchSlug = matchQuery(tpl.slug, q);
+      const matchStyle = matchQuery(tpl.style, q);
+      const matchDesc = matchQuery(tpl.description, q);
       if (!matchName && !matchSlug && !matchStyle && !matchDesc) return false;
     }
 
@@ -288,7 +298,10 @@ export const AdminTemplatesPage: React.FC = () => {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                outletCtx.setSearchQuery?.(e.target.value);
+              }}
               placeholder="Tìm theo tên mẫu, mã slug, phong cách, mô tả..."
               className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-surface-subtle text-xs font-medium text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine border border-border-delicate"
             />
