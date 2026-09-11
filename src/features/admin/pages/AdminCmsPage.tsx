@@ -45,6 +45,7 @@ export const AdminCmsPage: React.FC = () => {
 
   const heroImageInputRef = useRef<HTMLInputElement>(null);
   const testimonialAvatarInputRef = useRef<HTMLInputElement>(null);
+  const [newBadgeText, setNewBadgeText] = useState('');
 
   // Helper to compress uploaded image before storing into localStorage
   const compressImageFile = (file: File, maxWidth = 1200, quality = 0.75): Promise<string> => {
@@ -511,32 +512,124 @@ export const AdminCmsPage: React.FC = () => {
                 </div>
 
                 {/* Badges / Micro indicators */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-deep-espresso">
-                    Các nhãn cam kết nhanh (Badges)
-                  </label>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {(formData.hero.badges || []).map((b, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 rounded-full bg-gold-foil/10 border border-gold-foil/30 text-deep-espresso text-xs font-medium flex items-center gap-1.5"
+                <div className="flex flex-col gap-2.5 p-4 rounded-xl bg-surface border border-border-delicate">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-semibold text-deep-espresso">
+                        Các nhãn cam kết nhanh (Badges dưới nút CTA)
+                      </label>
+                      <p className="text-[11px] text-text-muted mt-0.5">
+                        Nếu xóa hết tất cả nhãn, hàng nhãn này sẽ ẩn hoàn toàn trên trang chủ.
+                      </p>
+                    </div>
+                    {(formData.hero.badges || []).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            hero: { ...formData.hero, badges: [] },
+                          });
+                        }}
+                        className="text-[11px] text-red-600 hover:text-red-700 hover:underline font-medium"
                       >
-                        <span>{b}</span>
+                        Xóa tất cả nhãn
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Danh sách nhãn hiện tại */}
+                  <div className="flex items-center gap-2 flex-wrap min-h-[32px]">
+                    {(formData.hero.badges || []).length === 0 ? (
+                      <div className="flex items-center gap-2 py-1">
+                        <span className="text-xs text-text-muted italic">
+                          (Hiện chưa có nhãn nào — Hàng nhãn đang được ẩn trên trang chủ)
+                        </span>
                         <button
                           type="button"
                           onClick={() => {
-                            const newBadges = (formData.hero.badges || []).filter((_, i) => i !== idx);
                             setFormData({
                               ...formData,
-                              hero: { ...formData.hero, badges: newBadges },
+                              hero: { ...formData.hero, badges: ['Tinh tế', 'Cá nhân', 'Dễ chia sẻ'] },
                             });
                           }}
-                          className="hover:text-red-700"
+                          className="text-xs text-burgundy-wine hover:underline font-medium ml-2"
                         >
-                          <Icon name="close" className="text-[14px]" />
+                          + Thêm lại mẫu "Tinh tế, Cá nhân, Dễ chia sẻ"
                         </button>
-                      </span>
-                    ))}
+                      </div>
+                    ) : (
+                      (formData.hero.badges || []).map((b, idx) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 rounded-full bg-gold-foil/15 border border-gold-foil/40 text-deep-espresso text-xs font-medium flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <span>{b}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newBadges = (formData.hero.badges || []).filter((_, i) => i !== idx);
+                              setFormData({
+                                ...formData,
+                                hero: { ...formData.hero, badges: newBadges },
+                              });
+                            }}
+                            className="text-text-muted hover:text-red-600 transition-colors"
+                            title="Xóa nhãn này"
+                          >
+                            <Icon name="close" className="text-[14px]" />
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Ô thêm nhãn mới */}
+                  <div className="flex items-center gap-2 pt-1 border-t border-border-delicate/60">
+                    <input
+                      type="text"
+                      placeholder="Nhập tên nhãn muốn thêm (ví dụ: Tinh tế, Cá nhân, Dễ chia sẻ)..."
+                      value={newBadgeText}
+                      onChange={(e) => setNewBadgeText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const trimmed = newBadgeText.trim();
+                          if (trimmed) {
+                            const current = formData.hero.badges || [];
+                            if (!current.includes(trimmed)) {
+                              setFormData({
+                                ...formData,
+                                hero: { ...formData.hero, badges: [...current, trimmed] },
+                              });
+                            }
+                            setNewBadgeText('');
+                          }
+                        }
+                      }}
+                      className="flex-1 px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const trimmed = newBadgeText.trim();
+                        if (trimmed) {
+                          const current = formData.hero.badges || [];
+                          if (!current.includes(trimmed)) {
+                            setFormData({
+                              ...formData,
+                              hero: { ...formData.hero, badges: [...current, trimmed] },
+                            });
+                          }
+                          setNewBadgeText('');
+                        }
+                      }}
+                      disabled={!newBadgeText.trim()}
+                      className="px-4 py-2 rounded-xl bg-burgundy-wine text-white text-xs font-semibold hover:bg-[#851622] disabled:opacity-40 transition-colors flex items-center gap-1 shadow-xs shrink-0"
+                    >
+                      <Icon name="add" className="text-[16px]" />
+                      <span>Thêm nhãn</span>
+                    </button>
                   </div>
                 </div>
               </div>

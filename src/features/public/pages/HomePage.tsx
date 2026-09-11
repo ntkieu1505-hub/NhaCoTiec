@@ -99,18 +99,17 @@ export const HomePage: React.FC = () => {
             <Icon name="arrow_downward" className="text-[18px]" />
           </a>
 
-          {/* 5. Supporting Value Points - "Tinh tế • Cá nhân • Dễ chia sẻ" */}
-          <div className="flex items-center justify-center gap-2.5 sm:gap-3 mt-6 text-xs sm:text-sm text-white/80 font-sans tracking-wide flex-wrap">
-            {(cms.hero.badges && cms.hero.badges.length > 0
-              ? cms.hero.badges
-              : ['Tinh tế', 'Cá nhân', 'Dễ chia sẻ']
-            ).map((badge, idx) => (
-              <React.Fragment key={idx}>
-                {idx > 0 && <span className="text-white/40 select-none">•</span>}
-                <span className="font-normal">{badge}</span>
-              </React.Fragment>
-            ))}
-          </div>
+          {/* 5. Supporting Value Points - Chỉ hiển thị khi có nhãn trong CMS */}
+          {cms.hero.badges && cms.hero.badges.length > 0 ? (
+            <div className="flex items-center justify-center gap-2.5 sm:gap-3 mt-6 text-xs sm:text-sm text-white/80 font-sans tracking-wide flex-wrap">
+              {cms.hero.badges.map((badge, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <span className="text-white/40 select-none">•</span>}
+                  <span className="font-normal">{badge}</span>
+                </React.Fragment>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 

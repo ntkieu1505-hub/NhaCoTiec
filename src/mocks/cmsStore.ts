@@ -35,9 +35,9 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
     secondaryCtaText: 'Tư vấn thiết kế',
     secondaryCtaUrl: '/lien-he',
     badge: '',
-    badges: ['Tinh tế', 'Cá nhân', 'Dễ chia sẻ'],
-    indicator1Text: 'Tinh tế',
-    indicator2Text: 'Cá nhân',
+    badges: [],
+    indicator1Text: '',
+    indicator2Text: '',
     enabled: true,
   },
   intro: {
