@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 
-export type FontTheme = 'vintage' | 'korean' | 'romantic' | 'royal' | 'modern' | 'classic';
+export type FontTheme = 'fraunces' | 'korean' | 'modern' | 'classic';
 
-const STORAGE_KEY = 'nha_co_tiec_font_theme';
+const STORAGE_KEY = 'nha_co_tiec_font_theme_v3';
 
 export const FontSwitcher: React.FC = () => {
   const [currentFont, setCurrentFont] = useState<FontTheme>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as FontTheme;
       if (
-        saved === 'vintage' ||
+        saved === 'fraunces' ||
         saved === 'korean' ||
-        saved === 'romantic' ||
-        saved === 'royal' ||
         saved === 'modern' ||
         saved === 'classic'
       ) {
         return saved;
       }
     } catch {}
-    return 'vintage'; // Default to Vintage Serif + Be Vietnam Pro
+    return 'fraunces'; // Default to Fraunces + Be Vietnam Pro
   });
 
   const [isOpen, setIsOpen] = useState(true);
@@ -33,25 +31,23 @@ export const FontSwitcher: React.FC = () => {
   }, [currentFont]);
 
   const getThemeLabel = (theme: FontTheme) => {
-    if (theme === 'vintage') return 'Vintage Serif';
-    if (theme === 'korean') return 'Hàn Quốc';
-    if (theme === 'romantic') return 'Viết tay';
-    if (theme === 'royal') return 'Quý tộc';
-    if (theme === 'modern') return 'Hiện đại';
-    return 'Cổ điển';
+    if (theme === 'fraunces') return 'Fraunces';
+    if (theme === 'korean') return 'Hàn Quốc (Lora)';
+    if (theme === 'modern') return 'Hiện đại (Montserrat)';
+    return 'Cổ điển ban đầu';
   };
 
   return (
     <aside aria-label="Bộ chọn giao diện font" className="fixed bottom-5 right-5 z-[9999]">
       {isOpen ? (
-        <div className="bg-surface-card/95 backdrop-blur-md border border-border-delicate rounded-2xl shadow-xl p-3.5 sm:p-4 w-[320px] max-h-[90vh] overflow-y-auto no-scrollbar flex flex-col gap-3 transition-all animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="bg-surface-card/95 backdrop-blur-md border border-border-delicate rounded-2xl shadow-xl p-3.5 sm:p-4 w-[330px] max-h-[90vh] overflow-y-auto no-scrollbar flex flex-col gap-3 transition-all animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div className="flex items-center justify-between border-b border-border-delicate pb-2">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-burgundy-wine text-white flex items-center justify-center text-xs font-bold font-serif">
                 Aa
               </span>
               <span className="text-xs font-bold text-deep-espresso">
-                Thử nghiệm Font chữ (6 Phong cách)
+                Thử nghiệm Font chữ (4 Phong cách)
               </span>
             </div>
             <button
@@ -65,62 +61,62 @@ export const FontSwitcher: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            {/* Option 1: Vintage Serif + Be Vietnam Pro (Mới theo yêu cầu) */}
+            {/* Option 1: Fraunces + Be Vietnam Pro */}
             <button
               type="button"
-              onClick={() => setCurrentFont('vintage')}
+              onClick={() => setCurrentFont('fraunces')}
               className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
-                currentFont === 'vintage'
-                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                currentFont === 'fraunces'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs ring-1 ring-burgundy-wine/30'
                   : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
               }`}
             >
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
-                  <span>📜 Vintage Serif • Be Vietnam Pro</span>
-                  {currentFont === 'vintage' && (
+                  <span>📜 Fraunces & Be Vietnam Pro</span>
+                  {currentFont === 'fraunces' && (
                     <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
-                      Đang bật
+                      Đang chọn
                     </span>
                   )}
                 </span>
-                <span className="text-[12px] text-burgundy-wine mt-0.5 font-medium" style={{ fontFamily: "'Fraunces', serif" }}>
-                  Fraunces (Vintage) • Be Vietnam Pro
+                <span className="text-[13px] text-burgundy-wine mt-0.5 font-medium" style={{ fontFamily: "'Fraunces', serif" }}>
+                  Tiêu đề Fraunces • Nội dung Be Vietnam Pro
                 </span>
                 <span className="text-[10px] text-text-muted italic mt-0.5">
-                  Ấm áp, hoài niệm, cổ điển quý phái & dễ đọc
+                  Vintage Serif ấm áp hoài niệm, Be Vietnam Pro chuẩn dấu tiếng Việt siêu nét
                 </span>
               </div>
               <div className="mt-0.5">
                 <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                  currentFont === 'vintage' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
+                  currentFont === 'fraunces' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
                 }`}>
-                  {currentFont === 'vintage' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                  {currentFont === 'fraunces' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
                 </span>
               </div>
             </button>
 
-            {/* Option 2: Thơ mộng / Trong veo Hàn Quốc */}
+            {/* Option 2: Thơ mộng / Trong veo Hàn Quốc (Lora) */}
             <button
               type="button"
               onClick={() => setCurrentFont('korean')}
               className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
                 currentFont === 'korean'
-                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs ring-1 ring-burgundy-wine/30'
                   : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
               }`}
             >
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
-                  <span>🌸 Thơ mộng Hàn Quốc</span>
+                  <span>🌸 Thơ mộng Hàn Quốc (Lora)</span>
                   {currentFont === 'korean' && (
                     <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
-                      Đang bật
+                      Đang chọn
                     </span>
                   )}
                 </span>
-                <span className="text-[12px] text-burgundy-wine mt-0.5 font-medium" style={{ fontFamily: "'Lora', serif" }}>
-                  Lora • Be Vietnam Pro
+                <span className="text-[13px] text-burgundy-wine mt-0.5 font-medium" style={{ fontFamily: "'Lora', serif" }}>
+                  Tiêu đề Lora • Nội dung Be Vietnam Pro
                 </span>
                 <span className="text-[10px] text-text-muted italic mt-0.5">
                   Dịu dàng, trong veo, thanh khiết như phim điện ảnh
@@ -135,83 +131,13 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 3: Viết tay uốn lượn lãng mạn */}
-            <button
-              type="button"
-              onClick={() => setCurrentFont('romantic')}
-              className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
-                currentFont === 'romantic'
-                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
-                  : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
-              }`}
-            >
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
-                  <span>💖 Viết tay lãng mạn</span>
-                  {currentFont === 'romantic' && (
-                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
-                      Đang bật
-                    </span>
-                  )}
-                </span>
-                <span className="text-base text-burgundy-wine mt-0.5 leading-tight" style={{ fontFamily: "'Alex Brush', cursive" }}>
-                  Alex Brush • Great Vibes
-                </span>
-                <span className="text-[10px] text-text-muted italic mt-0.5">
-                  Nét chữ mềm mại, bay bổng, thư pháp tình yêu
-                </span>
-              </div>
-              <div className="mt-0.5">
-                <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                  currentFont === 'romantic' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
-                }`}>
-                  {currentFont === 'romantic' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
-                </span>
-              </div>
-            </button>
-
-            {/* Option 4: Quý tộc / Hoàng gia */}
-            <button
-              type="button"
-              onClick={() => setCurrentFont('royal')}
-              className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
-                currentFont === 'royal'
-                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
-                  : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
-              }`}
-            >
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
-                  <span>👑 Quý tộc / Hoàng gia</span>
-                  {currentFont === 'royal' && (
-                    <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
-                      Đang bật
-                    </span>
-                  )}
-                </span>
-                <span className="text-[11px] text-text-muted mt-0.5 font-serif" style={{ fontFamily: "'Bodoni Moda', serif" }}>
-                  Bodoni Moda • Cormorant
-                </span>
-                <span className="text-[10px] text-text-muted italic">
-                  Đài các, hoàng gia châu Âu, tương phản cao
-                </span>
-              </div>
-              <div className="mt-0.5">
-                <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                  currentFont === 'royal' ? 'border-burgundy-wine bg-burgundy-wine text-white' : 'border-border-delicate'
-                }`}>
-                  {currentFont === 'royal' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
-                </span>
-              </div>
-            </button>
-
-            {/* Option 5: Hiện đại / Tối giản */}
+            {/* Option 3: Hiện đại / Tối giản (Montserrat) */}
             <button
               type="button"
               onClick={() => setCurrentFont('modern')}
               className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
                 currentFont === 'modern'
-                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs ring-1 ring-burgundy-wine/30'
                   : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
               }`}
             >
@@ -220,15 +146,15 @@ export const FontSwitcher: React.FC = () => {
                   <span>✨ Hiện đại / Tối giản</span>
                   {currentFont === 'modern' && (
                     <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
-                      Đang bật
+                      Đang chọn
                     </span>
                   )}
                 </span>
-                <span className="text-[11px] text-text-muted mt-0.5 font-sans" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                  Montserrat • Be Vietnam Pro
+                <span className="text-[12px] text-text-muted mt-0.5 font-sans" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                  Tiêu đề Montserrat • Nội dung Be Vietnam Pro
                 </span>
-                <span className="text-[10px] text-text-muted italic">
-                  Không chân, sắc nét, trẻ trung & tối giản
+                <span className="text-[10px] text-text-muted italic mt-0.5">
+                  Không chân, sắc nét, trẻ trung & phong cách hiện đại
                 </span>
               </div>
               <div className="mt-0.5">
@@ -240,30 +166,30 @@ export const FontSwitcher: React.FC = () => {
               </div>
             </button>
 
-            {/* Option 6: Cổ điển / Sang trọng (Gốc) */}
+            {/* Option 4: Cổ điển ban đầu (Playfair Display) */}
             <button
               type="button"
               onClick={() => setCurrentFont('classic')}
               className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
                 currentFont === 'classic'
-                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs'
+                  ? 'bg-burgundy-wine/10 border-burgundy-wine shadow-2xs ring-1 ring-burgundy-wine/30'
                   : 'bg-surface-subtle/50 border-border-delicate hover:bg-surface-subtle'
               }`}
             >
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
-                  <span>🏛️ Cổ điển / Trang nhã</span>
+                  <span>🏛️ Cổ điển ban đầu</span>
                   {currentFont === 'classic' && (
                     <span className="text-[10px] bg-burgundy-wine text-white px-1.5 py-0.2 rounded-full font-sans">
-                      Đang bật
+                      Đang chọn
                     </span>
                   )}
                 </span>
-                <span className="text-[11px] text-text-muted mt-0.5 font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  Playfair Display • Plus Jakarta
+                <span className="text-[12px] text-text-muted mt-0.5 font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Tiêu đề Playfair Display • Nội dung Plus Jakarta
                 </span>
-                <span className="text-[10px] text-text-muted italic">
-                  Font gốc ban đầu: Lãng mạn, tạp chí cưới
+                <span className="text-[10px] text-text-muted italic mt-0.5">
+                  Font gốc ban đầu của website: Lãng mạn, tạp chí cưới
                 </span>
               </div>
               <div className="mt-0.5">

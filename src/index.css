@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 :root {
-  /* Default font theme: Vintage Serif + Be Vietnam Pro */
+  /* Default font theme: Fraunces + Be Vietnam Pro */
   --font-heading: 'Fraunces', 'Cormorant Garamond', serif;
   --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
 }
 
+html[data-font="fraunces"],
 html[data-font="vintage"] {
   --font-heading: 'Fraunces', 'Cormorant Garamond', serif;
   --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
@@ -16,16 +17,6 @@ html[data-font="vintage"] {
 html[data-font="korean"] {
   --font-heading: 'Lora', 'Cormorant Garamond', 'Playfair Display', serif;
   --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
-}
-
-html[data-font="romantic"] {
-  --font-heading: 'Alex Brush', 'Great Vibes', 'Playfair Display', cursive;
-  --font-body: 'Be Vietnam Pro', 'Plus Jakarta Sans', sans-serif;
-}
-
-html[data-font="royal"] {
-  --font-heading: 'Bodoni Moda', 'Cormorant Garamond', 'Playfair Display', serif;
-  --font-body: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
 }
 
 html[data-font="modern"] {
