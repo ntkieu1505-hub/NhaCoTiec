@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Icon } from '../../../components/common/Icon';
-import { MOCK_GUESTS, MOCK_WISHES } from '../../../mocks/index';
 import {
   useOrders,
   adminUploadExcel,
@@ -8,22 +7,14 @@ import {
   useAllCustomerExports,
 } from '../../../mocks/orderStore';
 import { formatDateTime } from '../../../utils/formatters';
-import { Wish, RsvpStatus } from '../../../types';
 
 export const AdminGuestsWishesPage: React.FC = () => {
   const orders = useOrders();
   const allExports = useAllCustomerExports();
 
-  // Active Tab: 'guests' | 'wishes' | 'excel'
-  const [activeTab, setActiveTab] = useState<'guests' | 'wishes' | 'excel'>('guests');
-
   // Filter & Search state
   const [selectedOrderId, setSelectedOrderId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [rsvpFilter, setRsvpFilter] = useState<RsvpStatus | 'all'>('all');
-
-  // Interactive Wishes State
-  const [wishesList, setWishesList] = useState<Wish[]>(MOCK_WISHES);
 
   // Excel Upload Modal State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -37,103 +28,57 @@ export const AdminGuestsWishesPage: React.FC = () => {
   const [sendTargetOrderId, setSendTargetOrderId] = useState<string>('NCT01');
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
 
-  // Toggle approval / pin for wishes
-  const toggleWishApproval = (id: string) => {
-    setWishesList((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, isApproved: !w.isApproved } : w))
-    );
-  };
-
-  const toggleWishPin = (id: string) => {
-    setWishesList((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, isPinned: !w.isPinned } : w))
-    );
-  };
-
   // Selected Order Object (if not 'all')
   const selectedOrder = useMemo(() => {
     if (selectedOrderId === 'all') return null;
     return orders.find((o) => o.id === selectedOrderId) || null;
   }, [orders, selectedOrderId]);
 
-  // Filtered Guests
-  const filteredGuests = useMemo(() => {
-    return MOCK_GUESTS.filter((g) => {
-      // Filter by Order
-      if (selectedOrderId !== 'all' && g.orderId !== selectedOrderId) return false;
+  // Excel Handover Statistics
+  const excelStats = useMemo(() => {
+    const totalOrders = orders.length;
+    let sentCount = 0;
+    let uploadedCount = 0;
+    let draftCount = 0;
 
-      // Filter by RSVP Status
-      if (rsvpFilter !== 'all' && g.rsvpStatus !== rsvpFilter) return false;
-
-      // Filter by Search Query (Name, Phone, OrderId, Note)
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = g.name.toLowerCase().includes(q);
-        const matchPhone = (g.phone || '').toLowerCase().includes(q);
-        const matchOrder = g.orderId.toLowerCase().includes(q);
-        const matchNote = (g.notes || '').toLowerCase().includes(q);
-        const matchTable = (g.tableNumber || '').toLowerCase().includes(q);
-        if (!matchName && !matchPhone && !matchOrder && !matchNote && !matchTable) {
-          return false;
-        }
+    orders.forEach((ord) => {
+      const exp = allExports[ord.id];
+      if (exp?.status === 'sent') {
+        sentCount++;
+      } else if (exp?.status === 'uploaded') {
+        uploadedCount++;
+      } else {
+        draftCount++;
       }
-
-      return true;
     });
-  }, [selectedOrderId, rsvpFilter, searchQuery]);
-
-  // Filtered Wishes
-  const filteredWishes = useMemo(() => {
-    return wishesList.filter((w) => {
-      // Filter by Order
-      if (selectedOrderId !== 'all' && w.orderId !== selectedOrderId) return false;
-
-      // Filter by Search Query (Sender, Relationship, Message, OrderId)
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchSender = w.senderName.toLowerCase().includes(q);
-        const matchRel = (w.relationship || '').toLowerCase().includes(q);
-        const matchMsg = w.message.toLowerCase().includes(q);
-        const matchOrder = w.orderId.toLowerCase().includes(q);
-        if (!matchSender && !matchRel && !matchMsg && !matchOrder) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [wishesList, selectedOrderId, searchQuery]);
-
-  // Attendance Statistics (based on selected order or all)
-  const stats = useMemo(() => {
-    const relevantGuests =
-      selectedOrderId === 'all'
-        ? MOCK_GUESTS
-        : MOCK_GUESTS.filter((g) => g.orderId === selectedOrderId);
-
-    const relevantWishes =
-      selectedOrderId === 'all'
-        ? wishesList
-        : wishesList.filter((w) => w.orderId === selectedOrderId);
-
-    const totalGuests = relevantGuests.reduce(
-      (acc, g) => acc + 1 + (g.rsvpStatus === 'attending' ? g.companionCount : 0),
-      0
-    );
-    const totalResponses = relevantGuests.length;
-    const attendingCount = relevantGuests.filter((g) => g.rsvpStatus === 'attending').length;
-    const declinedCount = relevantGuests.filter((g) => g.rsvpStatus === 'declined').length;
-    const pendingCount = relevantGuests.filter((g) => g.rsvpStatus === 'pending').length;
 
     return {
-      totalGuests,
-      totalResponses,
-      attendingCount,
-      declinedCount,
-      pendingCount,
-      wishesCount: relevantWishes.length,
+      totalOrders,
+      sentCount,
+      uploadedCount,
+      draftCount,
     };
-  }, [selectedOrderId, wishesList]);
+  }, [orders, allExports]);
+
+  // Filtered Orders for the Table
+  const filteredOrders = useMemo(() => {
+    return orders.filter((ord) => {
+      if (selectedOrderId !== 'all' && ord.id !== selectedOrderId) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const exp = allExports[ord.id];
+        const matchId = ord.id.toLowerCase().includes(q);
+        const matchName = ord.customerName.toLowerCase().includes(q);
+        const matchTpl = ord.templateName.toLowerCase().includes(q);
+        const matchFile = (exp?.fileName || '').toLowerCase().includes(q);
+        const matchPhone = (ord.customerPhone || '').toLowerCase().includes(q);
+        if (!matchId && !matchName && !matchTpl && !matchFile && !matchPhone) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [orders, selectedOrderId, searchQuery, allExports]);
 
   // Handlers for Excel Upload
   const openUploadModal = (orderId: string) => {
@@ -194,26 +139,32 @@ export const AdminGuestsWishesPage: React.FC = () => {
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-surface-subtle text-gold-foil font-label-caps text-[10px] tracking-widest uppercase font-semibold mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold-foil"></span>
+            Quản lý dữ liệu tiệc cưới • Chuyển giao file Excel
+          </div>
           <div className="flex items-center gap-2">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso">
-              06. Khách Mời &amp; Lời Chúc
+              06. Chuyển Giao File Excel
             </h1>
             <span className="px-2 py-0.5 rounded-full bg-burgundy-wine/10 text-burgundy-wine font-label-caps text-[11px] font-bold">
-              Trung tâm dữ liệu
+              Khách mời &amp; Lời chúc
             </span>
           </div>
-          <p className="text-xs text-text-muted mt-1">
-            Tổng hợp dữ liệu khách mời, phản hồi tham dự (RSVP), lời chúc cưới và quy trình chuyển giao file Excel
+          <p className="text-xs text-text-muted mt-1 max-w-2xl leading-relaxed">
+            Quản lý tải lên, cập nhật và bàn giao file dữ liệu Excel tổng hợp khách tham dự (RSVP) &amp; lưu bút lời chúc cho từng đơn hàng của các cặp đôi.
           </p>
         </div>
 
-        {/* Global Action: Download current view */}
+        {/* Global Action: Download template */}
         <button
-          onClick={() => handleDownloadExcel('danh-sach-khach-moi-va-loi-chuc.xlsx')}
+          type="button"
+          onClick={() => handleDownloadExcel('file_mau_tong_hop_khach_moi_nha_co_tiec.xlsx')}
           className="px-4 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors self-start sm:self-auto"
+          title="Tải file Excel mẫu cấu trúc chuẩn của Nhà Có Tiệc"
         >
           <Icon name="file_download" className="text-[16px] text-text-muted" />
-          <span>Xuất Excel hiện tại</span>
+          <span>Tải file Excel mẫu</span>
         </button>
       </div>
 
@@ -327,365 +278,83 @@ export const AdminGuestsWishesPage: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Summary Statistics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {/* Card 1: Tổng khách */}
+      {/* 2. KPI Summary Statistics Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Tổng đơn hàng */}
         <div className="p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-1 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-label-caps uppercase font-bold text-text-muted">
-              Tổng khách
+              Tổng đơn hàng
             </span>
-            <div className="w-7 h-7 rounded-full bg-surface-subtle text-deep-espresso flex items-center justify-center">
-              <Icon name="group" className="text-[16px]" />
+            <div className="w-8 h-8 rounded-full bg-surface-subtle text-deep-espresso flex items-center justify-center">
+              <Icon name="shopping_bag" className="text-[17px]" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="font-serif text-2xl font-bold text-deep-espresso">
-              {stats.totalGuests}
+              {excelStats.totalOrders}
             </span>
-            <span className="text-[11px] text-text-muted">
-              ({stats.totalResponses} phản hồi)
-            </span>
+            <span className="text-[11px] text-text-muted">hợp đồng tiệc</span>
           </div>
         </div>
 
-        {/* Card 2: Đã xác nhận tham dự */}
+        {/* Card 2: Đã bàn giao cho khách */}
         <div className="p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-1 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-label-caps uppercase font-bold text-emerald-800">
-              Đã xác nhận
+              Đã gửi khách hàng
             </span>
-            <div className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
-              <Icon name="check_circle" className="text-[16px]" />
+            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+              <Icon name="check_circle" className="text-[17px]" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="font-serif text-2xl font-bold text-emerald-800">
-              {stats.attendingCount}
+              {excelStats.sentCount}
             </span>
-            <span className="text-[11px] text-emerald-700/80 font-medium">khách</span>
+            <span className="text-[11px] text-emerald-700/80 font-medium">file hoàn tất</span>
           </div>
         </div>
 
-        {/* Card 3: Không tham dự */}
-        <div className="p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-1 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-label-caps uppercase font-bold text-rose-800">
-              Không tham dự
-            </span>
-            <div className="w-7 h-7 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-200">
-              <Icon name="cancel" className="text-[16px]" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="font-serif text-2xl font-bold text-rose-800">
-              {stats.declinedCount}
-            </span>
-            <span className="text-[11px] text-rose-700/80 font-medium">khách</span>
-          </div>
-        </div>
-
-        {/* Card 4: Chưa xác nhận */}
+        {/* Card 3: Đã tải lên (chờ gửi) */}
         <div className="p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-1 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-label-caps uppercase font-bold text-amber-900">
-              Chưa xác nhận
+              Đã tải lên — chờ gửi
             </span>
-            <div className="w-7 h-7 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
-              <Icon name="hourglass_empty" className="text-[16px]" />
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
+              <Icon name="hourglass_top" className="text-[17px]" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="font-serif text-2xl font-bold text-amber-900">
-              {stats.pendingCount}
+              {excelStats.uploadedCount}
             </span>
-            <span className="text-[11px] text-amber-800/80 font-medium">chờ</span>
+            <span className="text-[11px] text-amber-800/80 font-medium">file sẵn sàng</span>
           </div>
         </div>
 
-        {/* Card 5: Tổng lời chúc */}
-        <div className="col-span-2 lg:col-span-1 p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-1 shadow-2xs">
+        {/* Card 4: Chưa có file Excel */}
+        <div className="p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-1 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-label-caps uppercase font-bold text-burgundy-wine">
-              Tổng lời chúc
+            <span className="text-[11px] font-label-caps uppercase font-bold text-text-muted">
+              Chưa có file
             </span>
-            <div className="w-7 h-7 rounded-full bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center">
-              <Icon name="favorite" className="text-[16px]" />
+            <div className="w-8 h-8 rounded-full bg-surface-subtle text-text-muted flex items-center justify-center border border-border-delicate">
+              <Icon name="pending_actions" className="text-[17px]" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="font-serif text-2xl font-bold text-burgundy-wine">
-              {stats.wishesCount}
+            <span className="font-serif text-2xl font-bold text-deep-espresso">
+              {excelStats.draftCount}
             </span>
-            <span className="text-[11px] text-text-muted">lưu bút</span>
+            <span className="text-[11px] text-text-muted">chờ xuất dữ liệu</span>
           </div>
         </div>
       </div>
 
-      {/* 4. Combined 3 Tabs: [ Khách mời ] [ Lời chúc ] [ File Excel ] */}
-      <div className="flex flex-col gap-4">
-        {/* Tab Navigation Buttons */}
-        <div className="flex items-center gap-2 border-b border-border-delicate pb-2 overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setActiveTab('guests')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
-              activeTab === 'guests'
-                ? 'bg-burgundy-wine text-white shadow-xs'
-                : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
-            }`}
-          >
-            <Icon name="recent_actors" className="text-[16px]" />
-            <span>Khách mời ({filteredGuests.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('wishes')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
-              activeTab === 'wishes'
-                ? 'bg-burgundy-wine text-white shadow-xs'
-                : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
-            }`}
-          >
-            <Icon name="favorite" className="text-[16px]" />
-            <span>Lời chúc ({filteredWishes.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('excel')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
-              activeTab === 'excel'
-                ? 'bg-burgundy-wine text-white shadow-xs'
-                : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
-            }`}
-          >
-            <Icon name="table_view" className="text-[16px]" />
-            <span>File Excel (Chuyển giao dữ liệu)</span>
-            <span className="w-2 h-2 rounded-full bg-gold-foil"></span>
-          </button>
-        </div>
-
-        {/* ==================================================================== */}
-        {/* TAB 1: KHÁCH MỜI (RSVP) */}
-        {/* ==================================================================== */}
-        {activeTab === 'guests' && (
-          <div className="flex flex-col gap-4">
-            {/* Quick RSVP Sub-filters */}
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="text-text-muted font-medium mr-1">Trạng thái RSVP:</span>
-                {[
-                  { id: 'all', label: `Tất cả (${stats.totalResponses})` },
-                  { id: 'attending', label: `Tham dự (${stats.attendingCount})` },
-                  { id: 'declined', label: `Không tham dự (${stats.declinedCount})` },
-                  { id: 'pending', label: `Chờ xác nhận (${stats.pendingCount})` },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setRsvpFilter(item.id as any)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                      rsvpFilter === item.id
-                        ? 'bg-deep-espresso text-white font-semibold shadow-2xs'
-                        : 'bg-surface-card text-text-muted border border-border-delicate hover:text-deep-espresso'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
-              <span className="text-[11px] text-text-muted">
-                Hiển thị {filteredGuests.length} khách mời
-              </span>
-            </div>
-
-            {/* Guests Table */}
-            <div className="bg-surface-card rounded-2xl shadow-xs border border-border-delicate overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-surface-subtle/60 border-b border-border-delicate text-text-muted font-label-caps uppercase text-[10px]">
-                      <th className="py-3 px-4">Tên khách mời</th>
-                      <th className="py-3 px-4">Đơn hàng</th>
-                      <th className="py-3 px-4">Số điện thoại</th>
-                      <th className="py-3 px-4">Phản hồi RSVP</th>
-                      <th className="py-3 px-4">Đi kèm</th>
-                      <th className="py-3 px-4">Xếp bàn / Lời nhắn</th>
-                      <th className="py-3 px-4 text-right">Ngày gửi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-delicate">
-                    {filteredGuests.length > 0 ? (
-                      filteredGuests.map((g) => (
-                        <tr key={g.id} className="hover:bg-surface-subtle/30 transition-colors">
-                          <td className="py-3.5 px-4">
-                            <div className="font-semibold text-deep-espresso">{g.name}</div>
-                            <span className="text-[10px] text-text-muted font-mono">{g.id}</span>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <button
-                              onClick={() => setSelectedOrderId(g.orderId)}
-                              className="font-mono text-burgundy-wine font-bold hover:underline"
-                              title="Lọc theo đơn này"
-                            >
-                              #{g.orderId}
-                            </button>
-                          </td>
-                          <td className="py-3.5 px-4 text-text-muted font-mono">
-                            {g.phone || '—'}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-label-caps font-semibold border ${
-                                g.rsvpStatus === 'attending'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                  : g.rsvpStatus === 'declined'
-                                  ? 'bg-rose-50 text-burgundy-wine border-rose-200'
-                                  : 'bg-amber-50 text-amber-800 border-amber-200'
-                              }`}
-                            >
-                              <Icon
-                                name={
-                                  g.rsvpStatus === 'attending'
-                                    ? 'check'
-                                    : g.rsvpStatus === 'declined'
-                                    ? 'close'
-                                    : 'hourglass_empty'
-                                }
-                                className="text-[12px]"
-                              />
-                              {g.rsvpStatus === 'attending'
-                                ? 'Tham dự'
-                                : g.rsvpStatus === 'declined'
-                                ? 'Không tham dự'
-                                : 'Chưa xác nhận'}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 font-medium text-deep-espresso">
-                            {g.companionCount > 0 ? `+${g.companionCount} người` : 'Đi một mình'}
-                          </td>
-                          <td className="py-3.5 px-4 text-text-muted max-w-xs">
-                            <div className="font-medium text-deep-espresso">{g.tableNumber || 'Chưa xếp bàn'}</div>
-                            {g.notes && (
-                              <div className="text-[11px] text-gold-foil italic truncate mt-0.5" title={g.notes}>
-                                "{g.notes}"
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 text-right text-[11px] text-text-muted">
-                            {formatDateTime(g.submittedAt)}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="py-10 text-center text-xs text-text-muted">
-                          Không tìm thấy khách mời nào phù hợp với bộ lọc.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ==================================================================== */}
-        {/* TAB 2: LỜI CHÚC (GUESTBOOK) */}
-        {/* ==================================================================== */}
-        {activeTab === 'wishes' && (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between text-xs text-text-muted">
-              <span>Hiển thị {filteredWishes.length} lời chúc lưu bút</span>
-              <span>Bấm ngôi sao để ghim lời chúc nổi bật lên đầu thiệp cưới online</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredWishes.length > 0 ? (
-                filteredWishes.map((w) => (
-                  <div
-                    key={w.id}
-                    className="p-4 rounded-2xl bg-surface-card border border-border-delicate flex flex-col justify-between gap-3 shadow-xs"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-deep-espresso text-sm">
-                            {w.senderName}
-                          </span>
-                          {w.relationship && (
-                            <span className="text-[10px] text-text-muted bg-surface-subtle border border-border-delicate px-2 py-0.2 rounded-md font-medium">
-                              {w.relationship}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-text-muted mt-0.5">
-                          <button
-                            onClick={() => setSelectedOrderId(w.orderId)}
-                            className="font-mono text-burgundy-wine font-bold hover:underline"
-                          >
-                            #{w.orderId}
-                          </button>
-                          <span>•</span>
-                          <span>{formatDateTime(w.createdAt)}</span>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleWishPin(w.id)}
-                        className="text-gold-foil hover:scale-110 transition-transform p-1"
-                        title={w.isPinned ? 'Bỏ ghim' : 'Ghim lời chúc lên đầu'}
-                      >
-                        <Icon name={w.isPinned ? 'star' : 'star_outline'} className="text-[20px]" />
-                      </button>
-                    </div>
-
-                    <p className="italic text-xs text-deep-espresso bg-surface-subtle/50 p-3 rounded-xl border border-border-delicate leading-relaxed">
-                      "{w.message}"
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-border-delicate text-xs">
-                      <span
-                        className={`text-[11px] font-semibold flex items-center gap-1 ${
-                          w.isApproved ? 'text-emerald-700' : 'text-amber-800'
-                        }`}
-                      >
-                        <span className="text-[9px]">{w.isApproved ? '●' : '○'}</span>
-                        <span>{w.isApproved ? 'Đã hiển thị trên thiệp' : 'Tạm ẩn'}</span>
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleWishApproval(w.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors border ${
-                          w.isApproved
-                            ? 'bg-surface-subtle text-deep-espresso border-border-delicate hover:bg-surface-container-high'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        }`}
-                      >
-                        {w.isApproved ? 'Ẩn lời chúc' : 'Duyệt hiển thị'}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-2 py-12 text-center text-xs text-text-muted bg-surface-card rounded-2xl border border-border-delicate">
-                  Không tìm thấy lời chúc nào phù hợp.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ==================================================================== */}
-        {/* TAB 3: FILE EXCEL (EXCEL MANAGEMENT WORKFLOW) */}
-        {/* ==================================================================== */}
-        {activeTab === 'excel' && (
-          <div className="flex flex-col gap-6">
+      {/* 4. MAIN EXCEL MANAGEMENT WORKFLOW */}
+      <div className="flex flex-col gap-6">
             {/* Context Notice / Permission Rule Card */}
             <div className="p-4 rounded-xl bg-surface-subtle/80 border border-border-delicate text-xs flex flex-col gap-2">
               <div className="flex items-center gap-2 font-semibold text-deep-espresso">
@@ -873,7 +542,7 @@ export const AdminGuestsWishesPage: React.FC = () => {
                 <div className="p-4 border-b border-border-delicate flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <h2 className="font-serif text-base font-bold text-deep-espresso">
-                      Tình trạng chuyển giao file Excel ({orders.length} đơn hàng)
+                      Tình trạng chuyển giao file Excel ({filteredOrders.length} đơn hàng)
                     </h2>
                     <p className="text-xs text-text-muted">
                       Theo dõi và thực hiện thao tác tải lên hoặc bàn giao file cho từng cặp đôi
@@ -895,115 +564,121 @@ export const AdminGuestsWishesPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-delicate">
-                      {orders.map((ord) => {
-                        const exp = allExports[ord.id] || {
-                          id: `exp-${ord.id}`,
-                          orderId: ord.id,
-                          fileName: `Danh_sach_khach_moi_${ord.id}.xlsx`,
-                          fileUrl: '#',
-                          fileSize: '—',
-                          status: 'draft',
-                          deadline: '3 ngày trước ngày cưới',
-                        };
+                      {filteredOrders.length > 0 ? (
+                        filteredOrders.map((ord) => {
+                          const exp = allExports[ord.id] || {
+                            id: `exp-${ord.id}`,
+                            orderId: ord.id,
+                            fileName: `Danh_sach_khach_moi_${ord.id}.xlsx`,
+                            fileUrl: '#',
+                            fileSize: '—',
+                            status: 'draft',
+                            deadline: '3 ngày trước ngày cưới',
+                          };
 
-                        return (
-                          <tr key={ord.id} className="hover:bg-surface-subtle/30 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-bold text-burgundy-wine">
-                              #{ord.id}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <div className="font-semibold text-deep-espresso">{ord.customerName}</div>
-                              <span className="text-[10px] text-text-muted">{ord.templateName}</span>
-                            </td>
-                            <td className="py-3.5 px-4">
-                              {exp.status === 'sent' ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold font-label-caps">
-                                  <Icon name="check_circle" className="text-[12px]" />
-                                  Đã gửi khách hàng
-                                </span>
-                              ) : exp.status === 'uploaded' ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold font-label-caps">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                                  Đã tải lên — chưa gửi
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-subtle text-text-muted border border-border-delicate text-[10px] font-bold font-label-caps">
-                                  Chưa có file
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3.5 px-4 font-mono text-deep-espresso truncate max-w-xs">
-                              {exp.status === 'draft' ? '—' : exp.fileName}
-                            </td>
-                            <td className="py-3.5 px-4 text-text-muted">
-                              {exp.status === 'draft' ? '—' : exp.fileSize}
-                            </td>
-                            <td className="py-3.5 px-4 text-[11px] text-text-muted">
-                              {exp.sentAt
-                                ? `Gửi: ${formatDateTime(exp.sentAt)}`
-                                : exp.uploadedAt
-                                ? `Tải: ${formatDateTime(exp.uploadedAt)}`
-                                : '—'}
-                            </td>
-                            <td className="py-3.5 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {exp.status === 'draft' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => openUploadModal(ord.id)}
-                                    className="px-2.5 py-1 rounded-full bg-burgundy-wine text-white text-[11px] font-semibold hover:bg-[#851622] transition-colors"
-                                  >
-                                    + Upload
-                                  </button>
+                          return (
+                            <tr key={ord.id} className="hover:bg-surface-subtle/30 transition-colors">
+                              <td className="py-3.5 px-4 font-mono font-bold text-burgundy-wine">
+                                #{ord.id}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-semibold text-deep-espresso">{ord.customerName}</div>
+                                <span className="text-[10px] text-text-muted">{ord.templateName}</span>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                {exp.status === 'sent' ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold font-label-caps">
+                                    <Icon name="check_circle" className="text-[12px]" />
+                                    Đã gửi khách hàng
+                                  </span>
                                 ) : exp.status === 'uploaded' ? (
-                                  <>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold font-label-caps">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                    Đã tải lên — chưa gửi
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-subtle text-text-muted border border-border-delicate text-[10px] font-bold font-label-caps">
+                                    Chưa có file
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 font-mono text-deep-espresso truncate max-w-xs">
+                                {exp.status === 'draft' ? '—' : exp.fileName}
+                              </td>
+                              <td className="py-3.5 px-4 text-text-muted">
+                                {exp.status === 'draft' ? '—' : exp.fileSize}
+                              </td>
+                              <td className="py-3.5 px-4 text-[11px] text-text-muted">
+                                {exp.sentAt
+                                  ? `Gửi: ${formatDateTime(exp.sentAt)}`
+                                  : exp.uploadedAt
+                                  ? `Tải: ${formatDateTime(exp.uploadedAt)}`
+                                  : '—'}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {exp.status === 'draft' ? (
                                     <button
                                       type="button"
                                       onClick={() => openUploadModal(ord.id)}
-                                      className="px-2 py-1 rounded-full bg-surface-subtle text-deep-espresso border border-border-delicate text-[11px] font-medium hover:bg-surface-cream"
-                                    >
-                                      Thay file
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => openSendConfirmModal(ord.id)}
                                       className="px-2.5 py-1 rounded-full bg-burgundy-wine text-white text-[11px] font-semibold hover:bg-[#851622] transition-colors"
                                     >
-                                      Gửi khách
+                                      + Upload
                                     </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDownloadExcel(exp.fileName)}
-                                      className="p-1 text-text-muted hover:text-deep-espresso"
-                                      title="Tải file"
-                                    >
-                                      <Icon name="download" className="text-[16px]" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => openUploadModal(ord.id)}
-                                      className="px-2 py-1 rounded-full bg-surface-subtle text-deep-espresso border border-border-delicate text-[11px] font-medium hover:bg-surface-cream"
-                                    >
-                                      Thay file
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                                  ) : exp.status === 'uploaded' ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => openUploadModal(ord.id)}
+                                        className="px-2 py-1 rounded-full bg-surface-subtle text-deep-espresso border border-border-delicate text-[11px] font-medium hover:bg-surface-cream"
+                                      >
+                                        Thay file
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => openSendConfirmModal(ord.id)}
+                                        className="px-2.5 py-1 rounded-full bg-burgundy-wine text-white text-[11px] font-semibold hover:bg-[#851622] transition-colors"
+                                      >
+                                        Gửi khách
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDownloadExcel(exp.fileName)}
+                                        className="p-1 text-text-muted hover:text-deep-espresso"
+                                        title="Tải file"
+                                      >
+                                        <Icon name="download" className="text-[16px]" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => openUploadModal(ord.id)}
+                                        className="px-2 py-1 rounded-full bg-surface-subtle text-deep-espresso border border-border-delicate text-[11px] font-medium hover:bg-surface-cream"
+                                      >
+                                        Thay file
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-8 text-center text-xs text-text-muted">
+                            Không tìm thấy đơn hàng nào phù hợp với từ khóa &quot;{searchQuery}&quot;.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
             )}
           </div>
-        )}
-      </div>
 
       {/* ==================================================================== */}
       {/* MODAL 1: UPLOAD EXCEL INTERFACE */}

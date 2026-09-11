@@ -6,7 +6,8 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
-  resetTemplates
+  resetTemplates,
+  purgeCorruptedTemplates,
 } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { TemplateFormModal } from '../components/TemplateFormModal';
@@ -79,9 +80,19 @@ export const AdminTemplatesPage: React.FC = () => {
   };
 
   const handleDelete = (tpl: Template) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa mẫu thiệp "${tpl.name}"?`)) {
+    if (
+      window.confirm(
+        `Bạn có chắc chắn muốn xóa mẫu thiệp "${tpl.name}"? Mẫu thiệp sẽ bị gỡ hoàn toàn khỏi trang chủ công khai ngay lập tức.`
+      )
+    ) {
       deleteTemplate(tpl.id);
+      alert(`Đã xóa vĩnh viễn mẫu thiệp "${tpl.name}"!`);
     }
+  };
+
+  const handlePurge = () => {
+    const cleaned = purgeCorruptedTemplates();
+    alert(`Đã dọn dẹp và đồng bộ lại danh sách mẫu thiệp! (${cleaned} mục được xử lý)`);
   };
 
   // Distinct styles for dropdown filter
@@ -106,6 +117,15 @@ export const AdminTemplatesPage: React.FC = () => {
 
         {/* Global Action Buttons */}
         <div className="flex items-center flex-wrap gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handlePurge}
+            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+            title="Dọn dẹp và thanh lọc các mẫu lỗi hoặc đã xóa"
+          >
+            <Icon name="cleaning_services" className="text-[15px] text-amber-700" />
+            <span>Dọn dẹp mẫu lỗi</span>
+          </button>
           <button
             type="button"
             onClick={() => {

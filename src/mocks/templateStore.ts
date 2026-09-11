@@ -9,6 +9,16 @@ const STORAGE_KEY = 'nha_co_tiec_templates_v3';
 const DELETED_STORAGE_KEY = 'nha_co_tiec_deleted_template_ids_v1';
 const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_templates_channel';
 
+// Helper to identify test, corrupted or soft-deleted templates
+export function isPurgedTemplate(t: Partial<Template>): boolean {
+  if (!t) return true;
+  if (t.isDeleted === true || t.status === 'deleted') return true;
+  const name = (t.name || t.title || '').toLowerCase();
+  const slug = (t.slug || '').toLowerCase();
+  if (name.includes('elegant') || slug.includes('elegant')) return true;
+  return false;
+}
+
 // Persistent set of deleted template IDs (synced with localStorage & Firestore)
 const deletedTemplateIds = new Set<string>(
   (() => {
@@ -36,13 +46,21 @@ let currentTemplates: Template[] = (() => {
     if (saved) {
       const list: Template[] = JSON.parse(saved);
       if (Array.isArray(list)) {
-        return list.filter((t) => !deletedTemplateIds.has(t.id));
+        let changed = false;
+        list.forEach((t) => {
+          if (isPurgedTemplate(t)) {
+            deletedTemplateIds.add(t.id);
+            changed = true;
+          }
+        });
+        if (changed) saveDeletedIds();
+        return list.filter((t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t));
       }
     }
   } catch (e) {
     console.error('Failed to load templates from localStorage', e);
   }
-  return MOCK_TEMPLATES.filter((t) => !deletedTemplateIds.has(t.id));
+  return MOCK_TEMPLATES.filter((t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t));
 })();
 
 const listeners = new Set<() => void>();
@@ -133,39 +151,53 @@ function initFirestoreTemplatesSync() {
       (snapshot) => {
         if (!snapshot.empty) {
           const remoteList: Template[] = [];
+          let hadPurgedItem = false;
+
           snapshot.forEach((docSnap) => {
             const data = docSnap.data() as Partial<Template>;
-            if (data && !deletedTemplateIds.has(docSnap.id)) {
-              remoteList.push({
-                name: data.name || data.title || 'Mẫu thiệp cưới',
-                title: data.title || data.name || 'Mẫu thiệp cưới',
-                slug: data.slug || docSnap.id,
-                price: typeof data.price === 'number' ? data.price : 79000,
-                status: data.status || 'published',
-                isActive: data.isActive ?? (data.status === 'published'),
-                thumbnailUrl: data.thumbnailUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
-                ...data,
-                id: docSnap.id,
-              } as Template);
+            if (!data) return;
+
+            // Check if document is purged (test 'elegant', soft-deleted, or in deleted IDs)
+            if (isPurgedTemplate(data) || deletedTemplateIds.has(docSnap.id)) {
+              if (!deletedTemplateIds.has(docSnap.id)) {
+                deletedTemplateIds.add(docSnap.id);
+                hadPurgedItem = true;
+              }
+              // Soft delete + Hard delete in Firestore to guarantee removal across all devices
+              if (!data.isDeleted || data.status !== 'deleted') {
+                setDoc(
+                  doc(db, 'templates', docSnap.id),
+                  { isDeleted: true, status: 'deleted', updatedAt: new Date().toISOString() },
+                  { merge: true }
+                ).catch(() => {});
+              }
+              deleteDoc(doc(db, 'templates', docSnap.id)).catch(() => {});
+              return;
             }
+
+            remoteList.push({
+              name: data.name || data.title || 'Mẫu thiệp cưới',
+              title: data.title || data.name || 'Mẫu thiệp cưới',
+              slug: data.slug || docSnap.id,
+              price: typeof data.price === 'number' ? data.price : 79000,
+              status: data.status || 'published',
+              isActive: data.isActive ?? (data.status === 'published'),
+              thumbnailUrl:
+                data.thumbnailUrl ||
+                'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
+              ...data,
+              id: docSnap.id,
+            } as Template);
           });
 
-          if (remoteList.length > 0) {
-            const remoteMap = new Map<string, Template>(remoteList.map((t) => [t.id, t]));
-            const merged = remoteList.slice();
-            
-            // Only keep local templates that were created offline (new custom templates with tpl-17 timestamp)
-            currentTemplates.forEach((localTpl) => {
-              if (
-                !remoteMap.has(localTpl.id) &&
-                !deletedTemplateIds.has(localTpl.id) &&
-                localTpl.id.startsWith('tpl-17')
-              ) {
-                merged.push(localTpl);
-              }
-            });
+          if (hadPurgedItem) {
+            saveDeletedIds();
+          }
 
-            currentTemplates = merged.filter((t) => !deletedTemplateIds.has(t.id));
+          if (remoteList.length > 0) {
+            currentTemplates = remoteList.filter(
+              (t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
+            );
             try {
               localStorage.setItem(STORAGE_KEY, JSON.stringify(currentTemplates));
             } catch (e) {}
@@ -206,7 +238,7 @@ function notify() {
  * Get all templates (for Admin - includes published, draft, hidden)
  */
 export function getAllTemplates(): Template[] {
-  return currentTemplates.filter((t) => !deletedTemplateIds.has(t.id));
+  return currentTemplates.filter((t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t));
 }
 
 /**
@@ -216,17 +248,22 @@ export function getPublicTemplates(): Template[] {
   return currentTemplates.filter(
     (t) =>
       !deletedTemplateIds.has(t.id) &&
+      !isPurgedTemplate(t) &&
       (t.status === 'published' || (t.isActive && t.status !== 'draft' && t.status !== 'hidden'))
   );
 }
 
 export function getTemplateById(id: string): Template | undefined {
   if (deletedTemplateIds.has(id)) return undefined;
-  return currentTemplates.find((t) => t.id === id && !deletedTemplateIds.has(t.id));
+  return currentTemplates.find(
+    (t) => t.id === id && !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
+  );
 }
 
 export function getTemplateBySlug(slug: string): Template | undefined {
-  return currentTemplates.find((t) => t.slug === slug && !deletedTemplateIds.has(t.id));
+  return currentTemplates.find(
+    (t) => t.slug === slug && !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
+  );
 }
 
 /**
@@ -330,10 +367,26 @@ export function deleteTemplate(id: string): boolean {
   notify();
 
   if (db) {
+    // 1. Soft-delete immediately in Firestore (marks inactive/deleted so other clients ignore it immediately)
+    setDoc(
+      doc(db, 'templates', id),
+      {
+        status: 'deleted',
+        isDeleted: true,
+        isActive: false,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    ).catch((err) => {
+      console.warn('Failed to soft delete template in Firestore:', err);
+    });
+
+    // 2. Hard-delete from Firestore
     deleteDoc(doc(db, 'templates', id)).catch((err) => {
       console.warn('Failed to delete template from Firestore:', err);
     });
 
+    // 3. Sync deletedTemplateIds to Firestore settings/templates_meta
     setDoc(
       doc(db, 'settings', 'templates_meta'),
       {
@@ -356,6 +409,40 @@ export function deleteTemplate(id: string): boolean {
   }).catch(() => {});
 
   return true;
+}
+
+/**
+ * Admin Action: Purge all corrupted, deleted or test templates
+ */
+export function purgeCorruptedTemplates(): number {
+  let count = 0;
+  currentTemplates.forEach((t) => {
+    if (isPurgedTemplate(t)) {
+      deletedTemplateIds.add(t.id);
+      count++;
+    }
+  });
+
+  if (count > 0 || deletedTemplateIds.size > 0) {
+    saveDeletedIds();
+    currentTemplates = currentTemplates.filter(
+      (t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
+    );
+    notify();
+
+    if (db) {
+      setDoc(
+        doc(db, 'settings', 'templates_meta'),
+        {
+          deletedTemplateIds: Array.from(deletedTemplateIds),
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      ).catch(() => {});
+    }
+  }
+
+  return count;
 }
 
 /**

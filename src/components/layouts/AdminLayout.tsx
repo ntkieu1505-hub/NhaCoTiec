@@ -15,7 +15,7 @@ export const AdminLayout: React.FC = () => {
     { number: '03', name: 'Thiệp', path: '/admin/thiep', icon: 'mail' },
     { number: '04', name: 'Mẫu thiệp', path: '/admin/mau-thiep', icon: 'style' },
     { number: '05', name: 'Người dùng', path: '/admin/nguoi-dung', icon: 'group' },
-    { number: '06', name: 'Khách mời & lời chúc', path: '/admin/khach-moi-loi-chuc', icon: 'recent_actors' },
+    { number: '06', name: 'File Excel (Dữ liệu tiệc)', path: '/admin/khach-moi-loi-chuc', icon: 'table_view' },
     { number: '07', name: 'Thông báo', path: '/admin/thong-bao', icon: 'notifications' },
     { number: '08', name: 'Phân tích', path: '/admin/phan-tich', icon: 'analytics' },
     { number: '09', name: 'Quản lý nội dung', path: '/admin/quan-ly-noi-dung', icon: 'article' },

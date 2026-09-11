@@ -1,5 +1,5 @@
 export type TemplateCategory = 'basic' | 'premium';
-export type TemplateStatus = 'published' | 'draft' | 'hidden';
+export type TemplateStatus = 'published' | 'draft' | 'hidden' | 'deleted';
 
 export interface Template {
   id: string;
@@ -11,9 +11,10 @@ export interface Template {
   thumbnailUrl: string;
   thumbnailPosition?: string; // CSS object-position, e.g. "center 30%", "center top", "center center"
   previewUrl: string; // Dedicated demo URL, e.g. "https://nhacotiec.vn/demo/minh-anh"
-  status: TemplateStatus; // 'published' | 'draft' | 'hidden'
+  status: TemplateStatus; // 'published' | 'draft' | 'hidden' | 'deleted'
   createdAt: string;
   updatedAt: string;
+  isDeleted?: boolean;
 
   // Optional and legacy compatibility fields
   title?: string;
