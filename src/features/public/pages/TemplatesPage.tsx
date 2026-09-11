@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { Badge } from '../../../components/common/Badge';
@@ -12,11 +12,23 @@ export const TemplatesPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const publicTemplates = usePublicTemplates();
   const [filter, setFilter] = useState<'all' | 'basic' | 'premium'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplateForOrder, setSelectedTemplateForOrder] = useState<Template | null>(null);
 
-  const filtered = filter === 'all'
-    ? publicTemplates
-    : publicTemplates.filter((t) => (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === filter);
+  const filtered = useMemo(() => {
+    return publicTemplates.filter((t) => {
+      const matchCat = filter === 'all' || (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === filter;
+      if (!matchCat) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const matchName = t.name.toLowerCase().includes(q);
+        const matchStyle = (t.style || '').toLowerCase().includes(q);
+        const matchSlug = t.slug.toLowerCase().includes(q);
+        if (!matchName && !matchStyle && !matchSlug) return false;
+      }
+      return true;
+    });
+  }, [publicTemplates, filter, searchQuery]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
@@ -32,43 +44,89 @@ export const TemplatesPage: React.FC = () => {
           Đội ngũ Nhà Có Tiệc sẽ tiếp nhận và tùy biến riêng từng câu chữ, ảnh cưới và âm nhạc theo thông điệp của bạn.
         </p>
 
-        {/* 3 tabs filter: Tất cả, Cao cấp, Cơ bản */}
-        <div className="inline-flex items-center gap-1 p-1 rounded-full bg-surface-subtle border border-border-delicate mt-6 shadow-xs">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
-              filter === 'all'
-                ? 'bg-[#63141a] text-white shadow-sm'
-                : 'text-deep-espresso hover:bg-surface-card'
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            onClick={() => setFilter('premium')}
-            className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
-              filter === 'premium'
-                ? 'bg-[#63141a] text-white shadow-sm'
-                : 'text-deep-espresso hover:bg-surface-card'
-            }`}
-          >
-            Cao cấp
-          </button>
-          <button
-            onClick={() => setFilter('basic')}
-            className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
-              filter === 'basic'
-                ? 'bg-[#63141a] text-white shadow-sm'
-                : 'text-deep-espresso hover:bg-surface-card'
-            }`}
-          >
-            Cơ bản
-          </button>
+        {/* Filters: Category tabs + Search bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
+          {/* 3 tabs filter: Tất cả, Cao cấp, Cơ bản */}
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-surface-subtle border border-border-delicate shadow-xs shrink-0">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                filter === 'all'
+                  ? 'bg-[#63141a] text-white shadow-sm'
+                  : 'text-deep-espresso hover:bg-surface-card'
+              }`}
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => setFilter('premium')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                filter === 'premium'
+                  ? 'bg-[#63141a] text-white shadow-sm'
+                  : 'text-deep-espresso hover:bg-surface-card'
+              }`}
+            >
+              Cao cấp
+            </button>
+            <button
+              onClick={() => setFilter('basic')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                filter === 'basic'
+                  ? 'bg-[#63141a] text-white shadow-sm'
+                  : 'text-deep-espresso hover:bg-surface-card'
+              }`}
+            >
+              Cơ bản
+            </button>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative w-full sm:w-64">
+            <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[17px] text-text-muted pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm theo tên, phong cách..."
+              className="w-full h-9 pl-9 pr-8 rounded-full bg-surface-subtle border border-border-delicate text-xs text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine focus:border-burgundy-wine"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
+                title="Xóa tìm kiếm"
+              >
+                <Icon name="close" className="text-[14px]" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Grid of Templates */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {filtered.length === 0 ? (
+        <div className="p-16 text-center bg-surface-card rounded-3xl border border-border-delicate flex flex-col items-center gap-2 max-w-md mx-auto">
+          <Icon name="search_off" className="text-4xl text-text-muted/50" />
+          <span className="font-serif text-base font-bold text-deep-espresso">
+            Không tìm thấy mẫu thiệp phù hợp
+          </span>
+          <span className="text-xs text-text-muted">
+            {searchQuery ? `Không có mẫu thiệp nào khớp với "${searchQuery}".` : 'Chưa có mẫu thiệp trong phân loại này.'}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setFilter('all');
+            }}
+            className="mt-3 px-5 py-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold hover:bg-burgundy-wine/90"
+          >
+            Xem tất cả mẫu thiệp
+          </button>
+        </div>
+      ) : (
+        /* Grid of Templates */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {filtered.map((template) => (
           <article
             key={template.id}
@@ -138,6 +196,7 @@ export const TemplatesPage: React.FC = () => {
           </article>
         ))}
       </div>
+      )}
 
       {/* Mandatory Pre-checkout Order Information Modal */}
       {selectedTemplateForOrder && (

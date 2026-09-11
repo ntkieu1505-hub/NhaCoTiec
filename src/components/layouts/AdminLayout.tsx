@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../common/Icon';
 import { useAuth } from '../../mocks/authStore';
+import { useOrders } from '../../mocks/orderStore';
+import { getAllTemplates } from '../../mocks/templateStore';
+import { MOCK_USERS } from '../../mocks/index';
+import { ORDER_STAGES } from '../../utils/constants';
+import { formatCurrency } from '../../utils/formatters';
 
 export const AdminLayout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -26,6 +31,100 @@ export const AdminLayout: React.FC = () => {
   const getCurrentTitle = () => {
     const current = navItems.find((item) => location.pathname.startsWith(item.path));
     return current ? `${current.number}. ${current.name}` : 'Bảng điều hành Nhà Có Tiệc';
+  };
+
+  const orders = useOrders();
+  const templates = getAllTemplates();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Compute search matches across orders, templates, users, and admin pages
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return null;
+
+    const matchedOrders = orders.filter((o) => {
+      const matchId = o.id.toLowerCase().includes(q);
+      const matchName = (o.customerName || '').toLowerCase().includes(q);
+      const matchPhone = (o.customerPhone || '').toLowerCase().includes(q);
+      const matchEmail = (o.customerEmail || '').toLowerCase().includes(q);
+      const matchTpl = (o.templateName || '').toLowerCase().includes(q);
+      return matchId || matchName || matchPhone || matchEmail || matchTpl;
+    }).slice(0, 5);
+
+    const matchedTemplates = templates.filter((t) => {
+      return (
+        t.name.toLowerCase().includes(q) ||
+        t.slug.toLowerCase().includes(q) ||
+        (t.style || '').toLowerCase().includes(q)
+      );
+    }).slice(0, 4);
+
+    const matchedUsers = MOCK_USERS.filter((u) => {
+      return (
+        u.fullName.toLowerCase().includes(q) ||
+        u.phone.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+      );
+    }).slice(0, 3);
+
+    const matchedPages = navItems.filter((item) => {
+      return (
+        item.name.toLowerCase().includes(q) ||
+        item.number.includes(q)
+      );
+    });
+
+    const totalCount =
+      matchedOrders.length +
+      matchedTemplates.length +
+      matchedUsers.length +
+      matchedPages.length;
+
+    return {
+      matchedOrders,
+      matchedTemplates,
+      matchedUsers,
+      matchedPages,
+      totalCount,
+    };
+  }, [searchQuery, orders, templates]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const q = searchQuery.trim();
+      if (!q) return;
+
+      if (searchResults && searchResults.matchedOrders.length > 0) {
+        const exact = searchResults.matchedOrders.find((o) => o.id.toLowerCase() === q.toLowerCase());
+        if (exact) {
+          navigate(`/admin/don-hang/${exact.id}`);
+          setIsSearchFocused(false);
+          setMobileSearchOpen(false);
+          return;
+        }
+      }
+
+      navigate(`/admin/don-hang?search=${encodeURIComponent(q)}`);
+      setIsSearchFocused(false);
+      setMobileSearchOpen(false);
+    } else if (e.key === 'Escape') {
+      setIsSearchFocused(false);
+      setMobileSearchOpen(false);
+    }
   };
 
   return (
@@ -150,14 +249,229 @@ export const AdminLayout: React.FC = () => {
 
           {/* Topbar Right */}
           <div className="flex items-center gap-4 sm:gap-6">
-            <div className="hidden md:flex relative items-center">
-              <Icon name="search" className="absolute left-3 text-text-muted text-[18px]" />
+            {/* Desktop Search Input with Quick Jump Dropdown */}
+            <div ref={searchContainerRef} className="relative items-center hidden md:flex">
+              <Icon name="search" className="absolute left-3 text-text-muted text-[18px] pointer-events-none" />
               <input
                 type="text"
-                placeholder="Tìm kiếm đơn, khách, thiệp..."
-                className="w-56 lg:w-64 pl-9 pr-4 py-1.5 rounded-full bg-surface-subtle text-on-surface text-xs placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine transition-all"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
+                }}
+                onFocus={() => setIsSearchFocused(true)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Tìm kiếm đơn (NCT01), khách, thiệp..."
+                className="w-60 lg:w-72 pl-9 pr-8 py-1.5 rounded-full bg-surface-subtle text-on-surface text-xs placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-burgundy-wine/30 border border-border-delicate transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 p-0.5 text-text-muted hover:text-deep-espresso rounded-full"
+                  title="Xóa tìm kiếm"
+                >
+                  <Icon name="close" className="text-[14px]" />
+                </button>
+              )}
+
+              {/* Instant Search Results Dropdown */}
+              {isSearchFocused && searchQuery.trim() && searchResults && (
+                <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 md:w-[450px] bg-surface-card rounded-2xl shadow-2xl border border-border-delicate overflow-hidden z-50 animate-in fade-in zoom-in-95">
+                  <div className="px-4 py-2.5 bg-surface-subtle/80 border-b border-border-delicate flex items-center justify-between text-xs">
+                    <span className="font-semibold text-deep-espresso">
+                      Kết quả tìm kiếm cho "{searchQuery}"
+                    </span>
+                    <span className="text-[11px] text-text-muted font-medium">
+                      {searchResults.totalCount} kết quả
+                    </span>
+                  </div>
+
+                  <div className="max-h-[380px] overflow-y-auto divide-y divide-border-delicate/60 text-xs">
+                    {searchResults.totalCount === 0 ? (
+                      <div className="p-6 text-center text-text-muted flex flex-col items-center gap-2">
+                        <Icon name="search_off" className="text-3xl text-text-muted/60" />
+                        <span>Không tìm thấy dữ liệu nào phù hợp</span>
+                        <Link
+                          to={`/admin/don-hang?search=${encodeURIComponent(searchQuery)}`}
+                          onClick={() => setIsSearchFocused(false)}
+                          className="mt-1 text-xs text-burgundy-wine font-semibold hover:underline"
+                        >
+                          Tìm trong trang Quản lý đơn hàng &rarr;
+                        </Link>
+                      </div>
+                    ) : (
+                      <>
+                        {/* 1. Orders Section */}
+                        {searchResults.matchedOrders.length > 0 && (
+                          <div className="p-2 flex flex-col gap-1">
+                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
+                              Đơn hàng ({searchResults.matchedOrders.length})
+                            </span>
+                            {searchResults.matchedOrders.map((ord) => (
+                              <button
+                                key={ord.id}
+                                type="button"
+                                onClick={() => {
+                                  navigate(`/admin/don-hang/${ord.id}`);
+                                  setIsSearchFocused(false);
+                                }}
+                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors group"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-7 h-7 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:bg-burgundy-wine group-hover:text-white transition-colors">
+                                    #{ord.id}
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-deep-espresso truncate text-xs">
+                                      {ord.customerName}
+                                    </span>
+                                    <span className="text-[11px] text-text-muted truncate">
+                                      {ord.templateName} • {ord.customerPhone}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-50 text-burgundy-wine border border-rose-200">
+                                    {ORDER_STAGES[ord.currentStage]?.name || 'Tiến trình'}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 2. Templates Section */}
+                        {searchResults.matchedTemplates.length > 0 && (
+                          <div className="p-2 flex flex-col gap-1">
+                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
+                              Mẫu thiệp cưới ({searchResults.matchedTemplates.length})
+                            </span>
+                            {searchResults.matchedTemplates.map((tpl) => (
+                              <button
+                                key={tpl.id}
+                                type="button"
+                                onClick={() => {
+                                  navigate(`/admin/mau-thiep?search=${encodeURIComponent(tpl.name)}`);
+                                  setIsSearchFocused(false);
+                                }}
+                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors group"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-7 h-7 rounded-lg bg-gold-foil/15 text-gold-foil flex items-center justify-center text-xs shrink-0">
+                                    <Icon name="style" className="text-[15px]" />
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-deep-espresso truncate text-xs">
+                                      {tpl.name}
+                                    </span>
+                                    <span className="text-[11px] text-text-muted truncate">
+                                      {tpl.style || 'Phong cách thanh lịch'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <span className="text-xs font-serif font-bold text-burgundy-wine shrink-0">
+                                  {formatCurrency(tpl.price)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 3. Users Section */}
+                        {searchResults.matchedUsers.length > 0 && (
+                          <div className="p-2 flex flex-col gap-1">
+                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
+                              Người dùng &amp; Khách ({searchResults.matchedUsers.length})
+                            </span>
+                            {searchResults.matchedUsers.map((usr) => (
+                              <button
+                                key={usr.id}
+                                type="button"
+                                onClick={() => {
+                                  navigate(`/admin/nguoi-dung?search=${encodeURIComponent(usr.fullName)}`);
+                                  setIsSearchFocused(false);
+                                }}
+                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-7 h-7 rounded-lg bg-surface-cream border border-border-delicate flex items-center justify-center text-xs shrink-0">
+                                    <Icon name="person" className="text-[15px] text-text-muted" />
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-deep-espresso truncate text-xs">
+                                      {usr.fullName}
+                                    </span>
+                                    <span className="text-[11px] text-text-muted truncate">
+                                      {usr.phone} • {usr.email}
+                                    </span>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-subtle text-text-muted border border-border-delicate shrink-0">
+                                  {usr.orderCount} đơn
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 4. Pages Section */}
+                        {searchResults.matchedPages.length > 0 && (
+                          <div className="p-2 flex flex-col gap-1">
+                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
+                              Trang điều hướng ({searchResults.matchedPages.length})
+                            </span>
+                            {searchResults.matchedPages.map((pg) => (
+                              <button
+                                key={pg.path}
+                                type="button"
+                                onClick={() => {
+                                  navigate(pg.path);
+                                  setIsSearchFocused(false);
+                                }}
+                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center gap-2.5 transition-colors"
+                              >
+                                <Icon name={pg.icon} className="text-[16px] text-burgundy-wine shrink-0" />
+                                <span className="font-medium text-deep-espresso text-xs">
+                                  {pg.number}. {pg.name}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Dropdown Footer */}
+                  <div className="p-2 bg-surface-subtle border-t border-border-delicate flex items-center justify-between text-[11px]">
+                    <span className="text-text-muted">
+                      Nhấn <strong>Enter</strong> để mở kết quả
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate(`/admin/don-hang?search=${encodeURIComponent(searchQuery.trim())}`);
+                        setIsSearchFocused(false);
+                      }}
+                      className="text-burgundy-wine font-semibold hover:underline"
+                    >
+                      Mở trong Quản lý đơn hàng &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Mobile Search Button Toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+              className="md:hidden p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              title="Tìm kiếm"
+            >
+              <Icon name="search" className="text-[20px]" />
+            </button>
 
             <button
               className="relative p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
@@ -190,6 +504,45 @@ export const AdminLayout: React.FC = () => {
             </div>
           </div>
         </header>
+
+        {/* Mobile Search Input Bar */}
+        {mobileSearchOpen && (
+          <div className="md:hidden p-3 bg-surface border-b border-border-delicate flex items-center gap-2 animate-in slide-in-from-top-2 duration-150">
+            <div className="relative flex-1">
+              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[17px]" />
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Tìm mã đơn (NCT01), khách, thiệp..."
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-subtle text-on-surface text-xs focus:outline-none focus:ring-1 focus:ring-burgundy-wine border border-border-delicate"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
+                >
+                  <Icon name="close" className="text-[14px]" />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (searchQuery.trim()) {
+                  navigate(`/admin/don-hang?search=${encodeURIComponent(searchQuery.trim())}`);
+                }
+                setMobileSearchOpen(false);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-burgundy-wine text-white text-xs font-semibold shrink-0"
+            >
+              Tìm
+            </button>
+          </div>
+        )}
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1160px] mx-auto">

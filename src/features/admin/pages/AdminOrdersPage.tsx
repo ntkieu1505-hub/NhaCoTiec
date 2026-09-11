@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { StatusChip } from '../../../components/common/StatusChip';
 import {
@@ -14,12 +14,48 @@ import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
 
 export const AdminOrdersPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedStage, setSelectedStage] = useState<number | 'all'>('all');
   const orders = useOrders();
 
-  const filteredOrders = selectedStage === 'all'
-    ? orders
-    : orders.filter((o) => o.currentStage === selectedStage);
+  // Sync if URL search param changes
+  useEffect(() => {
+    const q = searchParams.get('search');
+    if (q !== null && q !== searchQuery) {
+      setSearchQuery(q);
+    }
+  }, [searchParams]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val.trim()) {
+      setSearchParams({ search: val.trim() }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      if (selectedStage !== 'all' && o.currentStage !== selectedStage) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const matchId = o.id.toLowerCase().includes(q);
+        const matchName = (o.customerName || '').toLowerCase().includes(q);
+        const matchPhone = (o.customerPhone || '').toLowerCase().includes(q);
+        const matchEmail = (o.customerEmail || '').toLowerCase().includes(q);
+        const matchTpl = (o.templateName || '').toLowerCase().includes(q);
+        if (!matchId && !matchName && !matchPhone && !matchEmail && !matchTpl) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [orders, selectedStage, searchQuery]);
 
   const pendingConfirmations = orders.filter((o) => o.paymentStatus === 'pending_confirmation');
 
@@ -206,6 +242,45 @@ export const AdminOrdersPage: React.FC = () => {
         </section>
       )}
 
+      {/* Search Bar & Order Counter */}
+      <div className="bg-surface-card rounded-2xl p-3 sm:p-4 border border-border-delicate shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-lg">
+          <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-text-muted pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Tìm theo mã đơn (NCT01), tên dâu rể, SĐT, mẫu thiệp..."
+            className="w-full h-10 pl-10 pr-9 rounded-xl bg-surface-subtle border border-border-delicate text-xs text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine focus:border-burgundy-wine"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
+              title="Xóa tìm kiếm"
+            >
+              <Icon name="close" className="text-[16px]" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-text-muted">
+            Hiển thị: <strong>{filteredOrders.length}</strong> / {orders.length} đơn hàng
+          </span>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="text-burgundy-wine font-semibold hover:underline text-[11px]"
+            >
+              (Xóa lọc)
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 8-Stage Filter Pills */}
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
         <button
@@ -257,7 +332,36 @@ export const AdminOrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-delicate">
-              {filteredOrders.map((ord) => (
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-text-muted">
+                    <div className="flex flex-col items-center gap-2">
+                      <Icon name="search_off" className="text-3xl text-text-muted/50" />
+                      <span className="font-semibold text-deep-espresso">
+                        Không tìm thấy đơn hàng nào phù hợp
+                      </span>
+                      <span className="text-xs">
+                        {searchQuery
+                          ? `Không có kết quả cho từ khóa "${searchQuery}".`
+                          : 'Chưa có đơn hàng trong giai đoạn này.'}
+                      </span>
+                      {(searchQuery || selectedStage !== 'all') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleSearchChange('');
+                            setSelectedStage('all');
+                          }}
+                          className="mt-2 px-4 py-1.5 rounded-full bg-surface-subtle hover:bg-surface-cream text-burgundy-wine text-xs font-semibold border border-border-delicate"
+                        >
+                          Xem tất cả đơn hàng
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((ord) => (
                 <tr key={ord.id} className="hover:bg-surface-subtle/30 transition-colors">
                   <td className="py-3.5 px-4 font-mono font-bold text-deep-espresso">
                     #{ord.id}
@@ -338,7 +442,7 @@ export const AdminOrdersPage: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
