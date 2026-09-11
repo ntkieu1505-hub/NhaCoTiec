@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import {
@@ -17,7 +17,7 @@ import { RevisionModal } from '../components/RevisionModal';
 import { WeddingInfoModal } from '../components/WeddingInfoModal';
 import { PhotoAlbumModal } from '../components/PhotoAlbumModal';
 import { ORDER_STAGES, PAYMENT_STATUS_META } from '../../../utils/constants';
-import { OrderStatusStage, ORDER_STATUS_MAP, WeddingInformation } from '../../../types/order';
+import { Order, OrderStatusStage, ORDER_STATUS_MAP, WeddingInformation } from '../../../types/order';
 import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 
 export const CustomerDashboardPage: React.FC = () => {
@@ -36,33 +36,68 @@ export const CustomerDashboardPage: React.FC = () => {
   const [previewTab, setPreviewTab] = useState<'guests' | 'wishes'>('guests');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
-  // Dynamically resolve customer active order:
-  // 1. By logged-in user ID
-  // 2. By last created order ID
-  // 3. NCT01
-  // 4. First order in the store
-  const activeOrder =
-    (user ? allOrders.find((o) => o.userId === user.id) : undefined) ||
-    (lastOrderId ? allOrders.find((o) => o.id === lastOrderId) : undefined) ||
-    allOrders.find((o) => o.id === 'NCT01') ||
-    allOrders[0];
+  // Dynamically resolve all orders belonging to this customer:
+  const customerOrders = useMemo(() => {
+    let list: Order[] = [];
 
-  const liveOrder = activeOrder || {
-    id: 'NCT01',
-    customerName: 'Nguyễn Minh Anh & Trần Đức Minh',
-    customerPhone: '0982 123 456',
-    customerEmail: 'minhanh.wedding@gmail.com',
-    templateId: 'tpl-minh-anh',
-    templateName: 'Minh Anh & Tuấn Kiệt (Suite Cao Cấp)',
-    category: 'premium' as const,
-    price: 79000,
-    paymentStatus: 'unpaid' as const,
-    orderStatus: 'pending_payment' as const,
-    paymentMethod: 'vietqr' as const,
-    currentStage: 1 as const,
-    createdAt: '2026-09-08T19:15:00Z',
-    updatedAt: '2026-09-08T22:00:00Z',
-  };
+    // 1. Matched by authenticated user
+    if (user) {
+      list = allOrders.filter(
+        (o) =>
+          (o.userId && o.userId === user.id) ||
+          (user.email && o.customerEmail && o.customerEmail.toLowerCase() === user.email.toLowerCase()) ||
+          (user.phone && o.customerPhone && o.customerPhone === user.phone)
+      );
+    }
+
+    // 2. Fallback to last customer order ID if guest or not matched
+    if (list.length === 0 && lastOrderId) {
+      const last = allOrders.find((o) => o.id === lastOrderId);
+      if (last) {
+        list = allOrders.filter(
+          (o) =>
+            o.id === lastOrderId ||
+            (last.customerPhone && o.customerPhone === last.customerPhone) ||
+            (last.customerEmail && o.customerEmail && o.customerEmail.toLowerCase() === last.customerEmail.toLowerCase())
+        );
+      }
+    }
+
+    // 3. Fallback for demo / direct portal view:
+    // If list is empty, default to demo orders (NCT01 and NCT02) so multi-order capability is available
+    if (list.length === 0) {
+      list = allOrders.slice(0, 2);
+    }
+
+    return list;
+  }, [allOrders, user, lastOrderId]);
+
+  const [selectedOrderId, setSelectedOrderId] = useState<string>(() => {
+    return lastOrderId || '';
+  });
+
+  const liveOrder = useMemo(() => {
+    if (selectedOrderId) {
+      const found = customerOrders.find((o) => o.id === selectedOrderId);
+      if (found) return found;
+    }
+    return customerOrders[0] || allOrders[0] || {
+      id: 'NCT01',
+      customerName: 'Nguyễn Minh Anh & Trần Đức Minh',
+      customerPhone: '0982 123 456',
+      customerEmail: 'minhanh.wedding@gmail.com',
+      templateId: 'tpl-minh-anh',
+      templateName: 'Minh Anh & Tuấn Kiệt (Suite Cao Cấp)',
+      category: 'premium' as const,
+      price: 79000,
+      paymentStatus: 'unpaid' as const,
+      orderStatus: 'pending_payment' as const,
+      paymentMethod: 'vietqr' as const,
+      currentStage: 1 as const,
+      createdAt: '2026-09-08T19:15:00Z',
+      updatedAt: '2026-09-08T22:00:00Z',
+    };
+  }, [customerOrders, selectedOrderId, allOrders]);
 
   // Data-driven current step strictly mapped from orderStatus
   const rawStep = ORDER_STATUS_MAP[liveOrder.orderStatus] || liveOrder.currentStage || 1;
@@ -144,10 +179,50 @@ export const CustomerDashboardPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="font-label-caps text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-700/20 shadow-2xs">
-              Mã đơn #{liveOrder.id}
+              {customerOrders.length > 1
+                ? `Đơn ${customerOrders.findIndex((o) => o.id === liveOrder.id) + 1} • #${liveOrder.id}`
+                : `Mã đơn #${liveOrder.id}`}
             </span>
           </div>
         </div>
+
+        {/* Multi-order Switcher Strip in Sticky Header */}
+        {customerOrders.length > 1 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted px-1 shrink-0">
+              Đơn hàng:
+            </span>
+            {customerOrders.map((ord, idx) => {
+              const isSelected = ord.id === liveOrder.id;
+              return (
+                <button
+                  key={ord.id}
+                  type="button"
+                  onClick={() => setSelectedOrderId(ord.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                    isSelected
+                      ? 'bg-burgundy-wine text-white shadow-2xs'
+                      : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
+                  }`}
+                >
+                  <Icon name={isSelected ? 'check_circle' : 'receipt'} className="text-[13px]" />
+                  <span>Đơn hàng {idx + 1}</span>
+                  <span className={`text-[10px] truncate max-w-[120px] ${isSelected ? 'text-rose-200' : 'text-text-muted'}`}>
+                    ({ord.templateName || `#${ord.id}`})
+                  </span>
+                </button>
+              );
+            })}
+            <Link
+              to="/mau-thiep"
+              className="px-2.5 py-1 rounded-full text-xs text-burgundy-wine hover:bg-rose-50 border border-dashed border-rose-300 font-medium whitespace-nowrap flex items-center gap-1 transition-colors shrink-0"
+              title="Đặt thêm mẫu thiệp cưới khác"
+            >
+              <Icon name="add" className="text-[13px]" />
+              <span>Thêm mẫu</span>
+            </Link>
+          </div>
+        )}
 
         {/* 3 Main Navigation Chips Only */}
         <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
@@ -176,6 +251,109 @@ export const CustomerDashboardPage: React.FC = () => {
       <div className="px-4 py-4 flex flex-col gap-5">
         {/* SECTION 1: #overview - TỔNG QUAN TÀI KHOẢN & ĐƠN HÀNG */}
         <section id="overview" className="scroll-mt-32 flex flex-col gap-4">
+          {/* Multi-template / Multi-order Selector Card */}
+          {customerOrders.length > 1 && (
+            <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center shrink-0">
+                    <Icon name="layers" className="text-[18px]" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-sm font-bold text-deep-espresso">
+                      Mẫu thiệp đã chọn ({customerOrders.length} đơn hàng)
+                    </h3>
+                    <p className="text-[11px] text-text-muted">
+                      Bạn đã đặt {customerOrders.length} mẫu thiệp cưới. Nhấn chọn đơn hàng bên dưới để xem tiến độ và quản lý riêng từng mẫu:
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/mau-thiep"
+                  className="hidden sm:inline-flex items-center gap-1 text-xs text-burgundy-wine font-semibold hover:underline shrink-0"
+                >
+                  <Icon name="add" className="text-[14px]" />
+                  <span>Chọn thêm mẫu khác</span>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                {customerOrders.map((ord, idx) => {
+                  const isSelected = ord.id === liveOrder.id;
+                  const ordStep = ORDER_STATUS_MAP[ord.orderStatus] || ord.currentStage || 1;
+                  const ordMeta = ORDER_STAGES[ordStep as OrderStatusStage] || ORDER_STAGES[1];
+
+                  return (
+                    <button
+                      key={ord.id}
+                      type="button"
+                      onClick={() => setSelectedOrderId(ord.id)}
+                      className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 relative ${
+                        isSelected
+                          ? 'bg-burgundy-wine text-white border-burgundy-wine shadow-md ring-2 ring-burgundy-wine/25'
+                          : 'bg-surface-subtle hover:bg-surface-card text-deep-espresso border-border-delicate'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-burgundy-wine/10 text-burgundy-wine'
+                        }`}
+                      >
+                        {idx + 1}
+                      </div>
+
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-bold text-xs">
+                            Đơn hàng {idx + 1}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                              isSelected
+                                ? 'bg-white/20 text-rose-100'
+                                : 'bg-surface-cream text-text-muted border border-border-delicate'
+                            }`}
+                          >
+                            #{ord.id}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`text-xs truncate font-medium mt-0.5 ${
+                            isSelected ? 'text-rose-100' : 'text-deep-espresso'
+                          }`}
+                        >
+                          {ord.templateName || 'Mẫu thiệp cưới'}
+                        </span>
+
+                        <div className="flex items-center gap-1.5 mt-1.5 text-[11px]">
+                          <span
+                            className={`inline-block w-2 h-2 rounded-full ${
+                              isSelected ? 'bg-emerald-300' : 'bg-emerald-600'
+                            }`}
+                          />
+                          <span
+                            className={isSelected ? 'text-white/90 text-[11px] font-medium' : 'text-text-muted text-[11px]'}
+                          >
+                            Bước {ordStep}/8 • {ordMeta.name}
+                          </span>
+                        </div>
+                      </div>
+
+                      {isSelected && (
+                        <div className="shrink-0 text-white flex items-center self-center">
+                          <Icon name="check_circle" className="text-[18px]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-border-delicate">
               <div className="flex items-center gap-2.5">
@@ -217,7 +395,9 @@ export const CustomerDashboardPage: React.FC = () => {
               </div>
               <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
                 <span className="text-[10px] text-text-muted uppercase font-bold">Ngày cưới</span>
-                <span className="font-semibold text-deep-espresso">28/12/2026</span>
+                <span className="font-semibold text-deep-espresso">
+                  {liveOrder.weddingInfo?.weddingDate || '28/12/2026'}
+                </span>
               </div>
               <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
                 <span className="text-[10px] text-text-muted uppercase font-bold">Mẫu thiệp đã chọn</span>
@@ -227,7 +407,9 @@ export const CustomerDashboardPage: React.FC = () => {
               </div>
               <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
                 <span className="text-[10px] text-text-muted uppercase font-bold">Địa điểm tiệc</span>
-                <span className="font-semibold text-deep-espresso truncate">GEM Center • TP. HCM</span>
+                <span className="font-semibold text-deep-espresso truncate">
+                  {liveOrder.weddingInfo?.venueName || 'GEM Center • TP. HCM'}
+                </span>
               </div>
             </div>
 
@@ -904,20 +1086,6 @@ export const CustomerDashboardPage: React.FC = () => {
                       {exportData?.deadline || '25/12/2026'}
                     </span>
                   </div>
-                </div>
-
-                {/* Informative notification: NO guest list, NO wishes, NO download button */}
-                <div className="flex items-center justify-between text-[11px] text-text-muted px-2">
-                  <span className="flex items-center gap-1">
-                    <Icon name="lock" className="text-[14px] text-text-muted/70" />
-                    Danh sách khách và lời chúc tạm ẩn để đảm bảo tính chuẩn xác trước ngày cưới.
-                  </span>
-                  <Link
-                    to="/admin/khach-moi-loi-chuc"
-                    className="text-burgundy-wine hover:underline font-semibold text-[11px] whitespace-nowrap ml-2"
-                  >
-                    Admin Hub (Demo gửi file) &rarr;
-                  </Link>
                 </div>
               </div>
             ) : (
