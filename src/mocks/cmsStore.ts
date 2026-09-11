@@ -23,7 +23,7 @@ const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_cms_channel';
 export const DEFAULT_ORDER_FORM_CONFIG: OrderFormConfig = {
   title: 'Điền Thông Tin Ngày Cưới',
   subtitle: 'Cung cấp chi tiết để Nhà Có Tiệc hoàn thiện thiệp cưới hoàn hảo cho bạn',
-  noticeText: 'Designer Nhà Có Tiệc sẽ liên hệ qua Zalo trong vòng 1-2h để xác nhận và gửi bản duyệt thiệp hoàn thiện trong 24h.',
+  noticeText: '',
   supportZalo: '0982 123 456',
   supportZaloLink: 'https://zalo.me/0982123456',
   photoGuideNote: 'Gợi ý: Tải từ 5 - 15 ảnh chất lượng cao (ảnh cổng, ảnh phóng lớn, khoảnh khắc chụp đôi) để website thiệp cưới hiển thị đẹp nhất.',
@@ -333,6 +333,10 @@ let currentCmsContent: CmsContent = (() => {
         orderForm: {
           ...DEFAULT_ORDER_FORM_CONFIG,
           ...(parsed.orderForm || {}),
+          noticeText:
+            parsed.orderForm?.noticeText?.includes('Designer Nhà Có Tiệc')
+              ? ''
+              : (parsed.orderForm?.noticeText ?? ''),
           rsvpFeatures:
             Array.isArray(parsed.orderForm?.rsvpFeatures) && parsed.orderForm.rsvpFeatures.length > 0
               ? parsed.orderForm.rsvpFeatures

@@ -225,25 +225,20 @@ export const OrderWeddingInfoPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Notice Banner from CMS */}
-        {orderFormConfig?.noticeText && (
-          <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-start gap-2.5 shadow-2xs">
-            <Icon name="info" className="text-[18px] text-amber-700 shrink-0 mt-0.5" />
-            <div className="flex-1 text-[11px] sm:text-xs">
-              <span className="leading-relaxed">{orderFormConfig.noticeText}</span>
-              {orderFormConfig.supportZalo && (
-                <div className="mt-1 flex items-center gap-1.5 font-medium">
-                  <span>Hotline / Zalo hỗ trợ:</span>
-                  <a
-                    href={orderFormConfig.supportZaloLink || `https://zalo.me/${orderFormConfig.supportZalo.replace(/\s+/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-burgundy-wine font-bold underline"
-                  >
-                    {orderFormConfig.supportZalo}
-                  </a>
-                </div>
-              )}
+        {/* Hotline / Zalo Support Banner */}
+        {orderFormConfig?.supportZalo && (
+          <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-center justify-center gap-2 shadow-2xs">
+            <Icon name="support_agent" className="text-[18px] text-amber-700 shrink-0" />
+            <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm">
+              <span>Hotline / Zalo hỗ trợ:</span>
+              <a
+                href={orderFormConfig.supportZaloLink || `https://zalo.me/${orderFormConfig.supportZalo.replace(/\s+/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-burgundy-wine font-bold underline hover:opacity-80"
+              >
+                {orderFormConfig.supportZalo}
+              </a>
             </div>
           </div>
         )}
