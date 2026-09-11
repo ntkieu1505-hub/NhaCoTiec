@@ -85,19 +85,19 @@ export default {
         "container-max": "1160px"
       },
       fontFamily: {
-        serif: ["Playfair Display", "Cormorant Garamond", "Times New Roman", "serif"],
-        sans: ["Plus Jakarta Sans", "sans-serif"],
-        "display-hero": ["Playfair Display", "serif"],
-        "display-hero-mobile": ["Playfair Display", "serif"],
-        "headline-lg": ["Playfair Display", "serif"],
-        "headline-lg-mobile": ["Playfair Display", "serif"],
-        "headline-md": ["Playfair Display", "serif"],
-        "headline-sm": ["Playfair Display", "serif"],
-        "body-lg": ["Plus Jakarta Sans", "sans-serif"],
-        "body-md": ["Plus Jakarta Sans", "sans-serif"],
-        "body-sm": ["Plus Jakarta Sans", "sans-serif"],
-        "label-md": ["Plus Jakarta Sans", "sans-serif"],
-        "label-caps": ["Plus Jakarta Sans", "sans-serif"]
+        serif: ["var(--font-heading)", "Fraunces", "Playfair Display", "serif"],
+        sans: ["var(--font-body)", "Be Vietnam Pro", "Plus Jakarta Sans", "sans-serif"],
+        "display-hero": ["var(--font-heading)", "serif"],
+        "display-hero-mobile": ["var(--font-heading)", "serif"],
+        "headline-lg": ["var(--font-heading)", "serif"],
+        "headline-lg-mobile": ["var(--font-heading)", "serif"],
+        "headline-md": ["var(--font-heading)", "serif"],
+        "headline-sm": ["var(--font-heading)", "serif"],
+        "body-lg": ["var(--font-body)", "sans-serif"],
+        "body-md": ["var(--font-body)", "sans-serif"],
+        "body-sm": ["var(--font-body)", "sans-serif"],
+        "label-md": ["var(--font-body)", "sans-serif"],
+        "label-caps": ["var(--font-body)", "sans-serif"]
       },
       fontSize: {
         "display-hero-mobile": ["38px", { lineHeight: "48px", letterSpacing: "-0.01em", fontWeight: "400" }],
