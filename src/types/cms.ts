@@ -162,6 +162,22 @@ export interface SocialLinksConfig {
   zalo: SocialPlatformConfig;
 }
 
+export interface OrderFormConfig {
+  title: string;
+  subtitle: string;
+  noticeText: string;
+  supportZalo: string;
+  supportZaloLink: string;
+  photoGuideNote: string;
+  maxPhotos: number;
+  showParentsSection: boolean;
+  showLoveStorySection: boolean;
+  showTimelineSection: boolean;
+  showVideoSection: boolean;
+  showRsvpSection: boolean;
+  termsText: string;
+}
+
 export interface CmsContent {
   hero: HomepageHero;
   intro: HomepageIntro;
@@ -173,5 +189,6 @@ export interface CmsContent {
   contact: ContactPageContent;
   settings: SiteSettings;
   socialLinks?: SocialLinksConfig;
+  orderForm?: OrderFormConfig;
 }
 

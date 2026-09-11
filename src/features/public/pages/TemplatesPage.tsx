@@ -100,15 +100,15 @@ export const TemplatesPage: React.FC = () => {
             {/* Template Info */}
             <div className="pt-3.5 px-5 pb-5 flex-1 flex flex-col justify-between gap-3.5">
               <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-xl font-bold text-deep-espresso">
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <h2 className="font-serif text-[17px] sm:text-lg font-bold text-deep-espresso min-w-0 flex-1 line-clamp-2 leading-[1.3] min-h-[44px] flex items-center">
                     {template.name}
                   </h2>
-                  <span className="text-xs text-gold-foil font-semibold flex items-center gap-1">
-                    <Icon name="grade" className="text-[16px]" /> {template.rating}
+                  <span className="text-xs text-gold-foil font-semibold flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-gold-foil/10 border border-gold-foil/25 mt-0.5">
+                    <Icon name="grade" className="text-[14px]" /> {template.rating || 5.0}
                   </span>
                 </div>
-                <p className="text-xs text-text-muted leading-relaxed">
+                <p className="text-xs text-text-muted leading-relaxed line-clamp-2 min-h-[34px]">
                   {template.description}
                 </p>
               </div>

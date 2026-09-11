@@ -59,6 +59,19 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const [status, setStatus] = useState<TemplateStatus>('published');
   const [slugEditedManually, setSlugEditedManually] = useState(false);
 
+  const DEFAULT_FEATURES = [
+    'Thiết kế chuẩn tỉ lệ smartphone, hiển thị hoàn hảo trên mọi thiết bị',
+    'Tích hợp nhạc nền tự động phát lãng mạn',
+    'Sổ lưu bút & xác nhận tham dự (RSVP) trực tuyến thời gian thực',
+    'Tích hợp bản đồ Google Maps chỉ đường chuẩn xác đến sảnh tiệc',
+    'Đếm ngược ngày cưới & lưu lịch Google / Apple Calendar tiện lợi'
+  ];
+
+  const [musicTitle, setMusicTitle] = useState('A Thousand Years');
+  const [musicArtist, setMusicArtist] = useState('Nhà Có Tiệc Studio');
+  const [features, setFeatures] = useState<string[]>(DEFAULT_FEATURES);
+  const [newFeatureText, setNewFeatureText] = useState('');
+
   // Helper to extract vertical percentage from object-position string
   const getYPercent = (posStr: string): number => {
     if (!posStr) return 30;
@@ -80,6 +93,13 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setThumbnailPosition(initialData.thumbnailPosition || 'center 30%');
       setPreviewUrl(initialData.previewUrl || 'https://nhacotiec.vn/demo/mau-moi');
       setStatus(initialData.status || (initialData.isActive ? 'published' : 'draft'));
+      setMusicTitle(initialData.musicTitle || 'A Thousand Years');
+      setMusicArtist(initialData.musicArtist || 'Nhà Có Tiệc Studio');
+      setFeatures(
+        initialData.features && initialData.features.length > 0
+          ? initialData.features
+          : DEFAULT_FEATURES
+      );
       setSlugEditedManually(true);
     } else {
       setName('');
@@ -91,6 +111,9 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setThumbnailPosition('center 30%');
       setPreviewUrl('https://nhacotiec.vn/demo/mau-moi');
       setStatus('published');
+      setMusicTitle('A Thousand Years');
+      setMusicArtist('Nhà Có Tiệc Studio');
+      setFeatures(DEFAULT_FEATURES);
       setSlugEditedManually(false);
     }
   }, [initialData, isOpen]);
@@ -161,7 +184,9 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       rating: initialData?.rating || 5.0,
       reviewCount: initialData?.reviewCount || 1,
       badgeText: price >= 79000 ? 'Cao cấp' : 'Cơ bản',
-      features: initialData?.features || []
+      musicTitle: musicTitle.trim() || 'A Thousand Years',
+      musicArtist: musicArtist.trim() || 'Nhà Có Tiệc Studio',
+      features: features.map((f) => f.trim()).filter(Boolean)
     });
 
     onClose();
@@ -514,6 +539,131 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               <p className="text-[10px] text-text-muted leading-tight">
                 * Đây là URL xem bản demo trực tiếp của <strong>MẪU THIỆP</strong>, không phải thiệp của từng khách hàng riêng lẻ.
               </p>
+            </div>
+
+            {/* SECTION: BACKGROUND MUSIC */}
+            <div className="p-4 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-burgundy-wine/15 text-burgundy-wine flex items-center justify-center">
+                  <Icon name="music_note" className="text-[14px]" />
+                </div>
+                <h3 className="font-serif text-sm font-bold text-deep-espresso">
+                  Nhạc Nền Mẫu Thiệp (Background Music)
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-deep-espresso">
+                    Tên bài hát <span className="text-burgundy-wine">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={musicTitle}
+                    onChange={(e) => setMusicTitle(e.target.value)}
+                    placeholder="Ví dụ: A Thousand Years, Until I Found You..."
+                    className="w-full px-3.5 py-2 rounded-xl bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-deep-espresso">
+                    Ca sĩ / Nghệ sĩ / Mô tả
+                  </label>
+                  <input
+                    type="text"
+                    value={musicArtist}
+                    onChange={(e) => setMusicArtist(e.target.value)}
+                    placeholder="Ví dụ: Christina Perri, Nhà Có Tiệc Studio..."
+                    className="w-full px-3.5 py-2 rounded-xl bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: TEMPLATE FEATURES */}
+            <div className="p-4 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-burgundy-wine/15 text-burgundy-wine flex items-center justify-center">
+                    <Icon name="verified" className="text-[14px]" />
+                  </div>
+                  <h3 className="font-serif text-sm font-bold text-deep-espresso">
+                    Mô Tả Tính Năng Mẫu Thiệp (Features / Checklist)
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFeatures(DEFAULT_FEATURES)}
+                  className="text-[11px] text-burgundy-wine hover:underline font-medium"
+                >
+                  + Nạp 5 tính năng mẫu chuẩn
+                </button>
+              </div>
+              <p className="text-[11px] text-text-muted">
+                Các tính năng này sẽ hiển thị trong mục "Tính năng bao gồm trong mẫu này" trên trang xem chi tiết thiệp của khách.
+              </p>
+
+              {/* Feature items */}
+              <div className="flex flex-col gap-2">
+                {features.map((feat, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-surface-card border border-border-delicate">
+                    <Icon name="check_circle" className="text-[16px] text-burgundy-wine shrink-0" />
+                    <input
+                      type="text"
+                      value={feat}
+                      onChange={(e) => {
+                        const updated = [...features];
+                        updated[idx] = e.target.value;
+                        setFeatures(updated);
+                      }}
+                      className="flex-1 bg-transparent text-xs text-deep-espresso focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFeatures(features.filter((_, i) => i !== idx))}
+                      className="text-text-muted hover:text-red-600 transition-colors p-1"
+                      title="Xóa dòng tính năng này"
+                    >
+                      <Icon name="close" className="text-[15px]" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add new feature input */}
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  placeholder="Nhập tính năng mới (ví dụ: Tích hợp hiệu ứng hạt hoa bay)..."
+                  value={newFeatureText}
+                  onChange={(e) => setNewFeatureText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = newFeatureText.trim();
+                      if (trimmed) {
+                        setFeatures([...features, trimmed]);
+                        setNewFeatureText('');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-3.5 py-2 rounded-xl bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trimmed = newFeatureText.trim();
+                    if (trimmed) {
+                      setFeatures([...features, trimmed]);
+                      setNewFeatureText('');
+                    }
+                  }}
+                  disabled={!newFeatureText.trim()}
+                  className="px-4 py-2 rounded-xl bg-burgundy-wine text-white text-xs font-semibold hover:bg-[#851622] disabled:opacity-40 transition-colors flex items-center gap-1 shadow-xs shrink-0"
+                >
+                  <Icon name="add" className="text-[16px]" />
+                  <span>Thêm tính năng</span>
+                </button>
+              </div>
             </div>
 
             {/* Status Selection */}

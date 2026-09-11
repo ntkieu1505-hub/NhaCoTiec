@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { useTemplates, getTemplateBySlug } from '../../../mocks/templateStore';
+import { usePublicTemplates, getTemplateBySlug } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { createOrder } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
+import { useCmsContent } from '../../../mocks/cmsStore';
 
 interface UploadedPhoto {
   id: string;
@@ -19,7 +20,9 @@ export const OrderWeddingInfoPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const templates = useTemplates();
+  const cms = useCmsContent();
+  const orderFormConfig = cms.orderForm;
+  const templates = usePublicTemplates();
   const template = (slug ? getTemplateBySlug(slug) : undefined) || templates[0];
 
   // SECTION 1: Cô dâu & Chú rể
@@ -227,7 +230,40 @@ export const OrderWeddingInfoPage: React.FC = () => {
         </span>
       </div>
 
-      <div className="px-4 pt-4 space-y-5 max-w-xl mx-auto w-full">
+      <div className="px-4 pt-4 space-y-4 max-w-xl mx-auto w-full">
+        {/* Dynamic Form Header from CMS */}
+        <div className="text-center space-y-1 mb-1">
+          <h1 className="font-serif text-xl sm:text-2xl font-bold text-deep-espresso">
+            {orderFormConfig?.title || 'Điền Thông Tin Ngày Cưới'}
+          </h1>
+          <p className="text-xs sm:text-sm text-text-muted max-w-md mx-auto">
+            {orderFormConfig?.subtitle || 'Cung cấp chi tiết để Nhà Có Tiệc hoàn thiện thiệp cưới hoàn hảo cho bạn'}
+          </p>
+        </div>
+
+        {/* Notice Banner from CMS */}
+        {orderFormConfig?.noticeText && (
+          <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs flex items-start gap-2.5 shadow-2xs">
+            <Icon name="info" className="text-[18px] text-amber-700 shrink-0 mt-0.5" />
+            <div className="flex-1 text-[11px] sm:text-xs">
+              <span className="leading-relaxed">{orderFormConfig.noticeText}</span>
+              {orderFormConfig.supportZalo && (
+                <div className="mt-1 flex items-center gap-1.5 font-medium">
+                  <span>Hotline / Zalo hỗ trợ:</span>
+                  <a
+                    href={orderFormConfig.supportZaloLink || `https://zalo.me/${orderFormConfig.supportZalo.replace(/\s+/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-burgundy-wine font-bold underline"
+                  >
+                    {orderFormConfig.supportZalo}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Progress Stepper */}
         <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate">
           <div className="flex items-center justify-between text-center relative">
@@ -523,33 +559,35 @@ export const OrderWeddingInfoPage: React.FC = () => {
             </div>
 
             <div className="space-y-3.5 pt-1 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-deep-espresso mb-1">
-                    Đại diện Nhà Trai (Phụ huynh)
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Ông: Nguyễn Văn A&#10;Bà: Lê Thị B"
-                    value={groomParents}
-                    onChange={(e) => setGroomParents(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
-                  />
-                </div>
+              {orderFormConfig?.showParentsSection !== false && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-deep-espresso mb-1">
+                      Đại diện Nhà Trai (Phụ huynh)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Ông: Nguyễn Văn A&#10;Bà: Lê Thị B"
+                      value={groomParents}
+                      onChange={(e) => setGroomParents(e.target.value)}
+                      className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block font-semibold text-deep-espresso mb-1">
-                    Đại diện Nhà Gái (Phụ huynh)
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Ông: Trần Văn C&#10;Bà: Phạm Thị D"
-                    value={brideParents}
-                    onChange={(e) => setBrideParents(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
-                  />
+                  <div>
+                    <label className="block font-semibold text-deep-espresso mb-1">
+                      Đại diện Nhà Gái (Phụ huynh)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Ông: Trần Văn C&#10;Bà: Phạm Thị D"
+                      value={brideParents}
+                      onChange={(e) => setBrideParents(e.target.value)}
+                      className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block font-semibold text-deep-espresso mb-1">
@@ -563,30 +601,34 @@ export const OrderWeddingInfoPage: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-deep-espresso mb-1">
-                  Câu chuyện tình yêu (Love Story tóm tắt)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Gặp nhau mùa thu 2021 tại một quán cà phê quen..."
-                  value={loveStory}
-                  onChange={(e) => setLoveStory(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
-                />
-              </div>
+              {orderFormConfig?.showLoveStorySection !== false && (
+                <div>
+                  <label className="block font-semibold text-deep-espresso mb-1">
+                    Câu chuyện tình yêu (Love Story tóm tắt)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Gặp nhau mùa thu 2021 tại một quán cà phê quen..."
+                    value={loveStory}
+                    onChange={(e) => setLoveStory(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
+                  />
+                </div>
+              )}
 
-              <div>
-                <label className="block font-semibold text-deep-espresso mb-1">
-                  Timeline lịch trình tiệc cưới
-                </label>
-                <textarea
-                  rows={4}
-                  value={timeline}
-                  onChange={(e) => setTimeline(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed font-mono text-[11px]"
-                />
-              </div>
+              {orderFormConfig?.showTimelineSection !== false && (
+                <div>
+                  <label className="block font-semibold text-deep-espresso mb-1">
+                    Timeline lịch trình tiệc cưới
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={timeline}
+                    onChange={(e) => setTimeline(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed font-mono text-[11px]"
+                  />
+                </div>
+              )}
             </div>
           </section>
 
@@ -666,75 +708,79 @@ export const OrderWeddingInfoPage: React.FC = () => {
             </div>
 
             {/* Video Upload Block */}
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-deep-espresso mb-1">
-                Link Video kỷ niệm / Teaser cưới (Youtube / Drive / TikTok)
-              </label>
-              <div className="relative">
-                <input
-                  type="url"
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl bg-surface-subtle/70 text-deep-espresso text-xs font-medium focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none"
-                />
-                <Icon name="movie" className="absolute right-3 top-2.5 text-text-muted text-[20px]" />
-              </div>
-            </div>
-          </section>
-
-          {/* SECTION 5: Xác Nhận Tham Dự & Sổ Lưu Bút Online */}
-          <section className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate space-y-4">
-            <div className="flex items-start gap-3 pb-2 border-b border-border-delicate">
-              <div className="w-7 h-7 rounded-full bg-burgundy-wine text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                5
-              </div>
-              <div>
-                <h3 className="font-serif text-base font-bold text-deep-espresso">
-                  Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online
-                </h3>
-                <p className="text-xs text-text-muted mt-0.5">
-                  Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-1">
-              <div>
+            {orderFormConfig?.showVideoSection !== false && (
+              <div className="pt-2">
                 <label className="block text-xs font-semibold text-deep-espresso mb-1">
-                  Hạn chót nhận phản hồi RSVP từ khách mời <span className="text-burgundy-wine">*</span>
+                  Link Video kỷ niệm / Teaser cưới (Youtube / Drive / TikTok)
                 </label>
                 <div className="relative">
                   <input
-                    type="date"
-                    required
-                    value={rsvpDeadline}
-                    onChange={(e) => setRsvpDeadline(e.target.value)}
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
                     className="w-full h-11 px-3.5 rounded-xl bg-surface-subtle/70 text-deep-espresso text-xs font-medium focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none"
                   />
+                  <Icon name="movie" className="absolute right-3 top-2.5 text-text-muted text-[20px]" />
                 </div>
-                <p className="text-[11px] text-text-muted mt-1">
-                  Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách.
-                </p>
+              </div>
+            )}
+          </section>
+
+          {/* SECTION 5: Xác Nhận Tham Dự & Sổ Lưu Bút Online */}
+          {orderFormConfig?.showRsvpSection !== false && (
+            <section className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate space-y-4">
+              <div className="flex items-start gap-3 pb-2 border-b border-border-delicate">
+                <div className="w-7 h-7 rounded-full bg-burgundy-wine text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  5
+                </div>
+                <div>
+                  <h3 className="font-serif text-base font-bold text-deep-espresso">
+                    Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online
+                  </h3>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp.
+                  </p>
+                </div>
               </div>
 
-              {/* Feature Perks Checklist */}
-              <div className="bg-surface-subtle/70 rounded-xl p-3.5 space-y-2 text-xs text-deep-espresso border border-border-delicate">
-                <div className="flex items-center gap-2">
-                  <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
-                  <span>Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)</span>
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-deep-espresso mb-1">
+                    Hạn chót nhận phản hồi RSVP từ khách mời <span className="text-burgundy-wine">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      required
+                      value={rsvpDeadline}
+                      onChange={(e) => setRsvpDeadline(e.target.value)}
+                      className="w-full h-11 px-3.5 rounded-xl bg-surface-subtle/70 text-deep-espresso text-xs font-medium focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none"
+                    />
+                  </div>
+                  <p className="text-[11px] text-text-muted mt-1">
+                    Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách.
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
-                  <span>Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
-                  <span>Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực</span>
+
+                {/* Feature Perks Checklist */}
+                <div className="bg-surface-subtle/70 rounded-xl p-3.5 space-y-2 text-xs text-deep-espresso border border-border-delicate">
+                  <div className="flex items-center gap-2">
+                    <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
+                    <span>Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
+                    <span>Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
+                    <span>Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Terms Checkbox */}
           <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate">
@@ -746,7 +792,8 @@ export const OrderWeddingInfoPage: React.FC = () => {
                 className="w-5 h-5 rounded mt-0.5 accent-burgundy-wine cursor-pointer shrink-0"
               />
               <span className="text-xs text-deep-espresso leading-relaxed font-medium">
-                Tôi xác nhận các thông tin trên là chính xác và hiểu rằng hệ thống sẽ khởi tạo bản mẫu ngay sau khi xác nhận chuyển khoản thành công.
+                {orderFormConfig?.termsText ||
+                  'Tôi xác nhận các thông tin trên là chính xác và hiểu rằng hệ thống sẽ khởi tạo bản mẫu ngay sau khi xác nhận chuyển khoản thành công.'}
               </span>
             </label>
           </div>

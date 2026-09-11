@@ -190,19 +190,20 @@ export const HomePage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="pt-3 px-4 pb-4 flex-1 flex flex-col justify-between gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <Link to={`/mau-thiep/${template.slug}`}>
-                      <h3 className="font-serif text-lg font-bold text-deep-espresso truncate hover:text-burgundy-wine transition-colors">
+              <div className="pt-3.5 px-4 pb-4 flex-1 flex flex-col justify-between gap-3">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2 min-w-0">
+                    <Link to={`/mau-thiep/${template.slug}`} className="min-w-0 flex-1">
+                      <h3 className="font-serif text-[16px] sm:text-[17px] font-bold text-deep-espresso hover:text-burgundy-wine transition-colors line-clamp-2 leading-[1.3] min-h-[42px] flex items-center">
                         {template.name}
                       </h3>
                     </Link>
-                    <span className="text-xs text-gold-foil font-semibold flex items-center gap-0.5 shrink-0">
-                      <Icon name="star" className="text-[14px]" /> {template.rating}
+                    <span className="text-xs text-gold-foil font-semibold flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-gold-foil/10 border border-gold-foil/25 mt-0.5">
+                      <Icon name="star" className="text-[13px]" />
+                      <span>{template.rating || 5.0}</span>
                     </span>
                   </div>
-                  <p className="text-xs text-text-muted line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-text-muted line-clamp-2 min-h-[34px] leading-relaxed">
                     {template.description}
                   </p>
                 </div>

@@ -14,10 +14,27 @@ import {
   ContactPageContent,
   SiteSettings,
   SocialLinksConfig,
+  OrderFormConfig,
 } from '../types/cms';
 
 const STORAGE_KEY = 'nha_co_tiec_cms_v8';
 const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_cms_channel';
+
+export const DEFAULT_ORDER_FORM_CONFIG: OrderFormConfig = {
+  title: 'Điền Thông Tin Ngày Cưới',
+  subtitle: 'Cung cấp chi tiết để Nhà Có Tiệc hoàn thiện thiệp cưới hoàn hảo cho bạn',
+  noticeText: 'Designer Nhà Có Tiệc sẽ liên hệ qua Zalo trong vòng 1-2h để xác nhận và gửi bản duyệt thiệp hoàn thiện trong 24h.',
+  supportZalo: '0982 123 456',
+  supportZaloLink: 'https://zalo.me/0982123456',
+  photoGuideNote: 'Gợi ý: Tải từ 5 - 15 ảnh chất lượng cao (ảnh cổng, ảnh phóng lớn, khoảnh khắc chụp đôi) để website thiệp cưới hiển thị đẹp nhất.',
+  maxPhotos: 15,
+  showParentsSection: true,
+  showLoveStorySection: true,
+  showTimelineSection: true,
+  showVideoSection: true,
+  showRsvpSection: true,
+  termsText: 'Tôi xác nhận thông tin trên là chính xác và đồng ý điều khoản dịch vụ phát hành thiệp cưới của Nhà Có Tiệc.',
+};
 
 export const DEFAULT_CMS_CONTENT: CmsContent = {
   hero: {
@@ -294,13 +311,19 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
       url: 'https://zalo.me/0982123456',
     },
   },
+  orderForm: DEFAULT_ORDER_FORM_CONFIG,
 };
 
 let currentCmsContent: CmsContent = (() => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      return {
+        ...DEFAULT_CMS_CONTENT,
+        ...parsed,
+        orderForm: { ...DEFAULT_ORDER_FORM_CONFIG, ...(parsed.orderForm || {}) },
+      };
     }
   } catch (e) {
     console.error('Failed to load CMS content from localStorage', e);
@@ -368,6 +391,7 @@ function initFirestoreCmsSync() {
             footer: { ...DEFAULT_CMS_CONTENT.footer, ...(remoteData.footer || {}) },
             contact: { ...DEFAULT_CMS_CONTENT.contact, ...(remoteData.contact || {}) },
             settings: { ...DEFAULT_CMS_CONTENT.settings, ...(remoteData.settings || {}) },
+            orderForm: { ...DEFAULT_ORDER_FORM_CONFIG, ...(remoteData.orderForm || {}) },
           };
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(currentCmsContent));

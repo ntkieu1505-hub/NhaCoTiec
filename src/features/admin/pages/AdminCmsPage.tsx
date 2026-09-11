@@ -12,7 +12,7 @@ import { CmsContent, HomepageFeature, Testimonial } from '../../../types/cms';
 export const AdminCmsPage: React.FC = () => {
   const currentCms = useCmsContent();
   const [formData, setFormData] = useState<CmsContent>(currentCms);
-  const [activeTab, setActiveTab] = useState<'homepage' | 'contact' | 'social' | 'settings'>('homepage');
+  const [activeTab, setActiveTab] = useState<'homepage' | 'orderForm' | 'contact' | 'social' | 'settings'>('homepage');
   const [activeHomepageSection, setActiveHomepageSection] = useState<
     'hero' | 'features' | 'testimonials' | 'intro' | 'templates' | 'cta' | 'footer'
   >('hero');
@@ -316,47 +316,58 @@ export const AdminCmsPage: React.FC = () => {
       <div className="flex items-center border-b border-border-delicate bg-surface-card rounded-2xl p-1.5 shadow-xs">
         <button
           onClick={() => setActiveTab('homepage')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
             activeTab === 'homepage'
               ? 'bg-burgundy-wine text-white shadow-xs'
               : 'text-text-muted hover:text-deep-espresso hover:bg-surface-subtle'
           }`}
         >
-          <Icon name="home" className="text-[18px]" />
-          <span>Tab 1: Trang chủ</span>
+          <Icon name="home" className="text-[17px]" />
+          <span>Trang chủ</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('orderForm')}
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+            activeTab === 'orderForm'
+              ? 'bg-burgundy-wine text-white shadow-xs'
+              : 'text-text-muted hover:text-deep-espresso hover:bg-surface-subtle'
+          }`}
+        >
+          <Icon name="assignment" className="text-[17px]" />
+          <span>Form Đặt Thiệp & Nhập Tin</span>
         </button>
         <button
           onClick={() => setActiveTab('contact')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
             activeTab === 'contact'
               ? 'bg-burgundy-wine text-white shadow-xs'
               : 'text-text-muted hover:text-deep-espresso hover:bg-surface-subtle'
           }`}
         >
-          <Icon name="contact_support" className="text-[18px]" />
-          <span>Tab 2: Trang liên hệ</span>
+          <Icon name="contact_support" className="text-[17px]" />
+          <span>Trang liên hệ</span>
         </button>
         <button
           onClick={() => setActiveTab('social')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
             activeTab === 'social'
               ? 'bg-burgundy-wine text-white shadow-xs'
               : 'text-text-muted hover:text-deep-espresso hover:bg-surface-subtle'
           }`}
         >
-          <Icon name="share" className="text-[18px]" />
-          <span>Tab 3: Mạng xã hội</span>
+          <Icon name="share" className="text-[17px]" />
+          <span>Mạng xã hội</span>
         </button>
         <button
           onClick={() => setActiveTab('settings')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
             activeTab === 'settings'
               ? 'bg-burgundy-wine text-white shadow-xs'
               : 'text-text-muted hover:text-deep-espresso hover:bg-surface-subtle'
           }`}
         >
-          <Icon name="tune" className="text-[18px]" />
-          <span>Tab 4: Cài đặt chung</span>
+          <Icon name="tune" className="text-[17px]" />
+          <span>Cài đặt chung</span>
         </button>
       </div>
 
@@ -1585,6 +1596,337 @@ export const AdminCmsPage: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB: FORM ĐẶT THIỆP & NHẬP TIN KHÁCH HÀNG */}
+      {activeTab === 'orderForm' && (
+        <div className="bg-surface-card p-6 rounded-2xl border border-border-delicate shadow-xs flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-delicate">
+            <div className="flex items-center gap-2">
+              <Icon name="assignment" className="text-[22px] text-burgundy-wine" />
+              <div>
+                <h3 className="font-serif text-lg font-bold text-deep-espresso">
+                  Cấu Hình Form Điền Thông Tin Cưới Của Khách Hàng
+                </h3>
+                <p className="text-xs text-text-muted">
+                  Tùy chỉnh tiêu đề, hướng dẫn dâu rể, số Zalo hỗ trợ và bật/tắt các mục thông tin trong form đặt thiệp.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/dat-thiep/tpl-minh-anh"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-full bg-surface-subtle hover:bg-surface-cream text-burgundy-wine border border-border-delicate font-semibold text-xs flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+            >
+              <Icon name="open_in_new" className="text-[16px]" />
+              <span>Xem form thực tế</span>
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* 1. Tiêu đề & Lời dẫn */}
+            <div className="md:col-span-2 p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-3">
+              <h4 className="font-serif text-sm font-bold text-deep-espresso flex items-center gap-1.5">
+                <Icon name="title" className="text-[16px] text-burgundy-wine" />
+                <span>1. Tiêu Đề & Lời Dẫn Form</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Tiêu đề chính của Form</label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.title || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          title: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso font-semibold focus:border-burgundy-wine focus:outline-none"
+                    placeholder="Ví dụ: Điền Thông Tin Ngày Cưới"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Mô tả phụ / Lời dẫn cho dâu rể</label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.subtitle || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          subtitle: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                    placeholder="Ví dụ: Cung cấp chi tiết để Nhà Có Tiệc hoàn thiện thiệp cưới hoàn hảo cho bạn"
+                  />
+                </div>
+                <div className="sm:col-span-2 flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Thông báo / Lưu ý thời gian xử lý (Notice banner)</label>
+                  <textarea
+                    rows={2}
+                    value={formData.orderForm?.noticeText || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          noticeText: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none resize-none"
+                    placeholder="Ví dụ: Designer Nhà Có Tiệc sẽ liên hệ qua Zalo trong vòng 1-2h để xác nhận..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Kênh hỗ trợ & Giới hạn tải ảnh */}
+            <div className="p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-3">
+              <h4 className="font-serif text-sm font-bold text-deep-espresso flex items-center gap-1.5">
+                <Icon name="support_agent" className="text-[16px] text-burgundy-wine" />
+                <span>2. Kênh Hỗ Trợ Dâu Rể</span>
+              </h4>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Số Zalo / Hotline hỗ trợ</label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.supportZalo || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          supportZalo: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                    placeholder="0982 123 456"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Link Zalo trực tiếp</label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.supportZaloLink || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          supportZaloLink: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                    placeholder="https://zalo.me/0982123456"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Quy định tải ảnh cưới */}
+            <div className="p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-3">
+              <h4 className="font-serif text-sm font-bold text-deep-espresso flex items-center gap-1.5">
+                <Icon name="photo_library" className="text-[16px] text-burgundy-wine" />
+                <span>3. Quy Định Tải Ảnh Cưới</span>
+              </h4>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Số lượng ảnh tối đa cho phép tải</label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={50}
+                    value={formData.orderForm?.maxPhotos || 15}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          maxPhotos: Number(e.target.value) || 15,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Lời nhắc / Hướng dẫn chọn ảnh gửi</label>
+                  <textarea
+                    rows={2}
+                    value={formData.orderForm?.photoGuideNote || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          photoGuideNote: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none resize-none"
+                    placeholder="Gợi ý: Tải từ 5 - 15 ảnh chất lượng cao..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Bật / Tắt các phần trong Form */}
+            <div className="md:col-span-2 p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-3">
+              <h4 className="font-serif text-sm font-bold text-deep-espresso flex items-center gap-1.5">
+                <Icon name="toggle_on" className="text-[18px] text-burgundy-wine" />
+                <span>4. Bật / Tắt Các Phần Thông Tin Tùy Chọn Trong Form</span>
+              </h4>
+              <p className="text-[11px] text-text-muted">
+                Admin có thể chủ động ẩn bớt các mục không cần thiết để form của khách gọn gàng và dễ điền hơn.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                {/* Parents Section */}
+                <label className="flex items-center gap-2.5 p-3 rounded-xl border border-border-delicate bg-surface-card cursor-pointer hover:bg-surface-subtle transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.orderForm?.showParentsSection !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          showParentsSection: e.target.checked,
+                        },
+                      })
+                    }
+                    className="w-4 h-4 rounded text-burgundy-wine focus:ring-burgundy-wine"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-deep-espresso">Thông tin song thân</span>
+                    <span className="text-[10px] text-text-muted">Bố mẹ hai bên cô dâu & chú rể</span>
+                  </div>
+                </label>
+
+                {/* Love Story Section */}
+                <label className="flex items-center gap-2.5 p-3 rounded-xl border border-border-delicate bg-surface-card cursor-pointer hover:bg-surface-subtle transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.orderForm?.showLoveStorySection !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          showLoveStorySection: e.target.checked,
+                        },
+                      })
+                    }
+                    className="w-4 h-4 rounded text-burgundy-wine focus:ring-burgundy-wine"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-deep-espresso">Câu chuyện tình yêu</span>
+                    <span className="text-[10px] text-text-muted">Kỷ niệm hẹn hò của dâu rể</span>
+                  </div>
+                </label>
+
+                {/* Timeline Section */}
+                <label className="flex items-center gap-2.5 p-3 rounded-xl border border-border-delicate bg-surface-card cursor-pointer hover:bg-surface-subtle transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.orderForm?.showTimelineSection !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          showTimelineSection: e.target.checked,
+                        },
+                      })
+                    }
+                    className="w-4 h-4 rounded text-burgundy-wine focus:ring-burgundy-wine"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-deep-espresso">Lịch trình hôn lễ</span>
+                    <span className="text-[10px] text-text-muted">Timeline các mốc giờ đón khách, khai tiệc</span>
+                  </div>
+                </label>
+
+                {/* Video Section */}
+                <label className="flex items-center gap-2.5 p-3 rounded-xl border border-border-delicate bg-surface-card cursor-pointer hover:bg-surface-subtle transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.orderForm?.showVideoSection !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          showVideoSection: e.target.checked,
+                        },
+                      })
+                    }
+                    className="w-4 h-4 rounded text-burgundy-wine focus:ring-burgundy-wine"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-deep-espresso">Video cưới (YouTube)</span>
+                    <span className="text-[10px] text-text-muted">Link video pre-wedding</span>
+                  </div>
+                </label>
+
+                {/* RSVP Section */}
+                <label className="flex items-center gap-2.5 p-3 rounded-xl border border-border-delicate bg-surface-card cursor-pointer hover:bg-surface-subtle transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.orderForm?.showRsvpSection !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          showRsvpSection: e.target.checked,
+                        },
+                      })
+                    }
+                    className="w-4 h-4 rounded text-burgundy-wine focus:ring-burgundy-wine"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-deep-espresso">Hạn chót RSVP</span>
+                    <span className="text-[10px] text-text-muted">Hạn cuối khách mời xác nhận tham dự</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* 5. Điều khoản dịch vụ */}
+            <div className="md:col-span-2 p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-2">
+              <label className="text-xs font-semibold text-deep-espresso">
+                Lời xác nhận cam kết / Điều khoản dịch vụ cuối form
+              </label>
+              <textarea
+                rows={2}
+                value={formData.orderForm?.termsText || ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    orderForm: {
+                      ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                      termsText: e.target.value,
+                    },
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none resize-none"
+                placeholder="Tôi xác nhận thông tin trên là chính xác..."
+              />
+            </div>
+          </div>
         </div>
       )}
 

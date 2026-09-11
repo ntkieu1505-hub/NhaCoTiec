@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { Badge } from '../../../components/common/Badge';
-import { useTemplates } from '../../../mocks/templateStore';
+import { usePublicTemplates } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { OrderFormModal } from '../components/OrderFormModal';
 import { useAuth } from '../../../mocks/authStore';
@@ -10,11 +10,33 @@ import { useAuth } from '../../../mocks/authStore';
 export const TemplateDetailPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { slug } = useParams<{ slug: string }>();
-  const templates = useTemplates();
-  const template = templates.find((t) => t.slug === slug) || templates[0];
+  const templates = usePublicTemplates();
+  const template = slug ? templates.find((t) => t.slug === slug) : templates[0];
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+
+  if (!template) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full text-center flex flex-col items-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-surface-subtle flex items-center justify-center text-burgundy-wine">
+          <Icon name="sentiment_dissatisfied" className="text-3xl" />
+        </div>
+        <h1 className="font-serif text-2xl font-bold text-deep-espresso">
+          Mẫu thiệp không tồn tại hoặc đã ngừng cung cấp
+        </h1>
+        <p className="text-sm text-text-muted max-w-md">
+          Mẫu thiệp cưới bạn đang tìm kiếm có thể đã được gỡ bỏ khỏi hệ thống hoặc tạm thời ngưng hiển thị. Vui lòng khám phá các mẫu thiệp độc bản khác của Nhà Có Tiệc.
+        </p>
+        <Link
+          to="/mau-thiep"
+          className="mt-3 px-6 py-2.5 rounded-full bg-burgundy-wine text-white text-xs font-semibold hover:bg-burgundy-wine/90 transition-all shadow-sm"
+        >
+          Xem Bộ sưu tập mẫu thiệp khác
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col gap-6">
