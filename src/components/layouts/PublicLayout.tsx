@@ -30,17 +30,17 @@ export const PublicLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-cream text-on-surface font-sans">
-      {/* 1. Header / Navbar */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-[#5c0b14]/95 backdrop-blur-md border-b border-white/15 transition-colors shadow-md pt-safe">
+      {/* 1. Header / Navbar - Exact Logo Wine Color (#400D12) */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-[#400D12]/95 backdrop-blur-md border-b border-white/10 transition-colors shadow-md pt-safe">
         <div className="h-16 px-4 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
-          {/* Left: Brand Logo & Title with Playfair Display */}
+          {/* Left: Brand Logo & Title with Playfair Display matching logo font */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
               src="/logo.png"
               alt="Nhà Có Tiệc Logo"
-              className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-sm border border-white/25 group-hover:scale-105 transition-transform shrink-0"
+              className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-sm border border-white/20 group-hover:scale-105 transition-transform shrink-0"
             />
-            <span className="font-playfair text-[22px] md:text-[25px] font-bold tracking-tight text-white leading-none">
+            <span className="font-playfair text-[22px] md:text-[25px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none drop-shadow-xs">
               Nhà Có Tiệc
             </span>
           </Link>
@@ -105,7 +105,7 @@ export const PublicLayout: React.FC = () => {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#45080f] border-t border-white/10 px-4 py-4 flex flex-col gap-3 animate-in fade-in">
+          <div className="md:hidden bg-[#34080c] border-t border-white/10 px-4 py-4 flex flex-col gap-3 animate-in fade-in">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
