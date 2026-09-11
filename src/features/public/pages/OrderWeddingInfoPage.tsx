@@ -210,7 +210,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
           <span>Quay lại chi tiết mẫu</span>
         </Link>
         <span className="text-[11px] font-bold text-rose-200 uppercase tracking-wider">
-          BƯỚC 2 / THANH TOÁN
+          BƯỚC 2 / ĐIỀN THÔNG TIN
         </span>
       </div>
 
