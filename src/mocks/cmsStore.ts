@@ -33,6 +33,14 @@ export const DEFAULT_ORDER_FORM_CONFIG: OrderFormConfig = {
   showTimelineSection: true,
   showVideoSection: true,
   showRsvpSection: true,
+  rsvpTitle: 'Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online',
+  rsvpSubtitle: 'Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp.',
+  rsvpNote: 'Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách.',
+  rsvpFeatures: [
+    'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+    'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+    'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+  ],
   termsText: 'Tôi xác nhận thông tin trên là chính xác và đồng ý điều khoản dịch vụ phát hành thiệp cưới của Nhà Có Tiệc.',
 };
 
@@ -322,7 +330,14 @@ let currentCmsContent: CmsContent = (() => {
       return {
         ...DEFAULT_CMS_CONTENT,
         ...parsed,
-        orderForm: { ...DEFAULT_ORDER_FORM_CONFIG, ...(parsed.orderForm || {}) },
+        orderForm: {
+          ...DEFAULT_ORDER_FORM_CONFIG,
+          ...(parsed.orderForm || {}),
+          rsvpFeatures:
+            Array.isArray(parsed.orderForm?.rsvpFeatures) && parsed.orderForm.rsvpFeatures.length > 0
+              ? parsed.orderForm.rsvpFeatures
+              : DEFAULT_ORDER_FORM_CONFIG.rsvpFeatures,
+        },
       };
     }
   } catch (e) {
@@ -391,7 +406,14 @@ function initFirestoreCmsSync() {
             footer: { ...DEFAULT_CMS_CONTENT.footer, ...(remoteData.footer || {}) },
             contact: { ...DEFAULT_CMS_CONTENT.contact, ...(remoteData.contact || {}) },
             settings: { ...DEFAULT_CMS_CONTENT.settings, ...(remoteData.settings || {}) },
-            orderForm: { ...DEFAULT_ORDER_FORM_CONFIG, ...(remoteData.orderForm || {}) },
+            orderForm: {
+              ...DEFAULT_ORDER_FORM_CONFIG,
+              ...(remoteData.orderForm || {}),
+              rsvpFeatures:
+                Array.isArray(remoteData.orderForm?.rsvpFeatures) && remoteData.orderForm.rsvpFeatures.length > 0
+                  ? remoteData.orderForm.rsvpFeatures
+                  : DEFAULT_ORDER_FORM_CONFIG.rsvpFeatures,
+            },
           };
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(currentCmsContent));

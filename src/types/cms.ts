@@ -175,6 +175,10 @@ export interface OrderFormConfig {
   showTimelineSection: boolean;
   showVideoSection: boolean;
   showRsvpSection: boolean;
+  rsvpTitle?: string;
+  rsvpSubtitle?: string;
+  rsvpNote?: string;
+  rsvpFeatures?: string[];
   termsText: string;
 }
 

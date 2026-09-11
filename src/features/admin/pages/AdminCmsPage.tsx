@@ -1905,10 +1905,201 @@ export const AdminCmsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 5. Điều khoản dịch vụ */}
+            {/* 5. Tùy Chỉnh Nội Dung Mục Xác Nhận Tham Dự (RSVP) */}
+            <div className="md:col-span-2 p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border-delicate/70">
+                <h4 className="font-serif text-sm font-bold text-deep-espresso flex items-center gap-1.5">
+                  <Icon name="how_to_reg" className="text-[18px] text-burgundy-wine" />
+                  <span>5. Tùy Chỉnh Nội Dung Mục Xác Nhận Tham Dự (RSVP)</span>
+                </h4>
+                <span className="text-[11px] text-text-muted">Khối số 5 trên form của khách</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Tiêu đề khối RSVP</label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.rsvpTitle ?? 'Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online'}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          rsvpTitle: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso font-semibold focus:border-burgundy-wine focus:outline-none"
+                    placeholder="Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">Mô tả phụ khối RSVP</label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.rsvpSubtitle ?? 'Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp.'}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          rsvpSubtitle: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                    placeholder="Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp."
+                  />
+                </div>
+
+                <div className="sm:col-span-2 flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-deep-espresso">
+                    Dòng ghi chú hạn chót (dưới ô chọn ngày)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.orderForm?.rsvpNote ?? 'Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách.'}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          rsvpNote: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                    placeholder="Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách."
+                  />
+                </div>
+              </div>
+
+              {/* Danh sách các gạch đầu dòng tính năng RSVP */}
+              <div className="flex flex-col gap-2 pt-2 border-t border-border-delicate/70">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-semibold text-deep-espresso block">
+                      Các dòng tính năng / lợi ích RSVP (Hiển thị trong khung xám checkmark)
+                    </label>
+                    <span className="text-[11px] text-text-muted">
+                      Ví dụ: "Tự động thống kê số lượng khách...", "Tích hợp bảng khảo sát món ăn kiêng..."
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentList = formData.orderForm?.rsvpFeatures || [
+                        'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+                        'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+                        'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+                      ];
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          rsvpFeatures: [...currentList, ''],
+                        },
+                      });
+                    }}
+                    className="px-3 py-1.5 rounded-full bg-burgundy-wine/10 hover:bg-burgundy-wine/20 text-burgundy-wine text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
+                  >
+                    <Icon name="add" className="text-[16px]" />
+                    <span>Thêm dòng</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2 mt-1">
+                  {(
+                    formData.orderForm?.rsvpFeatures || [
+                      'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+                      'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+                      'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+                    ]
+                  ).map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center shrink-0">
+                        <Icon name="check" className="text-[14px]" />
+                      </div>
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => {
+                          const currentList = [
+                            ...(formData.orderForm?.rsvpFeatures || [
+                              'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+                              'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+                              'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+                            ]),
+                          ];
+                          currentList[index] = e.target.value;
+                          setFormData({
+                            ...formData,
+                            orderForm: {
+                              ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                              rsvpFeatures: currentList,
+                            },
+                          });
+                        }}
+                        placeholder={`Dòng tính năng RSVP số ${index + 1}...`}
+                        className="flex-1 px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentList = (
+                            formData.orderForm?.rsvpFeatures || [
+                              'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+                              'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+                              'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+                            ]
+                          ).filter((_, i) => i !== index);
+                          setFormData({
+                            ...formData,
+                            orderForm: {
+                              ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                              rsvpFeatures: currentList,
+                            },
+                          });
+                        }}
+                        className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+                        title="Xóa dòng này"
+                      >
+                        <Icon name="delete" className="text-[18px]" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        orderForm: {
+                          ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
+                          rsvpFeatures: [
+                            'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+                            'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+                            'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+                          ],
+                        },
+                      });
+                    }}
+                    className="text-[11px] text-text-muted hover:text-burgundy-wine underline"
+                  >
+                    Khôi phục 3 dòng tính năng RSVP mặc định
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Điều khoản dịch vụ */}
             <div className="md:col-span-2 p-4 rounded-xl bg-surface border border-border-delicate flex flex-col gap-2">
               <label className="text-xs font-semibold text-deep-espresso">
-                Lời xác nhận cam kết / Điều khoản dịch vụ cuối form
+                6. Lời xác nhận cam kết / Điều khoản dịch vụ cuối form
               </label>
               <textarea
                 rows={2}

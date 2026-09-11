@@ -36,9 +36,7 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
   // Optional Details
   const [groomParents, setGroomParents] = useState('');
   const [brideParents, setBrideParents] = useState('');
-  const [invitationMessage, setInvitationMessage] = useState(
-    'Tình yêu là khi hai trái tim cùng chung một nhịp đập. Trân trọng kính mời bạn đến chung vui cùng chúng mình trong ngày trọng đại nhất.'
-  );
+  const [invitationMessage, setInvitationMessage] = useState('');
   const [designerNotes, setDesignerNotes] = useState('');
   const [showOptionalFields, setShowOptionalFields] = useState(false);
 
@@ -85,12 +83,20 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
 
     setIsSubmitting(true);
 
+    const hasCoupleNames = Boolean(groomName.trim() || brideName.trim());
+    const coupleDisplayName = (groomName.trim() && brideName.trim())
+      ? `${groomName.trim()} & ${brideName.trim()}`
+      : (groomName.trim() || brideName.trim());
+    const finalTemplateName = hasCoupleNames
+      ? `Thiệp cưới ${coupleDisplayName} (${template.name})`
+      : template.name;
+
     try {
       // 1. Create order with all filled details
       const newOrder = createOrder({
         userId: user?.id,
         templateId: template.id,
-        templateName: template.name,
+        templateName: finalTemplateName,
         category: template.category || (template.price > 60000 ? 'premium' : 'basic'),
         price: template.price,
         weddingInfo: {
@@ -160,9 +166,15 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                 Mẫu đã chọn
               </span>
               <h3 className="font-serif text-sm font-bold text-deep-espresso line-clamp-1">
-                {template.name}
+                {(groomName.trim() || brideName.trim())
+                  ? `Thiệp cưới: ${(groomName.trim() && brideName.trim()) ? `${groomName.trim()} & ${brideName.trim()}` : (groomName.trim() || brideName.trim())}`
+                  : template.name}
               </h3>
-              <span className="text-xs text-text-muted">Phong cách {template.style}</span>
+              <span className="text-xs text-text-muted">
+                {(groomName.trim() || brideName.trim())
+                  ? `Mẫu ${template.name} • Phong cách ${template.style}`
+                  : `Phong cách ${template.style}`}
+              </span>
             </div>
           </div>
           <div className="text-right">
@@ -390,6 +402,7 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                     rows={2}
                     value={invitationMessage}
                     onChange={(e) => setInvitationMessage(e.target.value)}
+                    placeholder="Tình yêu là khi hai trái tim cùng chung một nhịp đập. Trân trọng kính mời bạn đến chung vui cùng chúng mình trong ngày trọng đại..."
                     className="w-full px-3 py-2 rounded-lg bg-surface-card border border-border-delicate focus:border-burgundy-wine text-xs outline-none resize-none"
                   />
                 </div>

@@ -26,20 +26,28 @@ export const OrderWeddingInfoPage: React.FC = () => {
   const template = (slug ? getTemplateBySlug(slug) : undefined) || templates[0];
 
   // SECTION 1: Cô dâu & Chú rể
-  const [groomName, setGroomName] = useState('Trần Đức Minh');
-  const [brideName, setBrideName] = useState('Nguyễn Minh Anh');
-  const [customerPhone, setCustomerPhone] = useState(user?.phone || '0912 345 678');
-  const [customerEmail, setCustomerEmail] = useState(user?.email || 'kiet.minhanh@gmail.com');
+  const [groomName, setGroomName] = useState('');
+  const [brideName, setBrideName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
+  const [customerEmail, setCustomerEmail] = useState(user?.email || '');
 
   // Auto-fill logged-in customer's contact details
   useEffect(() => {
-    if (user?.email && customerEmail === 'kiet.minhanh@gmail.com') {
+    if (user?.email && !customerEmail) {
       setCustomerEmail(user.email);
     }
-    if (user?.phone && customerPhone === '0912 345 678') {
+    if (user?.phone && !customerPhone) {
       setCustomerPhone(user.phone);
     }
   }, [user]);
+
+  // Dynamically compute couple name & invitation title as user types
+  const groomTrimmed = groomName.trim();
+  const brideTrimmed = brideName.trim();
+  const hasCoupleNames = Boolean(groomTrimmed || brideTrimmed);
+  const coupleDisplayName = (groomTrimmed && brideTrimmed)
+    ? `${groomTrimmed} & ${brideTrimmed}`
+    : (groomTrimmed || brideTrimmed);
 
   // If auth is still checking
   if (isLoading) {
@@ -63,54 +71,26 @@ export const OrderWeddingInfoPage: React.FC = () => {
     );
   }
 
-  // SECTION 2: Thời gian & Địa điểm
-  const [weddingDate, setWeddingDate] = useState('2026-10-26');
+  // SECTION 2: Thời gian & Địa điểm (Để trống cho khách tự điền)
+  const [weddingDate, setWeddingDate] = useState('');
   const [weddingTime, setWeddingTime] = useState('18:00');
-  const [venueName, setVenueName] = useState('Trung Tâm Hội Nghị & Tiệc Cưới White Palace');
-  const [venueAddress, setVenueAddress] = useState('194 Hoàng Văn Thụ, Phường 9, Quận Phú Nhuận, TP. HCM');
-  const [googleMapUrl, setGoogleMapUrl] = useState('https://maps.app.goo.gl/WhitePalace');
+  const [venueName, setVenueName] = useState('');
+  const [venueAddress, setVenueAddress] = useState('');
+  const [googleMapUrl, setGoogleMapUrl] = useState('');
 
-  // SECTION 3: Nội dung & Thông điệp
-  const [groomParents, setGroomParents] = useState('Ông: Trần Văn Hùng\nBà: Lê Thị Mai');
-  const [brideParents, setBrideParents] = useState('Ông: Nguyễn Văn An\nBà: Vũ Thị Cúc');
-  const [invitationMessage, setInvitationMessage] = useState(
-    'Tình yêu không phải là tìm kiếm một người hoàn hảo, mà là học cách yêu thương người không hoàn hảo một cách trọn vẹn nhất. Hân hạnh chào đón bạn trong ngày hạnh phúc của chúng mình!'
-  );
-  const [loveStory, setLoveStory] = useState(
-    'Gặp nhau mùa thu 2021 tại một quán cà phê quen, sau 4 năm đồng hành cùng nhau vượt qua bao khó khăn, chúng mình quyết định về chung một nhà...'
-  );
-  const [timeline, setTimeline] = useState(
-    '17:30 - Đón khách & Chụp ảnh lưu niệm\n18:30 - Khai tiệc & Nghi thức hôn lễ thiêng liêng\n19:30 - Giao lưu cùng cô dâu chú rể & Trò chơi gắn kết\n20:30 - Tiệc After-party ấm cúng cùng bạn thân'
-  );
+  // SECTION 3: Nội dung & Thông điệp (Để trống cho khách tự điền)
+  const [groomParents, setGroomParents] = useState('');
+  const [brideParents, setBrideParents] = useState('');
+  const [invitationMessage, setInvitationMessage] = useState('');
+  const [loveStory, setLoveStory] = useState('');
+  const [timeline, setTimeline] = useState('');
 
-  // SECTION 4: Media & Photos
-  const [photos, setPhotos] = useState<UploadedPhoto[]>([
-    {
-      id: 'p1',
-      url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=600&auto=format&fit=crop',
-      name: 'anh_cuoi_chinh_01.jpg',
-      size: '2.4 MB',
-      note: 'Đặt làm ảnh bìa chính mở màn thiệp',
-    },
-    {
-      id: 'p2',
-      url: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop',
-      name: 'nhan_cuoi_detail.jpg',
-      size: '1.8 MB',
-      note: 'Đặt ở đầu mục Lời Ngỏ Gửi Khách Mời',
-    },
-    {
-      id: 'p3',
-      url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=600&auto=format&fit=crop',
-      name: 'khoanh_khac_hen_ho.jpg',
-      size: '3.1 MB',
-      note: 'Chèn trong timeline kỷ niệm',
-    },
-  ]);
+  // SECTION 4: Media & Photos (Bắt đầu với danh sách ảnh trống)
+  const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [videoUrl, setVideoUrl] = useState('');
 
   // SECTION 5: RSVP & Sổ lưu bút
-  const [rsvpDeadline, setRsvpDeadline] = useState('2026-10-20');
+  const [rsvpDeadline, setRsvpDeadline] = useState('');
 
   // Terms & Submission
   const [agreedTerms, setAgreedTerms] = useState(true);
@@ -169,11 +149,15 @@ export const OrderWeddingInfoPage: React.FC = () => {
 
     setIsSubmitting(true);
 
+    const finalTemplateName = hasCoupleNames
+      ? `Thiệp cưới ${coupleDisplayName} (${template.name})`
+      : template.name;
+
     try {
       const newOrder = createOrder({
         userId: user?.id,
         templateId: template.id,
-        templateName: template.name,
+        templateName: finalTemplateName,
         category: template.category || (template.price >= 79000 ? 'premium' : 'basic'),
         price: template.price,
         weddingInfo: {
@@ -319,8 +303,17 @@ export const OrderWeddingInfoPage: React.FC = () => {
                 <Icon name="stars" className="text-[12px] text-gold-foil" />
                 <span>{template.category === 'premium' ? 'Cao Cấp' : 'Cơ Bản'} • {template.style}</span>
               </div>
-              <h2 className="font-serif text-base font-bold text-deep-espresso leading-snug truncate">
-                Mẫu thiệp: {template.name}
+              <h2 className="font-serif text-base font-bold text-deep-espresso leading-snug">
+                {hasCoupleNames ? (
+                  <div>
+                    <span className="text-burgundy-wine">Thiệp cưới: {coupleDisplayName}</span>
+                    <span className="text-[11px] text-text-muted font-normal block mt-0.5">
+                      Giao diện mẫu: {template.name}
+                    </span>
+                  </div>
+                ) : (
+                  <span>Mẫu thiệp: {template.name}</span>
+                )}
               </h2>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="font-serif text-lg text-burgundy-wine font-bold">
@@ -597,6 +590,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
                   rows={3}
                   value={invitationMessage}
                   onChange={(e) => setInvitationMessage(e.target.value)}
+                  placeholder="Ví dụ: Tình yêu không phải là tìm kiếm một người hoàn hảo, mà là học cách yêu thương người không hoàn hảo một cách trọn vẹn nhất. Hân hạnh chào đón bạn trong ngày hạnh phúc của chúng mình!"
                   className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed"
                 />
               </div>
@@ -625,6 +619,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
                     rows={4}
                     value={timeline}
                     onChange={(e) => setTimeline(e.target.value)}
+                    placeholder="Ví dụ:&#10;17:30 - Đón khách & Chụp ảnh lưu niệm&#10;18:30 - Khai tiệc & Nghi thức hôn lễ&#10;19:30 - Giao lưu & Trò chơi gắn kết&#10;20:30 - Tiệc After-party ấm cúng"
                     className="w-full p-3 rounded-xl bg-surface-subtle/70 text-deep-espresso focus:bg-surface-card border border-border-delicate focus:border-burgundy-wine outline-none resize-none leading-relaxed font-mono text-[11px]"
                   />
                 </div>
@@ -736,10 +731,10 @@ export const OrderWeddingInfoPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-serif text-base font-bold text-deep-espresso">
-                    Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online
+                    {orderFormConfig?.rsvpTitle || 'Xác Nhận Tham Dự (RSVP) & Sổ Lưu Bút Online'}
                   </h3>
                   <p className="text-xs text-text-muted mt-0.5">
-                    Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp.
+                    {orderFormConfig?.rsvpSubtitle || 'Quản lý số lượng bàn tiệc dễ dàng từ phản hồi của khách trên thiệp.'}
                   </p>
                 </div>
               </div>
@@ -759,24 +754,25 @@ export const OrderWeddingInfoPage: React.FC = () => {
                     />
                   </div>
                   <p className="text-[11px] text-text-muted mt-1">
-                    Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách.
+                    {orderFormConfig?.rsvpNote || 'Sau ngày này form RSVP sẽ tự động thông báo đóng nhận đăng ký thêm khách.'}
                   </p>
                 </div>
 
-                {/* Feature Perks Checklist */}
+                {/* Feature Perks Checklist - Dynamically configured from Admin CMS */}
                 <div className="bg-surface-subtle/70 rounded-xl p-3.5 space-y-2 text-xs text-deep-espresso border border-border-delicate">
-                  <div className="flex items-center gap-2">
-                    <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
-                    <span>Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
-                    <span>Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="check_circle" className="text-[18px] text-burgundy-wine" />
-                    <span>Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực</span>
-                  </div>
+                  {(orderFormConfig?.rsvpFeatures && orderFormConfig.rsvpFeatures.length > 0
+                    ? orderFormConfig.rsvpFeatures
+                    : [
+                        'Tự động thống kê số lượng khách đi cùng (vợ/chồng/con nhỏ)',
+                        'Tích hợp bảng khảo sát món ăn kiêng / chay tiện lợi',
+                        'Sổ lưu bút online kèm hiệu ứng thả tim lời chúc thời gian thực',
+                      ]
+                  ).map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Icon name="check_circle" className="text-[18px] text-burgundy-wine shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>
