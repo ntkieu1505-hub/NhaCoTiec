@@ -157,9 +157,9 @@ export const PublicLayout: React.FC = () => {
       </main>
 
       {/* Public Footer (CMS Dynamic) */}
-      <footer className="bg-deep-espresso text-surface-cream pt-12 pb-8 border-t border-gold-foil/20">
+      <footer className="bg-deep-espresso text-surface-cream pt-5 sm:pt-8 md:pt-12 pb-8 border-t border-gold-foil/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 pb-8 border-b border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-16 pb-8 border-b border-white/10">
             {/* Col 1: Brand info */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2.5">
@@ -171,7 +171,6 @@ export const PublicLayout: React.FC = () => {
                 <span className="font-playfair text-2xl font-bold text-surface-cream">
                   {cms.footer.brandName || 'Nhà Có Tiệc'}
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-gold-foil"></span>
               </div>
               <p className="text-body-sm text-text-muted max-w-sm leading-relaxed">
                 {cms.footer.slogan || 'Nền tảng thiệp cưới trực tuyến đồng hành cùng các cặp đôi. Đội ngũ thiết kế riêng theo từng câu chuyện tình yêu độc bản, hoàn thiện nhanh chóng trong 24h.'}

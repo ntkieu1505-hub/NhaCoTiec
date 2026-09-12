@@ -90,9 +90,8 @@ export const CustomerLayout: React.FC = () => {
               alt="Nhà Có Tiệc Logo"
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-xs border border-white/20 group-hover:scale-105 transition-transform shrink-0"
             />
-            <div className="flex items-center gap-1 font-playfair text-[16px] sm:text-[18px] md:text-[20px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none">
+            <div className="flex items-center font-playfair text-[16px] sm:text-[18px] md:text-[20px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none">
               <span>Nhà Có Tiệc</span>
-              <span className="text-gold-foil font-bold text-base">•</span>
             </div>
           </Link>
         </div>

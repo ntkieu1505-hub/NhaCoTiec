@@ -434,7 +434,6 @@ export const AdminLayout: React.FC = () => {
               <span className="font-playfair text-lg sm:text-xl font-bold text-deep-espresso tracking-tight">
                 Nhà Có Tiệc
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-burgundy-wine"></span>
             </Link>
             {isMobileMode ? (
               <button
@@ -453,7 +452,6 @@ export const AdminLayout: React.FC = () => {
           </div>
           <div className="flex items-center justify-between mt-1">
             <span className="text-xs text-text-muted italic">Tớ Có Thiệp · nhacotiec.vn</span>
-            <span className="w-2 h-2 rounded-full bg-gold-foil"></span>
           </div>
         </div>
 

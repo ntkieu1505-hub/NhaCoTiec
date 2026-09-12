@@ -217,11 +217,23 @@ export const OrderWeddingInfoPage: React.FC = () => {
       <div className="px-4 pt-4 space-y-4 max-w-xl mx-auto w-full">
         {/* Dynamic Form Header from CMS */}
         <div className="text-center space-y-1 mb-1">
-          <h1 className="font-serif text-xl sm:text-2xl font-bold text-deep-espresso">
+          <h1 className="font-serif text-xl sm:text-2xl font-bold text-deep-espresso text-balance">
             {orderFormConfig?.title || 'Điền Thông Tin Ngày Cưới'}
           </h1>
-          <p className="text-xs sm:text-sm text-text-muted max-w-md mx-auto">
-            {orderFormConfig?.subtitle || 'Cung cấp chi tiết để Nhà Có Tiệc hoàn thiện thiệp cưới hoàn hảo cho bạn'}
+          <p className="text-xs sm:text-sm text-text-muted max-w-md mx-auto text-balance">
+            {orderFormConfig?.subtitle ? (
+              orderFormConfig.subtitle.includes('thiệp cưới') ? (
+                <>
+                  {orderFormConfig.subtitle.split('thiệp cưới')[0]}
+                  <span className="whitespace-nowrap">thiệp cưới</span>
+                  {orderFormConfig.subtitle.split('thiệp cưới')[1]}
+                </>
+              ) : (
+                orderFormConfig.subtitle
+              )
+            ) : (
+              <>Cung cấp chi tiết để Nhà Có Tiệc hoàn thiện <span className="whitespace-nowrap">thiệp cưới</span> hoàn hảo cho bạn</>
+            )}
           </p>
         </div>
 

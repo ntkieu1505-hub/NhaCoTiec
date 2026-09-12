@@ -66,7 +66,7 @@ export const HomePage: React.FC = () => {
             }
 
             return (
-              <h1 className="font-serif text-[18px] min-[360px]:text-[19px] min-[390px]:text-[21px] sm:text-2xl md:text-3xl lg:text-[40px] xl:text-[46px] font-bold leading-[1.3] sm:leading-[1.35] text-white drop-shadow-md max-w-4xl mx-auto flex flex-col gap-0.5 sm:gap-1.5 md:gap-2 items-center">
+              <h1 className="font-serif text-[18px] min-[360px]:text-[19px] min-[390px]:text-[21px] sm:text-2xl md:text-3xl lg:text-[40px] xl:text-[46px] font-bold leading-[1.3] sm:leading-[1.35] text-white drop-shadow-md max-w-4xl mx-auto flex flex-col gap-0.5 sm:gap-1.5 md:gap-2 items-center text-balance">
                 {lines.map((line, idx) => (
                   <span
                     key={idx}
@@ -76,7 +76,15 @@ export const HomePage: React.FC = () => {
                         : 'tracking-tight'
                     }`}
                   >
-                    {line}
+                    {line.includes('thiệp cưới') ? (
+                      <>
+                        {line.split('thiệp cưới')[0]}
+                        <span className="whitespace-nowrap">thiệp cưới</span>
+                        {line.split('thiệp cưới')[1]}
+                      </>
+                    ) : (
+                      line
+                    )}
                   </span>
                 ))}
               </h1>
@@ -119,8 +127,8 @@ export const HomePage: React.FC = () => {
           <span className="font-label-caps text-xs text-burgundy-wine tracking-widest font-bold">
             {cms.featuredTemplates.eyebrow}
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso">
-            {cms.featuredTemplates.title ? cms.featuredTemplates.title.replace(/\.+$/, '') : 'Mẫu thiệp cưới độc bản'}
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso text-balance">
+            Mẫu <span className="whitespace-nowrap">thiệp cưới</span> độc bản
           </h2>
           <p className="text-sm text-text-muted max-w-md">
             {cms.featuredTemplates.description}
@@ -241,8 +249,8 @@ export const HomePage: React.FC = () => {
             <span className="font-label-caps text-xs text-burgundy-wine tracking-widest font-bold">
               Cam kết giá trị trọn vẹn
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso">
-              Tất cả những gì cặp đôi cần cho ngày chung đôi
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso text-balance">
+              Tất cả những gì cặp đôi cần cho <span className="whitespace-nowrap">ngày chung đôi</span>
             </h2>
             <p className="text-sm text-text-muted">
               Không chỉ dừng lại ở một tấm thiệp điện tử, Nhà Có Tiệc mang đến trải nghiệm toàn diện và lưu giữ trọn vẹn kỷ niệm ngày cưới.
@@ -292,8 +300,30 @@ export const HomePage: React.FC = () => {
           <span className="font-label-caps text-xs text-burgundy-wine tracking-widest font-bold">
             {cms.intro.eyebrow}
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso">
-            {cms.intro.title ? cms.intro.title.replace(/\.+$/, '') : '4 bước sở hữu website thiệp cưới'}
+          <h2 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-deep-espresso text-balance leading-snug">
+            {(() => {
+              const rawTitle = cms.intro.title ? cms.intro.title.replace(/\.+$/, '') : '4 bước sở hữu website thiệp cưới';
+              if (rawTitle.includes('website thiệp cưới')) {
+                const [before, after] = rawTitle.split('website thiệp cưới');
+                return (
+                  <>
+                    <span className="inline-block">{before}</span>{' '}
+                    <span className="inline-block whitespace-nowrap">website thiệp cưới</span>
+                    {after && <span className="inline-block">{after}</span>}
+                  </>
+                );
+              } else if (rawTitle.includes('thiệp cưới')) {
+                const [before, after] = rawTitle.split('thiệp cưới');
+                return (
+                  <>
+                    <span className="inline-block">{before}</span>{' '}
+                    <span className="inline-block whitespace-nowrap">thiệp cưới</span>
+                    {after && <span className="inline-block">{after}</span>}
+                  </>
+                );
+              }
+              return rawTitle;
+            })()}
           </h2>
           <p className="text-sm text-text-muted">
             {cms.intro.description}
@@ -350,8 +380,8 @@ export const HomePage: React.FC = () => {
             <span className="font-label-caps text-xs text-burgundy-wine tracking-widest font-bold">
               Hạnh phúc lan tỏa
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso">
-              Lời chúc &amp; phản hồi từ các cặp đôi
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-deep-espresso text-balance">
+              Lời chúc &amp; phản hồi từ <span className="whitespace-nowrap">các cặp đôi</span>
             </h2>
             <p className="text-sm text-text-muted">
               Lắng nghe cảm xúc thật từ những cặp đôi đã đồng hành cùng Nhà Có Tiệc để trao gửi tấm thiệp ngày chung đôi đến những người thân thương.
@@ -417,8 +447,8 @@ export const HomePage: React.FC = () => {
           <span className="font-label-caps text-xs text-burgundy-wine tracking-widest font-bold">
             Thắc mắc phổ biến
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso mt-1">
-            Câu hỏi thường gặp
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-espresso mt-1 text-balance">
+            Câu hỏi <span className="whitespace-nowrap">thường gặp</span>
           </h2>
         </div>
 

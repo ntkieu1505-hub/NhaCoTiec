@@ -35,12 +35,12 @@ export const TemplatesPage: React.FC = () => {
       {/* Header section matching SCREEN_4 Stitch */}
       <div className="text-center max-w-xl mx-auto mb-10">
         <span className="font-label-caps text-xs text-burgundy-wine tracking-widest font-bold">
-          Bộ sưu tập mẫu thiệp cưới online
+          Bộ sưu tập mẫu <span className="whitespace-nowrap">thiệp cưới</span> online
         </span>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-deep-espresso mt-2">
+        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-deep-espresso mt-2 text-balance">
           Chọn mẫu yêu thích của bạn.
         </h1>
-        <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed">
+        <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed text-balance">
           Đội ngũ Nhà Có Tiệc sẽ tiếp nhận và tùy biến riêng từng câu chữ, ảnh cưới và âm nhạc theo thông điệp của bạn.
         </p>
 
