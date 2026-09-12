@@ -13,6 +13,125 @@ export interface AdminOutletContext {
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
+export interface DeviceConfig {
+  id: string;
+  name: string;
+  shortLabel: string;
+  width: number;
+  height: number;
+  category: 'Apple' | 'Android';
+  notchType: 'dynamic-island' | 'punch-hole' | 'classic-notch';
+  borderRadius: number;
+  bezelWidth: number;
+}
+
+export const REAL_DEVICES: Record<string, DeviceConfig> = {
+  'iphone-15': {
+    id: 'iphone-15',
+    name: 'iPhone 15 / 16 Pro',
+    shortLabel: 'iPhone 15 Pro (393px)',
+    width: 393,
+    height: 852,
+    category: 'Apple',
+    notchType: 'dynamic-island',
+    borderRadius: 50,
+    bezelWidth: 10,
+  },
+  'iphone-promax': {
+    id: 'iphone-promax',
+    name: 'iPhone 15 / 16 Pro Max',
+    shortLabel: 'iPhone Pro Max (430px)',
+    width: 430,
+    height: 932,
+    category: 'Apple',
+    notchType: 'dynamic-island',
+    borderRadius: 54,
+    bezelWidth: 10,
+  },
+  'iphone-se': {
+    id: 'iphone-se',
+    name: 'iPhone SE / Mini',
+    shortLabel: 'iPhone SE (375px)',
+    width: 375,
+    height: 667,
+    category: 'Apple',
+    notchType: 'classic-notch',
+    borderRadius: 38,
+    bezelWidth: 8,
+  },
+  'galaxy-s24': {
+    id: 'galaxy-s24',
+    name: 'Samsung Galaxy S24',
+    shortLabel: 'Galaxy S24 (412px)',
+    width: 412,
+    height: 915,
+    category: 'Android',
+    notchType: 'punch-hole',
+    borderRadius: 42,
+    bezelWidth: 8,
+  },
+};
+
+export interface PreviewPageItem {
+  id: string;
+  label: string;
+  path: string;
+  icon: string;
+  group: 'customer' | 'admin';
+  description: string;
+}
+
+export const PREVIEW_PAGES: PreviewPageItem[] = [
+  {
+    id: 'home',
+    label: 'Trang chủ',
+    path: '/',
+    icon: 'home',
+    group: 'customer',
+    description: 'Trang chủ đón khách, giới thiệu & quy trình',
+  },
+  {
+    id: 'templates',
+    label: 'Kho mẫu thiệp',
+    path: '/mau-thiep',
+    icon: 'collections',
+    group: 'customer',
+    description: 'Bộ sưu tập mẫu thiệp cưới trực quan',
+  },
+  {
+    id: 'template-detail',
+    label: 'Chi tiết & Đặt thiệp',
+    path: '/mau-thiep/minh-anh-tuan-kiet',
+    icon: 'auto_awesome',
+    group: 'customer',
+    description: 'Trang demo & form đặt thiệp mẫu',
+  },
+  {
+    id: 'customer-dashboard',
+    label: 'Cổng khách hàng',
+    path: '/dashboard',
+    icon: 'person',
+    group: 'customer',
+    description: 'Bảng quản lý đơn của cô dâu chú rể',
+  },
+  {
+    id: 'admin-overview',
+    label: 'Tổng quan Admin',
+    path: '/admin/tong-quan',
+    icon: 'dashboard',
+    group: 'admin',
+    description: 'Bảng điều hành thời gian thực',
+  },
+  {
+    id: 'admin-orders',
+    label: 'Đơn hàng Admin',
+    path: '/admin/don-hang',
+    icon: 'receipt_long',
+    group: 'admin',
+    description: 'Quản lý duyệt đơn trên mobile',
+  },
+];
+
 export const AdminLayout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
@@ -32,13 +151,125 @@ export const AdminLayout: React.FC = () => {
       return 'desktop';
     }
   });
-  const [mobileDeviceWidth, setMobileDeviceWidth] = useState<375 | 390 | 430>(390);
+
+  // Simulator Device & Navigation State
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('nha_co_tiec_admin_sim_device') || 'iphone-15';
+    } catch {
+      return 'iphone-15';
+    }
+  });
+
+  const [previewPath, setPreviewPath] = useState<string>(() => {
+    try {
+      return localStorage.getItem('nha_co_tiec_admin_sim_path') || '/';
+    } catch {
+      return '/';
+    }
+  });
+
+  const [inputUrl, setInputUrl] = useState<string>(previewPath);
+  const [scaleMode, setScaleMode] = useState<'fit' | '100' | '90' | '85'>(() => {
+    try {
+      const saved = localStorage.getItem('nha_co_tiec_admin_sim_scale');
+      if (saved === '100' || saved === '90' || saved === '85' || saved === 'fit') return saved;
+      return 'fit';
+    } catch {
+      return 'fit';
+    }
+  });
+
+  const [iframeKey, setIframeKey] = useState(1);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [windowHeight, setWindowHeight] = useState(
+    typeof window !== 'undefined' ? window.innerHeight : 900
+  );
+
+  useEffect(() => {
+    const handleResize = () => setWindowHeight(window.innerHeight);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const activeDevice = REAL_DEVICES[selectedDeviceId] || REAL_DEVICES['iphone-15'];
+
+  const effectiveScale = useMemo(() => {
+    if (scaleMode === '100') return 1;
+    if (scaleMode === '90') return 0.9;
+    if (scaleMode === '85') return 0.85;
+    // 'fit' calculation
+    const availableHeight = Math.max(450, windowHeight - 210);
+    const calculated = availableHeight / activeDevice.height;
+    return Math.min(1, Math.max(0.55, Number(calculated.toFixed(2))));
+  }, [scaleMode, windowHeight, activeDevice.height]);
 
   const handleToggleViewMode = (mode: 'desktop' | 'mobile') => {
     setViewMode(mode);
     try {
       localStorage.setItem('nha_co_tiec_admin_view_mode', mode);
     } catch {}
+  };
+
+  const handleSelectDevice = (devId: string) => {
+    setSelectedDeviceId(devId);
+    try {
+      localStorage.setItem('nha_co_tiec_admin_sim_device', devId);
+    } catch {}
+  };
+
+  const handleSelectScale = (scale: 'fit' | '100' | '90' | '85') => {
+    setScaleMode(scale);
+    try {
+      localStorage.setItem('nha_co_tiec_admin_sim_scale', scale);
+    } catch {}
+  };
+
+  const handleNavigatePath = (newPath: string) => {
+    setPreviewPath(newPath);
+    setInputUrl(newPath);
+    try {
+      localStorage.setItem('nha_co_tiec_admin_sim_path', newPath);
+    } catch {}
+  };
+
+  const handleUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let target = inputUrl.trim();
+    if (!target) target = '/';
+    if (!target.startsWith('/')) target = '/' + target;
+    handleNavigatePath(target);
+  };
+
+  const handleIframeLoad = () => {
+    try {
+      const loc = iframeRef.current?.contentWindow?.location;
+      if (loc && loc.pathname) {
+        setInputUrl(loc.pathname + (loc.search || ''));
+      }
+    } catch {
+      // Ignore cross-origin error if any
+    }
+  };
+
+  const handleReloadIframe = () => {
+    setIframeKey((prev) => prev + 1);
+  };
+
+  const handleGoBack = () => {
+    try {
+      iframeRef.current?.contentWindow?.history.back();
+    } catch {}
+  };
+
+  const handleGoForward = () => {
+    try {
+      iframeRef.current?.contentWindow?.history.forward();
+    } catch {}
+  };
+
+  const handleOpenExternal = () => {
+    window.open(previewPath, '_blank');
   };
 
   const navItems = [
@@ -555,101 +786,252 @@ export const AdminLayout: React.FC = () => {
   // VIEW 1: MOBILE VIEWPORT SIMULATOR MODE
   if (viewMode === 'mobile') {
     return (
-      <div className="min-h-screen bg-[#1c1917] text-white flex flex-col items-center py-4 px-2 sm:px-4 selection:bg-burgundy-wine selection:text-white">
-        {/* Simulator Top Control Bar */}
-        <div className="w-full max-w-2xl mb-3.5 px-4 py-2.5 rounded-2xl bg-[#292524] border border-white/10 shadow-xl flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="font-semibold text-white">Mô phỏng Điện thoại</span>
-            <span className="text-white/40 hidden sm:inline">·</span>
-            <span className="text-white/80 hidden sm:inline">
-              Khổ rộng: <strong>{mobileDeviceWidth}px</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Device width presets */}
-            <div className="flex items-center p-0.5 rounded-xl bg-black/40 border border-white/10 text-[11px]">
-              {([375, 390, 430] as const).map((w) => (
-                <button
-                  key={w}
-                  type="button"
-                  onClick={() => setMobileDeviceWidth(w)}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-                    mobileDeviceWidth === w
-                      ? 'bg-burgundy-wine text-white font-bold shadow-xs'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  {w === 375 ? '375px' : w === 390 ? '390px' : '430px'}
-                </button>
-              ))}
+      <div className="min-h-screen bg-[#141211] text-white flex flex-col items-center py-3 px-2 sm:px-4 selection:bg-burgundy-wine selection:text-white font-sans">
+        {/* Simulator Master Control Header */}
+        <div className="w-full max-w-5xl mb-3 flex flex-col gap-2.5">
+          {/* Row 1: Brand & Device presets & Scale & Switch Back */}
+          <div className="px-4 py-2.5 rounded-2xl bg-[#221e1d] border border-white/10 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs">
+            {/* Title & Live Status */}
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="font-bold text-white tracking-tight">Mô phỏng Điện thoại Chuẩn Thực Tế</span>
+              <span className="text-white/40 hidden sm:inline">·</span>
+              <span className="text-white/70 hidden sm:inline">
+                {activeDevice.name} ({activeDevice.width} × {activeDevice.height}px)
+              </span>
             </div>
 
-            {/* Switch back to Desktop button */}
-            <button
-              type="button"
-              onClick={() => handleToggleViewMode('desktop')}
-              className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold flex items-center gap-1.5 transition-colors border border-white/15"
-              title="Quay lại giao diện Desktop toàn màn hình"
-            >
-              <Icon name="desktop_windows" className="text-[14px]" />
-              <span className="hidden sm:inline">Quay lại Desktop</span>
-            </button>
+            {/* Controls: Devices + Zoom + Back to Desktop */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Device Selector */}
+              <div className="flex items-center p-0.5 rounded-xl bg-black/40 border border-white/10 text-[11px]">
+                {Object.values(REAL_DEVICES).map((dev) => (
+                  <button
+                    key={dev.id}
+                    type="button"
+                    onClick={() => handleSelectDevice(dev.id)}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                      selectedDeviceId === dev.id
+                        ? 'bg-burgundy-wine text-white font-bold shadow-xs'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                    title={`${dev.name} (${dev.width}×${dev.height}px)`}
+                  >
+                    {dev.shortLabel}
+                  </button>
+                ))}
+              </div>
+
+              {/* Scale / Zoom Control */}
+              <div className="hidden md:flex items-center p-0.5 rounded-xl bg-black/40 border border-white/10 text-[11px]">
+                {(['fit', '100', '90', '85'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => handleSelectScale(s)}
+                    className={`px-2 py-1 rounded-lg font-medium transition-all ${
+                      scaleMode === s
+                        ? 'bg-white/20 text-white font-bold'
+                        : 'text-white/50 hover:text-white'
+                    }`}
+                  >
+                    {s === 'fit' ? `Tự chỉnh (${Math.round(effectiveScale * 100)}%)` : `${s}%`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Back to Desktop */}
+              <button
+                type="button"
+                onClick={() => handleToggleViewMode('desktop')}
+                className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold flex items-center gap-1.5 transition-colors border border-white/15"
+                title="Quay lại giao diện Desktop toàn màn hình"
+              >
+                <Icon name="desktop_windows" className="text-[14px]" />
+                <span className="hidden sm:inline">Quay lại Desktop</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2: Quick Page Switcher (Trang Khách hàng & Trang Admin) */}
+          <div className="px-4 py-2 rounded-2xl bg-[#221e1d]/90 border border-white/10 shadow-md flex flex-wrap items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-gold-foil uppercase tracking-wider flex items-center gap-1">
+                <Icon name="touch_app" className="text-[14px]" />
+                <span>Xem nhanh trang:</span>
+              </span>
+
+              {/* Customer Pages */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {PREVIEW_PAGES.filter((p) => p.group === 'customer').map((p) => {
+                  const isActive = previewPath === p.path;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => handleNavigatePath(p.path)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${
+                        isActive
+                          ? 'bg-burgundy-wine text-white font-semibold shadow-xs'
+                          : 'bg-black/30 text-white/80 hover:bg-black/50 hover:text-white border border-white/5'
+                      }`}
+                      title={p.description}
+                    >
+                      <Icon name={p.icon} className="text-[14px]" />
+                      <span>{p.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <span className="text-white/30 hidden sm:inline">|</span>
+
+              {/* Admin Pages */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {PREVIEW_PAGES.filter((p) => p.group === 'admin').map((p) => {
+                  const isActive = previewPath === p.path;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => handleNavigatePath(p.path)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${
+                        isActive
+                          ? 'bg-gold-foil text-deep-espresso font-bold shadow-xs'
+                          : 'bg-black/30 text-white/80 hover:bg-black/50 hover:text-white border border-white/5'
+                      }`}
+                      title={p.description}
+                    >
+                      <Icon name={p.icon} className="text-[14px]" />
+                      <span>{p.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Simulated Safari / Chrome Browser Navigation Bar */}
+            <form onSubmit={handleUrlSubmit} className="flex items-center gap-1.5 flex-1 max-w-md min-w-[240px]">
+              <div className="flex items-center gap-0.5 text-white/60">
+                <button
+                  type="button"
+                  onClick={handleGoBack}
+                  className="p-1 hover:text-white rounded hover:bg-white/10 transition-colors"
+                  title="Quay lại (Back)"
+                >
+                  <Icon name="arrow_back" className="text-[15px]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoForward}
+                  className="p-1 hover:text-white rounded hover:bg-white/10 transition-colors"
+                  title="Tiến tới (Forward)"
+                >
+                  <Icon name="arrow_forward" className="text-[15px]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReloadIframe}
+                  className="p-1 hover:text-white rounded hover:bg-white/10 transition-colors"
+                  title="Tải lại trang (F5)"
+                >
+                  <Icon name="refresh" className="text-[15px]" />
+                </button>
+              </div>
+
+              <div className="relative flex-1">
+                <Icon name="lock" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-emerald-400 text-[13px]" />
+                <input
+                  type="text"
+                  value={inputUrl}
+                  onChange={(e) => setInputUrl(e.target.value)}
+                  placeholder="/, /mau-thiep..."
+                  className="w-full pl-7 pr-7 py-1 rounded-xl bg-black/50 text-white text-xs border border-white/15 focus:outline-none focus:ring-1 focus:ring-gold-foil font-mono"
+                  title="Nhập đường dẫn trang để xem trên điện thoại và bấm Enter"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-white/60 hover:text-white"
+                  title="Chuyển tới trang"
+                >
+                  <Icon name="arrow_right_alt" className="text-[16px]" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleOpenExternal}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs transition-colors shrink-0"
+                title="Mở trang này sang tab mới trên trình duyệt"
+              >
+                <Icon name="open_in_new" className="text-[14px]" />
+              </button>
+            </form>
           </div>
         </div>
 
-        {/* Smartphone Device Frame */}
+        {/* Scaled Phone Container */}
         <div
-          style={{ width: `${mobileDeviceWidth}px` }}
-          className="relative max-w-full h-[880px] max-h-[calc(100vh-85px)] rounded-[44px] border-[10px] border-[#292524] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/15 bg-surface text-on-surface flex flex-col overflow-hidden"
+          style={{
+            width: `${activeDevice.width * effectiveScale}px`,
+            height: `${activeDevice.height * effectiveScale}px`,
+          }}
+          className="relative flex items-center justify-center transition-all duration-200 mt-1"
         >
-          {/* Top Dynamic Island Notch */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-[#141211] rounded-full z-50 flex items-center justify-between px-2.5 pointer-events-none shadow-xs">
-            <div className="w-2 h-2 rounded-full bg-[#292524]"></div>
-            <div className="w-2 h-2 rounded-full bg-[#1e293b]/70 border border-white/10"></div>
-          </div>
-
-          {/* Phone Status Bar */}
-          <div className="h-7 px-6 flex items-center justify-between text-[11px] font-semibold text-deep-espresso select-none shrink-0 pt-0.5 bg-surface z-40">
-            <span>9:41</span>
-            <div className="flex items-center gap-1.5 text-[13px] text-deep-espresso">
-              <Icon name="signal_cellular_alt" className="text-[13px]" />
-              <Icon name="wifi" className="text-[13px]" />
-              <Icon name="battery_full" className="text-[14px]" />
-            </div>
-          </div>
-
-          {/* Mobile Container Viewport */}
-          <div className="relative flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col bg-surface font-sans">
-            {/* Mobile Drawer Sidebar inside frame */}
-            {mobileSidebarOpen && (
-              <>
-                <div
-                  className="absolute inset-0 bg-deep-espresso/50 backdrop-blur-xs z-50"
-                  onClick={() => setMobileSidebarOpen(false)}
-                />
-                <aside className="absolute left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between py-5 px-3.5 shadow-2xl transition-transform duration-300 overflow-y-auto">
-                  {renderSidebarContent(true)}
-                </aside>
-              </>
+          <div
+            style={{
+              width: `${activeDevice.width}px`,
+              height: `${activeDevice.height}px`,
+              transform: `scale(${effectiveScale})`,
+              transformOrigin: 'top center',
+              borderRadius: `${activeDevice.borderRadius}px`,
+              borderWidth: `${activeDevice.bezelWidth}px`,
+            }}
+            className="absolute top-0 border-[#292524] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/15 bg-white text-on-surface flex flex-col overflow-hidden select-none"
+          >
+            {/* Dynamic Island / Notch */}
+            {activeDevice.notchType === 'dynamic-island' && (
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#141211] rounded-full z-50 flex items-center justify-between px-3 pointer-events-none shadow-xs border border-white/5">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#201d1c]"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-[#172535] border border-white/10"></div>
+              </div>
             )}
 
-            {/* Mobile Header */}
-            {renderHeader(true)}
+            {activeDevice.notchType === 'punch-hole' && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-[#141211] border border-white/10 z-50 pointer-events-none shadow-xs"></div>
+            )}
 
-            {/* Mobile Search Bar if active */}
-            {renderMobileSearchBar()}
+            {activeDevice.notchType === 'classic-notch' && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-[#141211] rounded-full z-50 pointer-events-none shadow-xs"></div>
+            )}
 
-            {/* Mobile Page Content Outlet */}
-            <main className="flex-1 p-3.5 sm:p-4 w-full">
-              <Outlet context={{ searchQuery, setSearchQuery } satisfies AdminOutletContext} />
-            </main>
-          </div>
+            {/* Phone Status Bar */}
+            <div className="h-8 px-6 flex items-center justify-between text-[11px] font-semibold text-deep-espresso select-none shrink-0 pt-0.5 bg-surface-cream/80 backdrop-blur-md z-40 border-b border-border-delicate/40">
+              <span className="font-mono">9:41</span>
+              <div className="flex items-center gap-1.5 text-[13px] text-deep-espresso">
+                <span className="text-[10px] font-bold text-text-muted mr-1">5G</span>
+                <Icon name="signal_cellular_alt" className="text-[13px]" />
+                <Icon name="wifi" className="text-[13px]" />
+                <Icon name="battery_full" className="text-[14px]" />
+              </div>
+            </div>
 
-          {/* Bottom iOS Home Indicator */}
-          <div className="h-4 bg-surface flex items-center justify-center shrink-0">
-            <div className="w-28 h-1 bg-deep-espresso/20 rounded-full"></div>
+            {/* The Real Phone Viewport: Isolated iframe */}
+            <div className="relative flex-1 w-full overflow-hidden bg-white">
+              <iframe
+                key={iframeKey}
+                ref={iframeRef}
+                src={previewPath}
+                title="Trình mô phỏng điện thoại Nhà Có Tiệc"
+                className="w-full h-full border-0 bg-white"
+                onLoad={handleIframeLoad}
+              />
+            </div>
+
+            {/* Bottom iOS Home Bar */}
+            <div className="h-4 bg-surface-cream/90 flex items-center justify-center shrink-0 border-t border-border-delicate/30">
+              <div className="w-28 h-1 bg-deep-espresso/25 rounded-full"></div>
+            </div>
           </div>
         </div>
       </div>
