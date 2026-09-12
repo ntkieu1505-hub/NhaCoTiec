@@ -26,7 +26,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="flex flex-col w-full">
       {/* 1. Full-bleed Artistic Hero Section (CMS Dynamic) */}
-      <section className="relative w-full min-h-[460px] sm:min-h-[560px] md:min-h-[680px] lg:min-h-[760px] flex items-center justify-center overflow-hidden bg-[#12100f] text-white">
+      <section className="relative w-full min-h-[460px] sm:min-h-[660px] md:min-h-[740px] lg:min-h-[820px] flex items-center justify-center overflow-hidden bg-[#12100f] text-white">
         {/* Full-bleed Hero Image extending from edge to edge of Hero frame */}
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           {/* Mobile Hero Image (Chuyên biệt cho giao diện điện thoại) */}
@@ -39,16 +39,16 @@ export const HomePage: React.FC = () => {
           <img
             src={cms.hero.coverImageUrl}
             alt={cms.hero.headline}
-            className="w-full h-full object-cover sm:object-[center_28%] hidden sm:block"
+            className="w-full h-full object-cover object-[center_35%] sm:object-[center_28%] md:object-[center_30%] hidden sm:block"
           />
           {/* Subtle neutral dark vignette for text readability - strictly NO red/burgundy tint */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/15 sm:to-black/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/15 md:to-black/25" />
         </div>
 
         {/* Centered, balanced Hero content with widened container (800–1000px) */}
         <div className="relative z-10 w-full max-w-4xl lg:max-w-5xl mx-auto px-3 sm:px-6 pt-14 pb-8 sm:py-16 md:py-24 flex flex-col items-center text-center">
           {/* 1. Tên thương hiệu - Dòng riêng nằm ngay bên trên tiêu đề */}
-          <p className="font-playfair text-xs sm:text-sm md:text-base text-gold-foil font-semibold tracking-[0.15em] mb-2 sm:mb-3 select-none drop-shadow-sm">
+          <p className="font-playfair text-xs sm:text-sm md:text-base lg:text-lg text-gold-foil font-semibold tracking-[0.15em] mb-2 sm:mb-3 md:mb-4 select-none drop-shadow-sm">
             Nhà Có Tiệc
           </p>
 
@@ -73,7 +73,7 @@ export const HomePage: React.FC = () => {
             }
 
             return (
-              <h1 className="font-serif text-[18px] min-[360px]:text-[19px] min-[390px]:text-[21px] sm:text-2xl md:text-3xl lg:text-[40px] xl:text-[46px] font-bold leading-[1.3] sm:leading-[1.35] text-white drop-shadow-md max-w-4xl mx-auto flex flex-col gap-0.5 sm:gap-1.5 md:gap-2 items-center text-balance">
+              <h1 className="font-serif text-[18px] min-[360px]:text-[19px] min-[390px]:text-[21px] sm:text-2xl md:text-3xl lg:text-[42px] xl:text-[46px] font-bold leading-[1.3] sm:leading-[1.35] md:leading-[1.38] text-white drop-shadow-md max-w-4xl mx-auto flex flex-col gap-0.5 sm:gap-1.5 md:gap-2 items-center text-balance">
                 {lines.map((line, idx) => (
                   <span
                     key={idx}
@@ -100,7 +100,7 @@ export const HomePage: React.FC = () => {
 
           {/* 3. Phần mô tả */}
           {cms.hero.subtext && (
-            <p className="text-white/85 text-xs sm:text-sm md:text-base mt-2.5 sm:mt-4 leading-relaxed max-w-xl font-sans drop-shadow-sm font-normal text-balance whitespace-pre-line px-2">
+            <p className="text-white/85 text-xs sm:text-sm md:text-lg mt-2.5 sm:mt-4 md:mt-5 leading-relaxed max-w-xl md:max-w-2xl font-sans drop-shadow-sm font-normal text-balance whitespace-pre-line px-2 sm:px-0">
               {cms.hero.subtext}
             </p>
           )}
@@ -108,7 +108,7 @@ export const HomePage: React.FC = () => {
           {/* 4. Primary CTA - "Xem mẫu thiệp" */}
           <a
             href={cms.hero.ctaLink || '#danh-sach-mau'}
-            className="mt-5 sm:mt-7 px-6 sm:px-9 h-10 sm:h-12 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-label-md text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 sm:gap-2 shadow-xl shadow-black/50 hover:scale-[1.02] active:scale-95 transition-all border border-white/10"
+            className="mt-5 sm:mt-7 md:mt-8 px-6 sm:px-9 md:px-10 h-10 sm:h-12 md:h-[50px] rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-label-md text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 sm:gap-2 shadow-xl shadow-black/50 hover:scale-[1.02] active:scale-95 transition-all border border-white/10"
           >
             <span>{cms.hero.ctaText || 'Xem mẫu thiệp'}</span>
             <Icon name="arrow_downward" className="text-[16px] sm:text-[18px]" />
