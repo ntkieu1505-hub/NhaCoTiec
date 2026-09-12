@@ -338,9 +338,10 @@ export const AdminOrdersPage: React.FC = () => {
         })}
       </div>
 
-      {/* Orders Table */}
+      {/* Orders Table & Mobile Cards */}
       <div className="bg-surface-card rounded-2xl shadow-xs border border-border-delicate overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table (Hidden on small mobile screens) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-surface-subtle/50 border-b border-border-delicate text-text-muted font-label-caps uppercase text-[10px]">
@@ -495,6 +496,136 @@ export const AdminOrdersPage: React.FC = () => {
               )))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Responsive Card List (Optimized for Phone screens) */}
+        <div className="md:hidden divide-y divide-border-delicate">
+          {orders.length === 0 ? (
+            <div className="p-8 text-center text-text-muted flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <Icon name="cloud_done" className="text-xl" />
+              </div>
+              <span className="font-semibold text-deep-espresso text-xs">
+                Chế độ thời gian thực (0 đơn ảo)
+              </span>
+              <p className="text-[11px] text-text-muted">
+                Khi có đơn mới, đơn hàng sẽ hiển thị tức thì tại đây.
+              </p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="p-8 text-center text-text-muted flex flex-col items-center gap-2">
+              <Icon name="search_off" className="text-2xl text-text-muted/50" />
+              <span className="font-semibold text-deep-espresso text-xs">Không tìm thấy đơn</span>
+              <button
+                type="button"
+                onClick={() => {
+                  handleSearchChange('');
+                  setSelectedStage('all');
+                }}
+                className="mt-1 px-3 py-1 rounded-full bg-surface-subtle text-burgundy-wine text-xs font-semibold"
+              >
+                Xem tất cả
+              </button>
+            </div>
+          ) : (
+            filteredOrders.map((ord) => (
+              <div key={ord.id} className="p-3.5 flex flex-col gap-2.5 hover:bg-surface-subtle/20 transition-colors">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono font-bold text-xs text-deep-espresso">
+                      #{ord.id}
+                    </span>
+                    <StatusChip stage={ord.currentStage} />
+                  </div>
+                  <span className="text-[10px] text-text-muted shrink-0">
+                    {formatDateTime(ord.updatedAt)}
+                  </span>
+                </div>
+
+                <div className="bg-surface-subtle/60 p-2.5 rounded-xl border border-border-delicate/70 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-xs text-deep-espresso truncate">
+                      {typeof ord.customerName === 'string' ? ord.customerName : 'Khách hàng'}
+                    </div>
+                    <div className="text-[11px] text-text-muted truncate">
+                      {typeof ord.customerPhone === 'string' ? ord.customerPhone : ''}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-medium text-deep-espresso truncate max-w-[120px]">
+                      {typeof ord.templateName === 'string' ? ord.templateName : 'Mẫu thiệp'}
+                    </div>
+                    <div className="text-xs font-serif font-bold text-burgundy-wine">
+                      {formatCurrency(ord.price)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-0.5">
+                  <span
+                    className={`font-label-caps text-[9px] px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${
+                      PAYMENT_STATUS_META[ord.paymentStatus]?.colorClass || 'bg-surface-subtle text-text-muted border-border-delicate'
+                    }`}
+                  >
+                    <Icon
+                      name={PAYMENT_STATUS_META[ord.paymentStatus]?.icon || 'help'}
+                      className="text-[11px]"
+                    />
+                    <span>{PAYMENT_STATUS_META[ord.paymentStatus]?.label || ord.paymentStatus}</span>
+                  </span>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    {ord.paymentStatus === 'pending_confirmation' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => adminConfirmPayment(ord.id)}
+                          className="px-2.5 py-1 rounded-full bg-emerald-700 text-white text-[10px] font-semibold flex items-center gap-1"
+                        >
+                          <Icon name="check" className="text-[12px]" />
+                          <span>Duyệt</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReject(ord.id)}
+                          className="px-2 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 text-[10px] font-semibold"
+                        >
+                          Từ chối
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickAdvance(ord.id, ord.currentStage)}
+                        disabled={ord.currentStage === 8 || ord.paymentStatus !== 'paid'}
+                        className="px-2 py-1 rounded-full bg-surface-subtle text-deep-espresso text-[10px] font-medium border border-border-delicate disabled:opacity-30"
+                      >
+                        +1 Bước
+                      </button>
+                    )}
+                    <Link
+                      to={`/admin/don-hang/${ord.id}`}
+                      className="px-2.5 py-1 rounded-full bg-burgundy-wine text-white text-[10px] font-semibold hover:bg-[#851622]"
+                    >
+                      Chi tiết
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Xác nhận xóa vĩnh viễn đơn hàng #${ord.id}?`)) {
+                          deleteOrder(ord.id);
+                        }
+                      }}
+                      className="p-1 rounded-full text-text-muted hover:text-rose-700"
+                      title="Xóa đơn"
+                    >
+                      <Icon name="delete" className="text-[14px]" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

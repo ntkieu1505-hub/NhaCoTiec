@@ -23,6 +23,24 @@ export const AdminLayout: React.FC = () => {
 
   const pendingCount = orders.filter((o) => o.paymentStatus === 'pending_confirmation').length;
 
+  // View Mode: 'desktop' (full screen) vs 'mobile' (phone viewport simulator)
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>(() => {
+    try {
+      const saved = localStorage.getItem('nha_co_tiec_admin_view_mode');
+      return saved === 'mobile' ? 'mobile' : 'desktop';
+    } catch {
+      return 'desktop';
+    }
+  });
+  const [mobileDeviceWidth, setMobileDeviceWidth] = useState<375 | 390 | 430>(390);
+
+  const handleToggleViewMode = (mode: 'desktop' | 'mobile') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('nha_co_tiec_admin_view_mode', mode);
+    } catch {}
+  };
+
   const navItems = [
     { number: '01', name: 'Tổng quan', path: '/admin/tong-quan', icon: 'dashboard' },
     {
@@ -152,9 +170,496 @@ export const AdminLayout: React.FC = () => {
     }
   };
 
+  // Helper: Sidebar Content
+  const renderSidebarContent = (isMobileMode = false) => (
+    <div className="flex flex-col justify-between h-full">
+      <div className="flex flex-col gap-4 sm:gap-5">
+        {/* Brand Header */}
+        <div className="px-3 pt-1 flex flex-col gap-1 border-b border-border-delicate/80 pb-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="Nhà Có Tiệc Logo"
+                className="w-8 sm:w-9 h-8 sm:h-9 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
+              />
+              <span className="font-playfair text-lg sm:text-xl font-bold text-deep-espresso tracking-tight">
+                Nhà Có Tiệc
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-burgundy-wine"></span>
+            </Link>
+            {isMobileMode ? (
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-1 text-text-muted hover:text-deep-espresso rounded-lg"
+                title="Đóng menu"
+              >
+                <Icon name="close" className="text-[20px]" />
+              </button>
+            ) : (
+              <span className="px-2 py-0.5 rounded bg-surface-subtle text-on-surface-variant font-label-caps text-[10px] uppercase font-bold">
+                Admin Hub
+              </span>
+            )}
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs text-text-muted italic">Tớ Có Thiệp · nhacotiec.vn</span>
+            <span className="w-2 h-2 rounded-full bg-gold-foil"></span>
+          </div>
+        </div>
+
+        {/* Nav Section Label */}
+        <div className="px-3">
+          <span className="font-label-caps text-[10px] text-text-muted uppercase tracking-widest font-semibold">
+            Menu điều hành
+          </span>
+        </div>
+
+        {/* 11 Navigation Links */}
+        <nav className="flex flex-col gap-1">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={() => setMobileSidebarOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl font-label-md text-xs sm:text-sm transition-all ${
+                  isActive
+                    ? 'bg-burgundy-wine text-white font-semibold shadow-md'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                }`
+              }
+            >
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <Icon name={item.icon} className="text-[18px] sm:text-[19px]" />
+                <span>{item.number}. {item.name}</span>
+              </div>
+              {item.badge && (
+                <span className="font-label-caps text-[10px] uppercase px-2 py-0.5 rounded-full bg-secondary text-white font-medium">
+                  {item.badge}
+                </span>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+
+      {/* Sidebar Footer */}
+      <div className="flex flex-col gap-2 pt-4 border-t border-border-delicate mt-4">
+        <Link
+          to="/"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-on-surface-variant hover:bg-surface-container-high transition-colors"
+        >
+          <Icon name="open_in_new" className="text-[16px]" />
+          <span>Xem trang khách (Public)</span>
+        </Link>
+        <button
+          onClick={() => {
+            logout();
+            navigate('/', { replace: true });
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-rose-700 hover:bg-rose-50 transition-colors w-full text-left font-medium"
+        >
+          <Icon name="logout" className="text-[16px]" />
+          <span>Đăng xuất Admin</span>
+        </button>
+        <div className="px-3 pt-0.5">
+          <p className="font-label-caps text-[10px] text-text-muted tracking-wider uppercase">
+            © 2026 Nhà Có Tiệc
+          </p>
+          <p className="text-[11px] text-text-muted mt-0.5">Hệ thống vận hành thiệp cưới</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Helper: Topbar Header
+  const renderHeader = (isMobileLayout = false) => (
+    <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md shadow-xs z-40 flex items-center justify-between px-3 sm:px-6 lg:px-8 border-b border-border-delicate shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 text-on-surface-variant min-w-0">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          className={`${isMobileLayout ? 'block' : 'lg:hidden'} p-1.5 rounded-lg text-deep-espresso hover:bg-surface-container-high`}
+          aria-label="Toggle Menu"
+        >
+          <Icon name="menu" className="text-[22px]" />
+        </button>
+        <Link to="/" className={`${isMobileLayout ? 'flex' : 'lg:hidden flex'} items-center gap-1.5 mr-1 shrink-0`}>
+          <img
+            src="/logo.png"
+            alt="Nhà Có Tiệc Logo"
+            className="w-7 h-7 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
+          />
+          <span className="font-playfair font-bold text-sm text-deep-espresso tracking-tight hidden min-[380px]:inline">
+            Nhà Có Tiệc
+          </span>
+        </Link>
+        {!isMobileLayout && (
+          <>
+            <span className="hidden sm:inline font-label-md text-xs text-text-muted">Quản trị</span>
+            <Icon name="chevron_right" className="hidden sm:inline text-[16px] text-text-muted" />
+          </>
+        )}
+        <span className="font-label-md text-xs sm:text-sm text-deep-espresso font-semibold truncate max-w-[100px] min-[360px]:max-w-[130px] sm:max-w-none">
+          {getCurrentTitle()}
+        </span>
+      </div>
+
+      {/* Topbar Right */}
+      <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
+        {/* Desktop Search Input with Quick Jump Dropdown */}
+        {!isMobileLayout && (
+          <div ref={searchContainerRef} className="relative items-center hidden md:flex">
+            <Icon name="search" className="absolute left-3 text-text-muted text-[18px] pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsSearchFocused(true);
+              }}
+              onFocus={() => setIsSearchFocused(true)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Tìm kiếm đơn (NCT01), khách, thiệp..."
+              className="w-48 lg:w-72 pl-9 pr-8 py-1.5 rounded-full bg-surface-subtle text-on-surface text-xs placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-burgundy-wine/30 border border-border-delicate transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 p-0.5 text-text-muted hover:text-deep-espresso rounded-full"
+                title="Xóa tìm kiếm"
+              >
+                <Icon name="close" className="text-[14px]" />
+              </button>
+            )}
+
+            {/* Instant Search Results Dropdown */}
+            {isSearchFocused && searchQuery.trim() && searchResults && (
+              <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 md:w-[450px] bg-surface-card rounded-2xl shadow-2xl border border-border-delicate overflow-hidden z-50 animate-in fade-in zoom-in-95">
+                <div className="px-4 py-2.5 bg-surface-subtle/90 border-b border-border-delicate flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 font-semibold text-deep-espresso">
+                    <span>Kết quả cho "{searchQuery}"</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-text-muted font-medium">
+                      {searchResults.totalCount} kết quả
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsSearchFocused(false)}
+                      className="p-1 text-text-muted hover:text-deep-espresso rounded-md"
+                      title="Đóng (Esc)"
+                    >
+                      <Icon name="close" className="text-[14px]" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[360px] overflow-y-auto divide-y divide-border-delicate/60 text-xs">
+                  {searchResults.totalCount === 0 ? (
+                    <div className="p-6 text-center text-text-muted flex flex-col items-center gap-2">
+                      <Icon name="search_off" className="text-3xl text-text-muted/60" />
+                      <span className="font-semibold text-deep-espresso">Không tìm thấy dữ liệu</span>
+                    </div>
+                  ) : (
+                    <>
+                      {searchResults.matchedOrders.length > 0 && (
+                        <div className="p-2 flex flex-col gap-1">
+                          <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
+                            Đơn hàng ({searchResults.matchedOrders.length})
+                          </span>
+                          {searchResults.matchedOrders.map((ord) => (
+                            <button
+                              key={ord.id}
+                              type="button"
+                              onClick={() => {
+                                navigate(`/admin/don-hang/${ord.id}`);
+                                setIsSearchFocused(false);
+                              }}
+                              className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-7 h-7 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center font-mono font-bold text-xs shrink-0">
+                                  #{ord.id}
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-semibold text-deep-espresso truncate text-xs">
+                                    {ord.customerName}
+                                  </span>
+                                  <span className="text-[11px] text-text-muted truncate">
+                                    {ord.templateName}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-50 text-burgundy-wine border border-rose-200 shrink-0">
+                                {ORDER_STAGES[ord.currentStage]?.name || 'Tiến trình'}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchResults.matchedTemplates.length > 0 && (
+                        <div className="p-2 flex flex-col gap-1">
+                          <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
+                            Mẫu thiệp ({searchResults.matchedTemplates.length})
+                          </span>
+                          {searchResults.matchedTemplates.map((tpl) => (
+                            <button
+                              key={tpl.id}
+                              type="button"
+                              onClick={() => {
+                                navigate('/admin/mau-thiep');
+                                setIsSearchFocused(false);
+                              }}
+                              className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center gap-2.5 transition-colors"
+                            >
+                              <img
+                                src={tpl.thumbnailUrl}
+                                alt={tpl.name}
+                                className="w-7 h-9 rounded object-cover border border-border-delicate shrink-0"
+                              />
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="font-semibold text-deep-espresso truncate text-xs">{tpl.name}</span>
+                                <span className="text-[11px] text-burgundy-wine font-serif font-bold">
+                                  {formatCurrency(tpl.price)}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* View Mode Switcher Toggle: Desktop ↔ Mobile */}
+        <div className="flex items-center p-0.5 rounded-full bg-surface-subtle border border-border-delicate shadow-2xs">
+          <button
+            type="button"
+            onClick={() => handleToggleViewMode('desktop')}
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all ${
+              viewMode === 'desktop'
+                ? 'bg-burgundy-wine text-white shadow-xs'
+                : 'text-text-muted hover:text-deep-espresso'
+            }`}
+            title="Chuyển sang giao diện Desktop (Toàn màn hình)"
+          >
+            <Icon name="desktop_windows" className="text-[14px]" />
+            <span className="hidden sm:inline">Desktop</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleViewMode('mobile')}
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all ${
+              viewMode === 'mobile'
+                ? 'bg-burgundy-wine text-white shadow-xs'
+                : 'text-text-muted hover:text-deep-espresso'
+            }`}
+            title="Chuyển sang mô phỏng giao diện Điện thoại"
+          >
+            <Icon name="smartphone" className="text-[14px]" />
+            <span className="hidden sm:inline">Điện thoại</span>
+          </button>
+        </div>
+
+        {/* Mobile Search Button Toggle */}
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+          className={`${!isMobileLayout ? 'md:hidden' : 'block'} p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors`}
+          title="Tìm kiếm"
+        >
+          <Icon name="search" className="text-[19px]" />
+        </button>
+
+        {/* SLA Notifications button */}
+        <button
+          className="relative p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
+          title="Thông báo SLA"
+        >
+          <Icon name="notifications" className="text-[19px]" />
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-burgundy-wine"></span>
+        </button>
+
+        {/* User Info & Avatar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 border-l border-border-delicate">
+          <div className="hidden lg:flex flex-col items-end">
+            <span className="font-label-md text-xs text-deep-espresso font-semibold leading-tight">
+              {user?.name || 'Admin Tuyết Nga'}
+            </span>
+            <span className="text-[11px] text-text-muted leading-tight">Quản trị vận hành</span>
+          </div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-burgundy-wine text-white flex items-center justify-center font-serif text-xs font-bold shadow-xs shrink-0">
+            TN
+          </div>
+          <button
+            onClick={() => {
+              logout();
+              navigate('/', { replace: true });
+            }}
+            className="p-1 sm:p-1.5 text-text-muted hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+            title="Đăng xuất Admin"
+          >
+            <Icon name="logout" className="text-[17px]" />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+
+  // Helper: Mobile Search Bar
+  const renderMobileSearchBar = () =>
+    mobileSearchOpen && (
+      <div className="p-3 bg-surface border-b border-border-delicate flex items-center gap-2 animate-in slide-in-from-top-2 duration-150">
+        <div className="relative flex-1">
+          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[17px]" />
+          <input
+            type="text"
+            autoFocus
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="Tìm mã đơn (NCT01), khách, thiệp..."
+            className="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-subtle text-on-surface text-xs focus:outline-none focus:ring-1 focus:ring-burgundy-wine border border-border-delicate"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
+            >
+              <Icon name="close" className="text-[14px]" />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setMobileSearchOpen(false);
+          }}
+          className="px-3.5 py-2 rounded-xl bg-burgundy-wine text-white text-xs font-semibold shrink-0"
+        >
+          Lọc
+        </button>
+      </div>
+    );
+
+  // VIEW 1: MOBILE VIEWPORT SIMULATOR MODE
+  if (viewMode === 'mobile') {
+    return (
+      <div className="min-h-screen bg-[#1c1917] text-white flex flex-col items-center py-4 px-2 sm:px-4 selection:bg-burgundy-wine selection:text-white">
+        {/* Simulator Top Control Bar */}
+        <div className="w-full max-w-2xl mb-3.5 px-4 py-2.5 rounded-2xl bg-[#292524] border border-white/10 shadow-xl flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="font-semibold text-white">Mô phỏng Điện thoại</span>
+            <span className="text-white/40 hidden sm:inline">·</span>
+            <span className="text-white/80 hidden sm:inline">
+              Khổ rộng: <strong>{mobileDeviceWidth}px</strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Device width presets */}
+            <div className="flex items-center p-0.5 rounded-xl bg-black/40 border border-white/10 text-[11px]">
+              {([375, 390, 430] as const).map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setMobileDeviceWidth(w)}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                    mobileDeviceWidth === w
+                      ? 'bg-burgundy-wine text-white font-bold shadow-xs'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  {w === 375 ? '375px' : w === 390 ? '390px' : '430px'}
+                </button>
+              ))}
+            </div>
+
+            {/* Switch back to Desktop button */}
+            <button
+              type="button"
+              onClick={() => handleToggleViewMode('desktop')}
+              className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold flex items-center gap-1.5 transition-colors border border-white/15"
+              title="Quay lại giao diện Desktop toàn màn hình"
+            >
+              <Icon name="desktop_windows" className="text-[14px]" />
+              <span className="hidden sm:inline">Quay lại Desktop</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Smartphone Device Frame */}
+        <div
+          style={{ width: `${mobileDeviceWidth}px` }}
+          className="relative max-w-full h-[880px] max-h-[calc(100vh-85px)] rounded-[44px] border-[10px] border-[#292524] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] ring-1 ring-white/15 bg-surface text-on-surface flex flex-col overflow-hidden"
+        >
+          {/* Top Dynamic Island Notch */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-[#141211] rounded-full z-50 flex items-center justify-between px-2.5 pointer-events-none shadow-xs">
+            <div className="w-2 h-2 rounded-full bg-[#292524]"></div>
+            <div className="w-2 h-2 rounded-full bg-[#1e293b]/70 border border-white/10"></div>
+          </div>
+
+          {/* Phone Status Bar */}
+          <div className="h-7 px-6 flex items-center justify-between text-[11px] font-semibold text-deep-espresso select-none shrink-0 pt-0.5 bg-surface z-40">
+            <span>9:41</span>
+            <div className="flex items-center gap-1.5 text-[13px] text-deep-espresso">
+              <Icon name="signal_cellular_alt" className="text-[13px]" />
+              <Icon name="wifi" className="text-[13px]" />
+              <Icon name="battery_full" className="text-[14px]" />
+            </div>
+          </div>
+
+          {/* Mobile Container Viewport */}
+          <div className="relative flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col bg-surface font-sans">
+            {/* Mobile Drawer Sidebar inside frame */}
+            {mobileSidebarOpen && (
+              <>
+                <div
+                  className="absolute inset-0 bg-deep-espresso/50 backdrop-blur-xs z-50"
+                  onClick={() => setMobileSidebarOpen(false)}
+                />
+                <aside className="absolute left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between py-5 px-3.5 shadow-2xl transition-transform duration-300 overflow-y-auto">
+                  {renderSidebarContent(true)}
+                </aside>
+              </>
+            )}
+
+            {/* Mobile Header */}
+            {renderHeader(true)}
+
+            {/* Mobile Search Bar if active */}
+            {renderMobileSearchBar()}
+
+            {/* Mobile Page Content Outlet */}
+            <main className="flex-1 p-3.5 sm:p-4 w-full">
+              <Outlet context={{ searchQuery, setSearchQuery } satisfies AdminOutletContext} />
+            </main>
+          </div>
+
+          {/* Bottom iOS Home Indicator */}
+          <div className="h-4 bg-surface flex items-center justify-center shrink-0">
+            <div className="w-28 h-1 bg-deep-espresso/20 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VIEW 2: STANDARD FULL-WIDTH DESKTOP VIEW
   return (
     <div className="bg-surface font-sans text-on-surface antialiased min-h-screen flex">
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay (for real mobile device screens) */}
       {mobileSidebarOpen && (
         <div
           className="fixed inset-0 bg-deep-espresso/50 backdrop-blur-xs z-50 lg:hidden"
@@ -168,427 +673,34 @@ export const AdminLayout: React.FC = () => {
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex flex-col gap-5">
-          {/* Brand Header */}
-          <div className="px-3 pt-1 flex flex-col gap-1 border-b border-border-delicate/80 pb-4">
-            <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2.5">
-                <img
-                  src="/logo.png"
-                  alt="Nhà Có Tiệc Logo"
-                  className="w-9 h-9 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
-                />
-                <span className="font-playfair text-xl font-bold text-deep-espresso tracking-tight">
-                  Nhà Có Tiệc
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-burgundy-wine"></span>
-              </Link>
-              <span className="px-2 py-0.5 rounded bg-surface-subtle text-on-surface-variant font-label-caps text-[10px] uppercase font-bold">
-                Admin Hub
-              </span>
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-xs text-text-muted italic">Tớ Có Thiệp · nhacotiec.vn</span>
-              <span className="w-2 h-2 rounded-full bg-gold-foil"></span>
-            </div>
-          </div>
-
-          {/* Nav Section Label */}
-          <div className="px-3">
-            <span className="font-label-caps text-[10px] text-text-muted uppercase tracking-widest font-semibold">
-              Menu điều hành
-            </span>
-          </div>
-
-          {/* 10 Navigation Links */}
-          <nav className="flex flex-col gap-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileSidebarOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-3 py-2.5 rounded-xl font-label-md text-sm transition-all ${
-                    isActive
-                      ? 'bg-burgundy-wine text-white font-semibold shadow-md'
-                      : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                  }`
-                }
-              >
-                <div className="flex items-center gap-3">
-                  <Icon name={item.icon} className="text-[19px]" />
-                  <span>{item.number}. {item.name}</span>
-                </div>
-                {item.badge && (
-                  <span className="font-label-caps text-[10px] uppercase px-2 py-0.5 rounded-full bg-secondary text-white font-medium">
-                    {item.badge}
-                  </span>
-                )}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="flex flex-col gap-2 pt-6 border-t border-border-delicate">
-          <Link
-            to="/"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-on-surface-variant hover:bg-surface-container-high transition-colors"
-          >
-            <Icon name="open_in_new" className="text-[16px]" />
-            <span>Xem trang khách (Public)</span>
-          </Link>
-          <button
-            onClick={() => {
-              logout();
-              navigate('/', { replace: true });
-            }}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-rose-700 hover:bg-rose-50 transition-colors w-full text-left font-medium"
-          >
-            <Icon name="logout" className="text-[16px]" />
-            <span>Đăng xuất Admin</span>
-          </button>
-          <div className="px-3 pt-1">
-            <p className="font-label-caps text-[10px] text-text-muted tracking-wider uppercase">
-              © 2026 Nhà Có Tiệc
-            </p>
-            <p className="text-[11px] text-text-muted mt-0.5">Hệ thống vận hành thiệp cưới</p>
-          </div>
-        </div>
+        {renderSidebarContent(false)}
       </aside>
 
       {/* 2. Main Content Area with Header */}
       <div className="flex-1 lg:pl-72 flex flex-col min-w-0">
         {/* Sticky Topbar */}
-        <header className="sticky top-0 h-16 bg-surface/90 backdrop-blur-md shadow-xs z-40 flex items-center justify-between px-4 sm:px-8 border-b border-border-delicate">
-          <div className="flex items-center gap-3 text-on-surface-variant">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="lg:hidden p-1.5 rounded-lg text-deep-espresso hover:bg-surface-container-high"
-              aria-label="Toggle Menu"
-            >
-              <Icon name="menu" className="text-[22px]" />
-            </button>
-            <Link to="/" className="lg:hidden flex items-center gap-1.5 mr-1">
-              <img
-                src="/logo.png"
-                alt="Nhà Có Tiệc Logo"
-                className="w-7 h-7 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
-              />
-              <span className="font-playfair font-bold text-sm text-deep-espresso tracking-tight">
-                Nhà Có Tiệc
-              </span>
-            </Link>
-            <span className="hidden sm:inline font-label-md text-xs text-text-muted">Quản trị</span>
-            <Icon name="chevron_right" className="hidden sm:inline text-[16px] text-text-muted" />
-            <span className="font-label-md text-sm text-deep-espresso font-semibold">
-              {getCurrentTitle()}
-            </span>
-          </div>
-
-          {/* Topbar Right */}
-          <div className="flex items-center gap-4 sm:gap-6">
-            {/* Desktop Search Input with Quick Jump Dropdown */}
-            <div ref={searchContainerRef} className="relative items-center hidden md:flex">
-              <Icon name="search" className="absolute left-3 text-text-muted text-[18px] pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsSearchFocused(true);
-                }}
-                onFocus={() => setIsSearchFocused(true)}
-                onKeyDown={handleSearchKeyDown}
-                placeholder="Tìm kiếm đơn (NCT01), khách, thiệp..."
-                className="w-60 lg:w-72 pl-9 pr-8 py-1.5 rounded-full bg-surface-subtle text-on-surface text-xs placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-burgundy-wine/30 border border-border-delicate transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 p-0.5 text-text-muted hover:text-deep-espresso rounded-full"
-                  title="Xóa tìm kiếm"
-                >
-                  <Icon name="close" className="text-[14px]" />
-                </button>
-              )}
-
-              {/* Instant Search Results Dropdown */}
-              {isSearchFocused && searchQuery.trim() && searchResults && (
-                <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 md:w-[450px] bg-surface-card rounded-2xl shadow-2xl border border-border-delicate overflow-hidden z-50 animate-in fade-in zoom-in-95">
-                  <div className="px-4 py-2.5 bg-surface-subtle/90 border-b border-border-delicate flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 font-semibold text-deep-espresso">
-                      <span>Kết quả tìm kiếm cho "{searchQuery}"</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-text-muted font-medium">
-                        {searchResults.totalCount} kết quả
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsSearchFocused(false)}
-                        className="p-1 text-text-muted hover:text-deep-espresso rounded-md"
-                        title="Đóng bảng gợi ý (Esc)"
-                      >
-                        <Icon name="close" className="text-[14px]" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="max-h-[380px] overflow-y-auto divide-y divide-border-delicate/60 text-xs">
-                    {searchResults.totalCount === 0 ? (
-                      <div className="p-6 text-center text-text-muted flex flex-col items-center gap-2">
-                        <Icon name="search_off" className="text-3xl text-text-muted/60" />
-                        <span className="font-semibold text-deep-espresso">Không tìm thấy dữ liệu nào khớp với "{searchQuery}"</span>
-                        <p className="text-[11px] text-text-muted max-w-xs">
-                          Gợi ý: Tìm theo mã đơn (ví dụ: NCT1136 hoặc #NCT1136), tên dâu rể, số điện thoại hoặc tên mẫu thiệp.
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* 1. Orders Section */}
-                        {searchResults.matchedOrders.length > 0 && (
-                          <div className="p-2 flex flex-col gap-1">
-                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
-                              Đơn hàng ({searchResults.matchedOrders.length})
-                            </span>
-                            {searchResults.matchedOrders.map((ord) => (
-                              <button
-                                key={ord.id}
-                                type="button"
-                                onClick={() => {
-                                  navigate(`/admin/don-hang/${ord.id}`);
-                                  setIsSearchFocused(false);
-                                }}
-                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors group"
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="w-7 h-7 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:bg-burgundy-wine group-hover:text-white transition-colors">
-                                    #{ord.id}
-                                  </div>
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-deep-espresso truncate text-xs">
-                                      {ord.customerName}
-                                    </span>
-                                    <span className="text-[11px] text-text-muted truncate">
-                                      {ord.templateName} • {ord.customerPhone}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-50 text-burgundy-wine border border-rose-200">
-                                    {ORDER_STAGES[ord.currentStage]?.name || 'Tiến trình'}
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* 2. Templates Section */}
-                        {searchResults.matchedTemplates.length > 0 && (
-                          <div className="p-2 flex flex-col gap-1">
-                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
-                              Mẫu thiệp cưới ({searchResults.matchedTemplates.length})
-                            </span>
-                            {searchResults.matchedTemplates.map((tpl) => (
-                              <button
-                                key={tpl.id}
-                                type="button"
-                                onClick={() => {
-                                  navigate(`/admin/mau-thiep?search=${encodeURIComponent(tpl.name)}`);
-                                  setIsSearchFocused(false);
-                                }}
-                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors group"
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="w-7 h-7 rounded-lg bg-gold-foil/15 text-gold-foil flex items-center justify-center text-xs shrink-0">
-                                    <Icon name="style" className="text-[15px]" />
-                                  </div>
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-deep-espresso truncate text-xs">
-                                      {tpl.name}
-                                    </span>
-                                    <span className="text-[11px] text-text-muted truncate">
-                                      {tpl.style || 'Phong cách thanh lịch'}
-                                    </span>
-                                  </div>
-                                </div>
-                                <span className="text-xs font-serif font-bold text-burgundy-wine shrink-0">
-                                  {formatCurrency(tpl.price)}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* 3. Users Section */}
-                        {searchResults.matchedUsers.length > 0 && (
-                          <div className="p-2 flex flex-col gap-1">
-                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
-                              Người dùng &amp; Khách ({searchResults.matchedUsers.length})
-                            </span>
-                            {searchResults.matchedUsers.map((usr) => (
-                              <button
-                                key={usr.id}
-                                type="button"
-                                onClick={() => {
-                                  navigate(`/admin/nguoi-dung?search=${encodeURIComponent(usr.fullName)}`);
-                                  setIsSearchFocused(false);
-                                }}
-                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center justify-between gap-2 transition-colors"
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="w-7 h-7 rounded-lg bg-surface-cream border border-border-delicate flex items-center justify-center text-xs shrink-0">
-                                    <Icon name="person" className="text-[15px] text-text-muted" />
-                                  </div>
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-deep-espresso truncate text-xs">
-                                      {usr.fullName}
-                                    </span>
-                                    <span className="text-[11px] text-text-muted truncate">
-                                      {usr.phone} • {usr.email}
-                                    </span>
-                                  </div>
-                                </div>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-subtle text-text-muted border border-border-delicate shrink-0">
-                                  {usr.orderCount} đơn
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* 4. Pages Section */}
-                        {searchResults.matchedPages.length > 0 && (
-                          <div className="p-2 flex flex-col gap-1">
-                            <span className="px-2 pt-1 font-label-caps text-[10px] text-text-muted uppercase font-bold tracking-wider">
-                              Trang điều hướng ({searchResults.matchedPages.length})
-                            </span>
-                            {searchResults.matchedPages.map((pg) => (
-                              <button
-                                key={pg.path}
-                                type="button"
-                                onClick={() => {
-                                  navigate(pg.path);
-                                  setIsSearchFocused(false);
-                                }}
-                                className="w-full text-left p-2 rounded-xl hover:bg-surface-subtle flex items-center gap-2.5 transition-colors"
-                              >
-                                <Icon name={pg.icon} className="text-[16px] text-burgundy-wine shrink-0" />
-                                <span className="font-medium text-deep-espresso text-xs">
-                                  {pg.number}. {pg.name}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Dropdown Footer */}
-                  <div className="p-2.5 bg-surface-subtle border-t border-border-delicate flex items-center justify-between text-[11px]">
-                    <span className="text-text-muted flex items-center gap-1.5">
-                      <Icon name="info" className="text-[14px] text-burgundy-wine" />
-                      <span>Đang lọc đồng thời trên trang <strong>{getCurrentTitle()}</strong></span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsSearchFocused(false)}
-                      className="text-burgundy-wine font-semibold hover:underline"
-                    >
-                      Đóng gợi ý (Esc)
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile Search Button Toggle */}
-            <button
-              type="button"
-              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              className="md:hidden p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
-              title="Tìm kiếm"
-            >
-              <Icon name="search" className="text-[20px]" />
-            </button>
-
-            <button
-              className="relative p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
-              title="Thông báo SLA"
-            >
-              <Icon name="notifications" className="text-[20px]" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-burgundy-wine"></span>
-            </button>
-
-            <div className="flex items-center gap-2.5 pl-2 border-l border-border-delicate">
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="font-label-md text-xs text-deep-espresso font-semibold leading-tight">
-                  {user?.name || 'Admin Tuyết Nga'}
-                </span>
-                <span className="text-[11px] text-text-muted leading-tight">Quản trị vận hành</span>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-burgundy-wine text-white flex items-center justify-center font-serif text-xs font-bold shadow-xs">
-                TN
-              </div>
-              <button
-                onClick={() => {
-                  logout();
-                  navigate('/', { replace: true });
-                }}
-                className="p-1.5 text-text-muted hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
-                title="Đăng xuất Admin"
-              >
-                <Icon name="logout" className="text-[18px]" />
-              </button>
-            </div>
-          </div>
-        </header>
+        {renderHeader(false)}
 
         {/* Mobile Search Input Bar */}
-        {mobileSearchOpen && (
-          <div className="md:hidden p-3 bg-surface border-b border-border-delicate flex items-center gap-2 animate-in slide-in-from-top-2 duration-150">
-            <div className="relative flex-1">
-              <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[17px]" />
-              <input
-                type="text"
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                placeholder="Tìm mã đơn (NCT01), khách, thiệp..."
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-subtle text-on-surface text-xs focus:outline-none focus:ring-1 focus:ring-burgundy-wine border border-border-delicate"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
-                >
-                  <Icon name="close" className="text-[14px]" />
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileSearchOpen(false);
-              }}
-              className="px-3.5 py-2 rounded-xl bg-burgundy-wine text-white text-xs font-semibold shrink-0"
-            >
-              Lọc
-            </button>
-          </div>
-        )}
+        {renderMobileSearchBar()}
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1160px] mx-auto">
           <Outlet context={{ searchQuery, setSearchQuery } satisfies AdminOutletContext} />
         </main>
+      </div>
+
+      {/* Floating Action Button at Bottom-Right for Quick Mobile Switch */}
+      <div className="fixed bottom-5 right-5 z-40 hidden md:block">
+        <button
+          type="button"
+          onClick={() => handleToggleViewMode('mobile')}
+          className="px-4 py-2.5 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold shadow-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 border border-white/20"
+          title="Xem mô phỏng giao diện Điện thoại"
+        >
+          <Icon name="smartphone" className="text-[17px]" />
+          <span>Xem giao diện Điện thoại</span>
+        </button>
       </div>
     </div>
   );

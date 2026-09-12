@@ -54,7 +54,7 @@ export const AdminOverviewPage: React.FC = () => {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => alert('Đã xuất báo cáo tổng quan ngày (.xlsx)')}
             className="px-4 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs"
@@ -255,7 +255,8 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-border-delicate text-text-muted font-label-caps uppercase text-[10px]">
@@ -336,20 +337,71 @@ export const AdminOverviewPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Cards View */}
+        <div className="md:hidden flex flex-col gap-3">
+          {orders.length === 0 ? (
+            <div className="py-8 text-center text-text-muted flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <Icon name="cloud_done" className="text-xl" />
+              </div>
+              <span className="font-semibold text-deep-espresso text-xs">
+                Hệ thống thời gian thực (0 đơn giả định)
+              </span>
+              <p className="text-[11px] text-text-muted">
+                Chưa có đơn hàng nào phát sinh.
+              </p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="py-6 text-center text-xs text-text-muted">
+              Không tìm thấy đơn hàng khớp với "{searchQuery}"
+            </div>
+          ) : (
+            filteredOrders.map((ord) => (
+              <div
+                key={ord.id}
+                className="p-3.5 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-2.5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-xs text-burgundy-wine">
+                    #{ord.id}
+                  </span>
+                  <span className="font-serif font-bold text-xs text-burgundy-wine">
+                    {formatCurrency(ord.price)}
+                  </span>
+                </div>
+                <div className="flex flex-col text-xs">
+                  <span className="font-semibold text-deep-espresso">{ord.customerName}</span>
+                  <span className="text-[11px] text-text-muted">{ord.customerPhone} · {ord.templateName}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-border-delicate/60">
+                  <StatusChip stage={ord.currentStage} />
+                  <Link
+                    to={`/dashboard/don-hang/${ord.id}`}
+                    className="px-3 py-1 rounded-full bg-white text-deep-espresso text-xs font-semibold inline-flex items-center gap-1 border border-border-delicate shadow-xs"
+                  >
+                    <Icon name="visibility" className="text-[14px]" />
+                    <span>Xem</span>
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* 5. Real-time Activity Logs (Cloud Firestore) */}
       <div className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate flex flex-col gap-4">
-        <div className="flex items-center justify-between pb-2 border-b border-border-delicate">
+        <div className="flex items-center justify-between pb-2 border-b border-border-delicate flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Icon name="history" className="text-[20px] text-burgundy-wine" />
             <h2 className="font-serif text-lg font-bold text-deep-espresso">
-              Nhật ký hoạt động & Chỉnh sửa (Firebase Cloud Firestore)
+              Nhật ký hoạt động & Chỉnh sửa
             </h2>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-            <span>Thời gian thực (Live Sync)</span>
+            <span>Live Sync</span>
           </div>
         </div>
 
@@ -364,7 +416,10 @@ export const AdminOverviewPage: React.FC = () => {
             filteredActivityLogs.map((log) => {
               const isCustomer = log.actorRole === 'customer';
               return (
-                <div key={log.id} className="py-3 flex items-start justify-between gap-3 text-xs">
+                <div
+                  key={log.id}
+                  className="py-3 flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3 text-xs"
+                >
                   <div className="flex items-start gap-3">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
@@ -418,7 +473,7 @@ export const AdminOverviewPage: React.FC = () => {
                       <p className="text-text-muted leading-relaxed">{log.description}</p>
                     </div>
                   </div>
-                  <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap">
+                  <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap self-end sm:self-auto">
                     {formatDateTime(log.timestamp)}
                   </span>
                 </div>
