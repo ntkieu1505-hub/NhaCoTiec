@@ -4,6 +4,7 @@ export interface HomepageHero {
   description?: string;
   imageUrl?: string;
   coverImageUrl?: string;
+  mobileCoverImageUrl?: string;
   ctaText: string;
   ctaUrl?: string;
   ctaLink?: string;

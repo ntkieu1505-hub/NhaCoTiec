@@ -29,10 +29,17 @@ export const HomePage: React.FC = () => {
       <section className="relative w-full min-h-[460px] sm:min-h-[560px] md:min-h-[680px] lg:min-h-[760px] flex items-center justify-center overflow-hidden bg-[#12100f] text-white">
         {/* Full-bleed Hero Image extending from edge to edge of Hero frame */}
         <div className="absolute inset-0 w-full h-full pointer-events-none">
+          {/* Mobile Hero Image (Chuyên biệt cho giao diện điện thoại) */}
+          <img
+            src={cms.hero.mobileCoverImageUrl || '/hero-mobile.jpg'}
+            alt={cms.hero.headline}
+            className="w-full h-full object-cover object-[center_18%] sm:hidden"
+          />
+          {/* Desktop/Tablet Hero Image (Phong cảnh ngang cho máy tính) */}
           <img
             src={cms.hero.coverImageUrl}
             alt={cms.hero.headline}
-            className="w-full h-full object-cover object-[center_22%] sm:object-[center_28%]"
+            className="w-full h-full object-cover sm:object-[center_28%] hidden sm:block"
           />
           {/* Subtle neutral dark vignette for text readability - strictly NO red/burgundy tint */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/25" />

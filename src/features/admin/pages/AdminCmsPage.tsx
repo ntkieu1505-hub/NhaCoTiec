@@ -44,6 +44,7 @@ export const AdminCmsPage: React.FC = () => {
   });
 
   const heroImageInputRef = useRef<HTMLInputElement>(null);
+  const heroMobileImageInputRef = useRef<HTMLInputElement>(null);
   const testimonialAvatarInputRef = useRef<HTMLInputElement>(null);
   const [newBadgeText, setNewBadgeText] = useState('');
 
@@ -108,6 +109,20 @@ export const AdminCmsPage: React.FC = () => {
         setFormData((prev) => ({
           ...prev,
           hero: { ...prev.hero, coverImageUrl: compressed },
+        }));
+      }
+    }
+  };
+
+  // Handle image upload for Hero Mobile with automatic compression
+  const handleHeroMobileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const compressed = await compressImageFile(file, 1000, 0.85);
+      if (compressed) {
+        setFormData((prev) => ({
+          ...prev,
+          hero: { ...prev.hero, mobileCoverImageUrl: compressed },
         }));
       }
     }
@@ -453,35 +468,88 @@ export const AdminCmsPage: React.FC = () => {
                 </div>
 
                 {/* Hero Cover Image Preview & Replacement */}
-                <div className="flex flex-col gap-2 pt-2">
-                  <label className="text-xs font-semibold text-deep-espresso">
-                    Ảnh nền bìa Hero (Cover Image)
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-surface-subtle p-3.5 rounded-xl border border-border-delicate">
-                    <img
-                      src={formData.hero.coverImageUrl}
-                      alt="Hero preview"
-                      className="w-32 h-20 object-cover rounded-lg border border-border-delicate shadow-xs"
-                    />
-                    <div className="flex flex-col gap-2">
-                      <input
-                        type="file"
-                        ref={heroImageInputRef}
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleHeroImageChange}
+                <div className="flex flex-col gap-4 pt-2">
+                  {/* Desktop Cover Image */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-deep-espresso">
+                      Ảnh nền bìa Hero trên Máy tính (Desktop Cover Image - Tỉ lệ ngang 16:9)
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-surface-subtle p-3.5 rounded-xl border border-border-delicate">
+                      <img
+                        src={formData.hero.coverImageUrl}
+                        alt="Hero desktop preview"
+                        className="w-32 h-20 object-cover rounded-lg border border-border-delicate shadow-xs shrink-0"
                       />
-                      <button
-                        type="button"
-                        onClick={() => heroImageInputRef.current?.click()}
-                        className="px-4 py-2 rounded-full bg-surface-card hover:bg-white text-deep-espresso text-xs font-semibold border border-border-delicate shadow-xs flex items-center gap-1.5 transition-all"
-                      >
-                        <Icon name="photo_camera" className="text-[16px] text-burgundy-wine" />
-                        <span>Thay ảnh bìa Hero</span>
-                      </button>
-                      <span className="text-[11px] text-text-muted">
-                        Hỗ trợ PNG, JPG, WebP. Tỉ lệ khuyến nghị 16:9 hoặc ảnh phong cảnh cưới lãng mạn.
-                      </span>
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="file"
+                          ref={heroImageInputRef}
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleHeroImageChange}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => heroImageInputRef.current?.click()}
+                          className="px-4 py-2 rounded-full bg-surface-card hover:bg-white text-deep-espresso text-xs font-semibold border border-border-delicate shadow-xs flex items-center gap-1.5 transition-all w-fit"
+                        >
+                          <Icon name="photo_camera" className="text-[16px] text-burgundy-wine" />
+                          <span>Thay ảnh bìa Desktop</span>
+                        </button>
+                        <span className="text-[11px] text-text-muted">
+                          Hỗ trợ PNG, JPG, WebP. Tỉ lệ khuyến nghị 16:9 hoặc ảnh phong cảnh cưới lãng mạn.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Cover Image */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-deep-espresso">
+                      Ảnh nền bìa Hero trên Điện thoại (Mobile Cover Image - Tỉ lệ dọc chân dung)
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-surface-subtle p-3.5 rounded-xl border border-border-delicate">
+                      <img
+                        src={formData.hero.mobileCoverImageUrl || '/hero-mobile.jpg'}
+                        alt="Hero mobile preview"
+                        className="w-20 h-28 object-cover rounded-lg border border-border-delicate shadow-xs shrink-0"
+                      />
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="file"
+                          ref={heroMobileImageInputRef}
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleHeroMobileImageChange}
+                        />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => heroMobileImageInputRef.current?.click()}
+                            className="px-4 py-2 rounded-full bg-surface-card hover:bg-white text-deep-espresso text-xs font-semibold border border-border-delicate shadow-xs flex items-center gap-1.5 transition-all"
+                          >
+                            <Icon name="smartphone" className="text-[16px] text-burgundy-wine" />
+                            <span>Thay ảnh bìa Mobile</span>
+                          </button>
+                          {formData.hero.mobileCoverImageUrl && formData.hero.mobileCoverImageUrl !== '/hero-mobile.jpg' && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  hero: { ...prev.hero, mobileCoverImageUrl: '/hero-mobile.jpg' },
+                                }))
+                              }
+                              className="px-3 py-1.5 rounded-full text-xs text-text-muted hover:text-burgundy-wine border border-border-delicate transition-colors"
+                            >
+                              Khôi phục ảnh gốc
+                            </button>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-text-muted">
+                          Tỉ lệ dọc (chân dung) tối ưu hóa riêng cho màn hình smartphone của khách mời.
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

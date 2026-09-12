@@ -54,6 +54,7 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDpXKlSfTGty-PGubJdHXwzvpNLe8cuWV-jvA6kHaI4GVCxASSifIC8yGtLn1joBZ2BXHwDDJmO5w8jwRnpWktnO9p03jRcmmy7K8KGjzhLyUypKsH_QZn73Lhx7HBUpqjS2EYa_DYgMKh4VAI7Bpfgrzu341AnUXJdn1JhDyQq1Opk6zgmFUnEK8fbiMa1zmEBFh8kjzFZkpD47zygb2J8kqhUaV6DV-M99hnxtg34F588D-bEr-7J',
     coverImageUrl:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDpXKlSfTGty-PGubJdHXwzvpNLe8cuWV-jvA6kHaI4GVCxASSifIC8yGtLn1joBZ2BXHwDDJmO5w8jwRnpWktnO9p03jRcmmy7K8KGjzhLyUypKsH_QZn73Lhx7HBUpqjS2EYa_DYgMKh4VAI7Bpfgrzu341AnUXJdn1JhDyQq1Opk6zgmFUnEK8fbiMa1zmEBFh8kjzFZkpD47zygb2J8kqhUaV6DV-M99hnxtg34F588D-bEr-7J',
+    mobileCoverImageUrl: '/hero-mobile.jpg',
     ctaText: 'Xem mẫu thiệp',
     ctaUrl: '#danh-sach-mau',
     ctaLink: '#danh-sach-mau',
