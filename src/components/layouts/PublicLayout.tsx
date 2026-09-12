@@ -159,9 +159,9 @@ export const PublicLayout: React.FC = () => {
       {/* Public Footer (CMS Dynamic) */}
       <footer className="bg-deep-espresso text-surface-cream pt-12 pb-8 border-t border-gold-foil/20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 pb-8 border-b border-white/10">
             {/* Col 1: Brand info */}
-            <div className="md:col-span-2 flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2.5">
                 <img
                   src="/logo.png"
@@ -182,8 +182,6 @@ export const PublicLayout: React.FC = () => {
                 </span>
                 <span>•</span>
                 <span>Giá bán lẻ 59k - 79k</span>
-                <span>•</span>
-                <span>Không phí duy trì</span>
               </div>
 
               {/* Social Media Links from CMS */}
@@ -206,27 +204,8 @@ export const PublicLayout: React.FC = () => {
               )}
             </div>
 
-            {/* Col 2: Navigation */}
-            <div className="flex flex-col gap-2.5">
-              <span className="font-label-caps text-xs tracking-wider text-gold-foil font-semibold">
-                Khám phá
-              </span>
-              <Link to="/" className="text-sm text-text-muted hover:text-white transition-colors">
-                Trang chủ
-              </Link>
-              <Link to="/mau-thiep" className="text-sm text-text-muted hover:text-white transition-colors">
-                Bộ sưu tập mẫu thiệp
-              </Link>
-              <Link to="/lien-he" className="text-sm text-text-muted hover:text-white transition-colors">
-                Tư vấn thiết kế
-              </Link>
-              <Link to="/dang-nhap" className="text-sm text-text-muted hover:text-white transition-colors">
-                Đăng nhập tài khoản
-              </Link>
-            </div>
-
-            {/* Col 3: Support */}
-            <div className="flex flex-col gap-2.5">
+            {/* Col 2: Support */}
+            <div className="flex flex-col gap-2.5 md:pl-8 lg:pl-16">
               <span className="font-label-caps text-xs tracking-wider text-gold-foil font-semibold">
                 Liên hệ hỗ trợ
               </span>
