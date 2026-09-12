@@ -32,15 +32,15 @@ export const PublicLayout: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-surface-cream text-on-surface font-sans">
       {/* 1. Header / Navbar - Burgundy Wine (#6D141A) */}
       <header className="fixed top-0 inset-x-0 z-50 bg-[#6D141A]/95 backdrop-blur-md border-b border-white/15 transition-colors shadow-md pt-safe">
-        <div className="h-16 px-4 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
+        <div className="h-14 sm:h-15 md:h-16 px-3 sm:px-4 md:px-8 max-w-7xl mx-auto flex items-center justify-between">
           {/* Left: Brand Logo & Title with Playfair Display matching logo font */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 md:gap-3 group shrink-0">
             <img
               src="/logo.png"
               alt="Nhà Có Tiệc Logo"
-              className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-sm border border-white/20 group-hover:scale-105 transition-transform shrink-0"
+              className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm border border-white/20 group-hover:scale-105 transition-transform shrink-0"
             />
-            <span className="font-playfair text-[22px] md:text-[25px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none drop-shadow-xs">
+            <span className="font-playfair text-[16px] sm:text-[18px] md:text-[23px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none drop-shadow-xs">
               Nhà Có Tiệc
             </span>
           </Link>
@@ -64,27 +64,27 @@ export const PublicLayout: React.FC = () => {
           </nav>
 
           {/* Right Action: ONE main entry point "Đăng nhập" before login */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
             {!isAuthenticated ? (
               <Link
                 to="/dang-nhap"
-                className="px-5 py-2 text-xs md:text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/25 rounded-full shadow-xs active:scale-95 transition-all"
+                className="px-3 py-1 sm:px-4 sm:py-1.5 md:px-5 md:py-2 text-[11px] sm:text-xs md:text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/25 rounded-full shadow-xs active:scale-95 transition-all"
               >
                 Đăng nhập
               </Link>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Link
                   to={isAdmin ? '/admin/tong-quan' : '/dashboard'}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-full bg-gold-foil text-deep-espresso hover:brightness-105 transition-all flex items-center gap-1.5 shadow-sm"
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold rounded-full bg-gold-foil text-deep-espresso hover:brightness-105 transition-all flex items-center gap-1 shadow-sm shrink-0"
                 >
-                  <Icon name={isAdmin ? 'admin_panel_settings' : 'dashboard'} className="text-[16px]" />
+                  <Icon name={isAdmin ? 'admin_panel_settings' : 'dashboard'} className="text-[13px] sm:text-[15px]" />
                   <span className="hidden sm:inline">{isAdmin ? 'Quản trị Admin' : 'Cổng Khách Hàng'}</span>
-                  <span className="sm:hidden">Dashboard</span>
+                  <span className="sm:hidden">{isAdmin ? 'Admin' : 'Cổng KH'}</span>
                 </Link>
                 <button
                   onClick={() => logout()}
-                  className="px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-full border border-white/20 transition-all"
+                  className="px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-full border border-white/20 transition-all shrink-0"
                   title="Đăng xuất"
                 >
                   Đăng xuất
@@ -96,9 +96,9 @@ export const PublicLayout: React.FC = () => {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Menu"
-              className="md:hidden w-9 h-9 flex items-center justify-center text-white/90 hover:text-white active:scale-95 transition-transform"
+              className="md:hidden w-8 h-8 flex items-center justify-center text-white/90 hover:text-white active:scale-95 transition-transform"
             >
-              <Icon name={mobileMenuOpen ? 'close' : 'menu'} className="text-[24px]" />
+              <Icon name={mobileMenuOpen ? 'close' : 'menu'} className="text-[20px] sm:text-[22px]" />
             </button>
           </div>
         </div>
@@ -152,7 +152,7 @@ export const PublicLayout: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-16 flex flex-col w-full">
+      <main className="flex-1 pt-14 sm:pt-15 md:pt-16 flex flex-col w-full">
         <Outlet />
       </main>
 
@@ -262,6 +262,20 @@ export const PublicLayout: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Floating Mobile Simulator Switcher for Admin on Public Pages */}
+      {isAdmin && (
+        <div className="fixed bottom-5 right-5 z-40 hidden md:block">
+          <Link
+            to={`/admin/tong-quan?view=mobile&preview=${encodeURIComponent(location.pathname)}`}
+            className="px-4 py-2.5 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold shadow-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 border border-white/20"
+            title="Mở Trình mô phỏng điện thoại xem trang này"
+          >
+            <Icon name="smartphone" className="text-[17px]" />
+            <span>Mô phỏng Điện thoại</span>
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

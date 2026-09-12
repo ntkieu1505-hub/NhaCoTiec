@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { Outlet, NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '../common/Icon';
 import { useAuth } from '../../mocks/authStore';
 import { useOrders } from '../../mocks/orderStore';
@@ -133,6 +133,7 @@ export const PREVIEW_PAGES: PreviewPageItem[] = [
 ];
 
 export const AdminLayout: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -145,6 +146,8 @@ export const AdminLayout: React.FC = () => {
   // View Mode: 'desktop' (full screen) vs 'mobile' (phone viewport simulator)
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>(() => {
     try {
+      if (searchParams.get('view') === 'mobile') return 'mobile';
+      if (searchParams.get('view') === 'desktop') return 'desktop';
       const saved = localStorage.getItem('nha_co_tiec_admin_view_mode');
       return saved === 'mobile' ? 'mobile' : 'desktop';
     } catch {
@@ -163,6 +166,8 @@ export const AdminLayout: React.FC = () => {
 
   const [previewPath, setPreviewPath] = useState<string>(() => {
     try {
+      const qPreview = searchParams.get('preview');
+      if (qPreview) return qPreview;
       return localStorage.getItem('nha_co_tiec_admin_sim_path') || '/';
     } catch {
       return '/';
@@ -170,6 +175,18 @@ export const AdminLayout: React.FC = () => {
   });
 
   const [inputUrl, setInputUrl] = useState<string>(previewPath);
+
+  useEffect(() => {
+    const qView = searchParams.get('view');
+    if (qView === 'mobile' || qView === 'desktop') {
+      setViewMode(qView);
+    }
+    const qPreview = searchParams.get('preview');
+    if (qPreview) {
+      setPreviewPath(qPreview);
+      setInputUrl(qPreview);
+    }
+  }, [searchParams]);
   const [scaleMode, setScaleMode] = useState<'fit' | '100' | '90' | '85'>(() => {
     try {
       const saved = localStorage.getItem('nha_co_tiec_admin_sim_scale');

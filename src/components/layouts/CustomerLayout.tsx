@@ -82,15 +82,15 @@ export const CustomerLayout: React.FC = () => {
   return (
     <div className="bg-surface-cream text-on-surface antialiased min-h-screen flex flex-col selection:bg-burgundy-wine selection:text-white">
       {/* 1. Header - Burgundy Wine (#6D141A) */}
-      <header className="sticky top-0 z-50 bg-[#6D141A] text-[#FDF8EB] px-4 py-3 flex items-center justify-between shadow-md border-b border-white/15">
-        <div className="flex items-center gap-2.5">
-          <Link to="/" className="flex items-center gap-2.5 group">
+      <header className="sticky top-0 z-50 bg-[#6D141A] text-[#FDF8EB] px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between shadow-md border-b border-white/15">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group">
             <img
               src="/logo.png"
               alt="Nhà Có Tiệc Logo"
-              className="w-8 h-8 rounded-full object-cover shadow-xs border border-white/20 group-hover:scale-105 transition-transform shrink-0"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-xs border border-white/20 group-hover:scale-105 transition-transform shrink-0"
             />
-            <div className="flex items-center gap-1 font-playfair text-[20px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none">
+            <div className="flex items-center gap-1 font-playfair text-[16px] sm:text-[18px] md:text-[20px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none">
               <span>Nhà Có Tiệc</span>
               <span className="text-gold-foil font-bold text-base">•</span>
             </div>
