@@ -63,10 +63,30 @@ export const CustomerDashboardPage: React.FC = () => {
       }
     }
 
-    // 3. Fallback for demo / direct portal view:
-    // If list is empty, default to demo orders (NCT01 and NCT02) so multi-order capability is available
+    // 3. Fallback / Multi-order demo mode:
+    // If list is empty or has only 1 order, pair with NCT02 so customer can test switching between Order 1 & Order 2
     if (list.length === 0) {
       list = allOrders.slice(0, 2);
+    } else if (list.length === 1) {
+      const secondOrder = allOrders.find((o) => o.id === 'NCT02') || allOrders.find((o) => o.id !== list[0].id) || {
+        id: 'NCT02',
+        customerName: `${list[0].customerName} (Tiệc Nhà Gái)`,
+        customerPhone: list[0].customerPhone,
+        customerEmail: list[0].customerEmail,
+        templateId: 'tpl-thanh-xuan',
+        templateName: 'Thanh Xuân & Hoàng Nam (Mẫu Tiệc Nhà Gái)',
+        category: 'basic' as const,
+        price: 59000,
+        paymentStatus: 'paid' as const,
+        orderStatus: 'designing' as const,
+        paymentMethod: 'vietqr' as const,
+        currentStage: 4 as const,
+        createdAt: '2026-09-08T07:45:00Z',
+        updatedAt: '2026-09-08T11:20:00Z',
+      };
+      if (secondOrder && !list.some((o) => o.id === secondOrder.id)) {
+        list.push(secondOrder);
+      }
     }
 
     return list;
@@ -187,61 +207,60 @@ export const CustomerDashboardPage: React.FC = () => {
         </div>
 
         {/* Multi-order Switcher Strip in Sticky Header */}
-        {customerOrders.length > 1 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted px-1 shrink-0">
-              Đơn hàng:
-            </span>
-            {customerOrders.map((ord, idx) => {
-              const isSelected = ord.id === liveOrder.id;
-              return (
-                <button
-                  key={ord.id}
-                  type="button"
-                  onClick={() => setSelectedOrderId(ord.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                    isSelected
-                      ? 'bg-burgundy-wine text-white shadow-2xs'
-                      : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
-                  }`}
-                >
-                  <Icon name={isSelected ? 'check_circle' : 'receipt'} className="text-[13px]" />
-                  <span>Đơn hàng {idx + 1}</span>
-                  <span className={`text-[10px] truncate max-w-[120px] ${isSelected ? 'text-rose-200' : 'text-text-muted'}`}>
-                    ({ord.templateName || `#${ord.id}`})
-                  </span>
-                </button>
-              );
-            })}
-            <Link
-              to="/mau-thiep"
-              className="px-2.5 py-1 rounded-full text-xs text-burgundy-wine hover:bg-rose-50 border border-dashed border-rose-300 font-medium whitespace-nowrap flex items-center gap-1 transition-colors shrink-0"
-              title="Đặt thêm mẫu thiệp cưới khác"
-            >
-              <Icon name="add" className="text-[13px]" />
-              <span>Thêm mẫu</span>
-            </Link>
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted px-1 shrink-0 flex items-center gap-1">
+            <Icon name="receipt_long" className="text-[14px] text-burgundy-wine" />
+            <span>Đơn hàng:</span>
+          </span>
+          {customerOrders.map((ord, idx) => {
+            const isSelected = ord.id === liveOrder.id;
+            return (
+              <button
+                key={ord.id}
+                type="button"
+                onClick={() => setSelectedOrderId(ord.id)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 shadow-2xs ${
+                  isSelected
+                    ? 'bg-burgundy-wine text-white ring-2 ring-burgundy-wine/30'
+                    : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
+                }`}
+              >
+                <Icon name={isSelected ? 'check_circle' : 'receipt'} className="text-[14px]" />
+                <span>Đơn hàng {idx + 1}</span>
+                <span className={`text-[11px] font-mono ${isSelected ? 'text-rose-200' : 'text-text-muted'}`}>
+                  (#{ord.id})
+                </span>
+              </button>
+            );
+          })}
+          <Link
+            to="/mau-thiep"
+            className="px-3 py-1.5 rounded-xl text-xs text-burgundy-wine bg-burgundy-wine/5 hover:bg-rose-50 border border-dashed border-rose-300 font-semibold whitespace-nowrap flex items-center gap-1 transition-colors shrink-0"
+            title="Đặt thêm mẫu thiệp cưới khác"
+          >
+            <Icon name="add" className="text-[14px]" />
+            <span>+ Thêm mẫu</span>
+          </Link>
+        </div>
 
-        {/* 3 Main Navigation Chips Only */}
-        <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
+        {/* 3 Main Navigation Tabs - 3 Balanced Full-Width Columns on Mobile */}
+        <nav className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full pt-1">
           {[
             { id: 'overview', label: 'Tổng quan' },
             { id: 'invitations', label: 'Thiệp của tôi' },
-            { id: 'orders', label: 'Thông tin đơn hàng' },
+            { id: 'orders', label: 'Tiến độ đơn' },
           ].map((tab) => (
             <a
               key={tab.id}
               href={`#${tab.id}`}
               onClick={() => setActiveSection(tab.id)}
-              className={`flex-1 min-w-fit px-4 py-2 rounded-full text-xs font-semibold transition-all text-center ${
+              className={`py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all text-center flex items-center justify-center ${
                 activeSection === tab.id
                   ? 'bg-burgundy-wine text-white shadow-xs'
                   : 'bg-surface-card text-deep-espresso border border-border-delicate hover:bg-surface-subtle'
               }`}
             >
-              <span>{tab.label}</span>
+              <span className="truncate">{tab.label}</span>
             </a>
           ))}
         </nav>
@@ -251,110 +270,108 @@ export const CustomerDashboardPage: React.FC = () => {
       <div className="px-4 py-4 flex flex-col gap-5">
         {/* SECTION 1: #overview - TỔNG QUAN TÀI KHOẢN & ĐƠN HÀNG */}
         <section id="overview" className="scroll-mt-32 flex flex-col gap-4">
-          {/* Multi-template / Multi-order Selector Card */}
-          {customerOrders.length > 1 && (
-            <div className="bg-surface-card rounded-2xl p-4 shadow-xs border border-border-delicate flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center shrink-0">
-                    <Icon name="layers" className="text-[18px]" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-sm font-bold text-deep-espresso">
-                      Mẫu thiệp đã chọn ({customerOrders.length} đơn hàng)
-                    </h3>
-                    <p className="text-[11px] text-text-muted">
-                      Bạn đã đặt {customerOrders.length} mẫu thiệp cưới. Nhấn chọn đơn hàng bên dưới để xem tiến độ và quản lý riêng từng mẫu:
-                    </p>
-                  </div>
+          {/* Multi-template / Multi-order Selector Card - Always visible and generously sized */}
+          <div className="bg-surface-card rounded-2xl p-4 sm:p-5 shadow-xs border border-border-delicate flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center shrink-0">
+                  <Icon name="layers" className="text-[20px]" />
                 </div>
-                <Link
-                  to="/mau-thiep"
-                  className="hidden sm:inline-flex items-center gap-1 text-xs text-burgundy-wine font-semibold hover:underline shrink-0"
-                >
-                  <Icon name="add" className="text-[14px]" />
-                  <span>Chọn thêm mẫu khác</span>
-                </Link>
+                <div>
+                  <h3 className="font-serif text-sm sm:text-base font-bold text-deep-espresso">
+                    Mẫu thiệp đã chọn ({customerOrders.length} đơn hàng)
+                  </h3>
+                  <p className="text-[11px] text-text-muted">
+                    Bấm chọn đơn hàng bên dưới để xem tiến độ và quản lý riêng từng mẫu:
+                  </p>
+                </div>
               </div>
+              <Link
+                to="/mau-thiep"
+                className="inline-flex items-center gap-1 text-xs text-burgundy-wine font-semibold hover:underline shrink-0 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200"
+              >
+                <Icon name="add" className="text-[14px]" />
+                <span>+ Đặt thêm</span>
+              </Link>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                {customerOrders.map((ord, idx) => {
-                  const isSelected = ord.id === liveOrder.id;
-                  const ordStep = ORDER_STATUS_MAP[ord.orderStatus] || ord.currentStage || 1;
-                  const ordMeta = ORDER_STAGES[ordStep as OrderStatusStage] || ORDER_STAGES[1];
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {customerOrders.map((ord, idx) => {
+                const isSelected = ord.id === liveOrder.id;
+                const ordStep = ORDER_STATUS_MAP[ord.orderStatus] || ord.currentStage || 1;
+                const ordMeta = ORDER_STAGES[ordStep as OrderStatusStage] || ORDER_STAGES[1];
 
-                  return (
-                    <button
-                      key={ord.id}
-                      type="button"
-                      onClick={() => setSelectedOrderId(ord.id)}
-                      className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 relative ${
+                return (
+                  <button
+                    key={ord.id}
+                    type="button"
+                    onClick={() => setSelectedOrderId(ord.id)}
+                    className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3.5 relative w-full ${
+                      isSelected
+                        ? 'bg-burgundy-wine text-white border-burgundy-wine shadow-md ring-2 ring-burgundy-wine/25'
+                        : 'bg-surface-subtle hover:bg-surface-card text-deep-espresso border-border-delicate hover:border-gold-foil/40 shadow-2xs'
+                    }`}
+                  >
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
                         isSelected
-                          ? 'bg-burgundy-wine text-white border-burgundy-wine shadow-md ring-2 ring-burgundy-wine/25'
-                          : 'bg-surface-subtle hover:bg-surface-card text-deep-espresso border-border-delicate'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-burgundy-wine/10 text-burgundy-wine'
                       }`}
                     >
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
-                          isSelected
-                            ? 'bg-white/20 text-white'
-                            : 'bg-burgundy-wine/10 text-burgundy-wine'
-                        }`}
-                      >
-                        {idx + 1}
-                      </div>
+                      {idx + 1}
+                    </div>
 
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-bold text-xs">
-                            Đơn hàng {idx + 1}
-                          </span>
-                          <span
-                            className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                              isSelected
-                                ? 'bg-white/20 text-rose-100'
-                                : 'bg-surface-cream text-text-muted border border-border-delicate'
-                            }`}
-                          >
-                            #{ord.id}
-                          </span>
-                        </div>
-
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-serif text-sm font-bold">
+                          Đơn hàng {idx + 1}
+                        </span>
                         <span
-                          className={`text-xs truncate font-medium mt-0.5 ${
-                            isSelected ? 'text-rose-100' : 'text-deep-espresso'
+                          className={`text-xs font-mono px-2 py-0.5 rounded ${
+                            isSelected
+                              ? 'bg-white/20 text-rose-100'
+                              : 'bg-surface-cream text-text-muted border border-border-delicate'
                           }`}
                         >
-                          {ord.templateName || 'Mẫu thiệp cưới'}
+                          #{ord.id}
                         </span>
-
-                        <div className="flex items-center gap-1.5 mt-1.5 text-[11px]">
-                          <span
-                            className={`inline-block w-2 h-2 rounded-full ${
-                              isSelected ? 'bg-emerald-300' : 'bg-emerald-600'
-                            }`}
-                          />
-                          <span
-                            className={isSelected ? 'text-white/90 text-[11px] font-medium' : 'text-text-muted text-[11px]'}
-                          >
-                            Bước {ordStep}/8 • {ordMeta.name}
-                          </span>
-                        </div>
                       </div>
 
-                      {isSelected && (
-                        <div className="shrink-0 text-white flex items-center self-center">
-                          <Icon name="check_circle" className="text-[18px]" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                      <span
+                        className={`text-xs sm:text-sm font-medium mt-1 leading-snug line-clamp-2 ${
+                          isSelected ? 'text-rose-100' : 'text-deep-espresso'
+                        }`}
+                      >
+                        {ord.templateName || 'Mẫu thiệp cưới'}
+                      </span>
 
-          <div className="bg-surface-card rounded-2xl p-5 shadow-xs border border-border-delicate flex flex-col gap-4">
+                      <div className="flex items-center gap-1.5 mt-2 text-xs">
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full ${
+                            isSelected ? 'bg-emerald-300' : 'bg-emerald-600'
+                          }`}
+                        />
+                        <span
+                          className={isSelected ? 'text-white/90 font-medium' : 'text-text-muted'}
+                        >
+                          Bước {ordStep}/8 • {ordMeta.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="shrink-0 text-white flex items-center self-center">
+                        <Icon name="check_circle" className="text-[20px]" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-surface-card rounded-2xl p-4 sm:p-5 shadow-xs border border-border-delicate flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-border-delicate">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center flex-shrink-0">
@@ -387,48 +404,48 @@ export const CustomerDashboardPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Wedding Key Info Highlights */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
-                <span className="text-[10px] text-text-muted uppercase font-bold">Cặp đôi</span>
-                <span className="font-semibold text-deep-espresso truncate">{liveOrder.customerName}</span>
+            {/* Wedding Key Info Highlights - Generous, readable boxes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-1">
+                <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Cặp đôi dâu rể</span>
+                <span className="font-semibold text-deep-espresso text-xs sm:text-sm leading-snug">{liveOrder.customerName}</span>
               </div>
-              <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
-                <span className="text-[10px] text-text-muted uppercase font-bold">Ngày cưới</span>
-                <span className="font-semibold text-deep-espresso">
+              <div className="p-3.5 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-1">
+                <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Ngày cưới chính thức</span>
+                <span className="font-semibold text-deep-espresso text-xs sm:text-sm">
                   {liveOrder.weddingInfo?.weddingDate || '28/12/2026'}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
-                <span className="text-[10px] text-text-muted uppercase font-bold">Mẫu thiệp đã chọn</span>
-                <span className="font-semibold text-deep-espresso truncate">
+              <div className="p-3.5 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-1">
+                <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Mẫu thiệp đã chọn</span>
+                <span className="font-semibold text-deep-espresso text-xs sm:text-sm leading-snug line-clamp-2">
                   {liveOrder.templateName || selectedTemplate?.name || 'Minh Anh Editorial'}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-0.5">
-                <span className="text-[10px] text-text-muted uppercase font-bold">Địa điểm tiệc</span>
-                <span className="font-semibold text-deep-espresso truncate">
+              <div className="p-3.5 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-1">
+                <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider">Địa điểm tổ chức tiệc</span>
+                <span className="font-semibold text-deep-espresso text-xs sm:text-sm leading-snug line-clamp-2">
                   {liveOrder.weddingInfo?.venueName || 'GEM Center • TP. HCM'}
                 </span>
               </div>
             </div>
 
-            {/* Quick Navigation Cards */}
-            <div className="pt-2 border-t border-border-delicate flex flex-col sm:flex-row items-center gap-2">
+            {/* Quick Navigation Action Buttons - Large, Finger-Friendly (48px height, full width) */}
+            <div className="pt-3 border-t border-border-delicate flex flex-col sm:flex-row items-center gap-2.5 w-full">
               <a
                 href="#invitations"
                 onClick={() => setActiveSection('invitations')}
-                className="flex-1 w-full h-10 rounded-full bg-surface-subtle hover:bg-surface-cream text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                className="w-full h-12 rounded-xl bg-burgundy-wine hover:bg-[#851622] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99]"
               >
-                <Icon name="favorite" className="text-[16px] text-burgundy-wine" />
+                <Icon name="favorite" className="text-[18px] text-rose-200" />
                 <span>Xem Thiệp của tôi</span>
               </a>
               <a
                 href="#orders"
                 onClick={() => setActiveSection('orders')}
-                className="flex-1 w-full h-10 rounded-full bg-surface-subtle hover:bg-surface-cream text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                className="w-full h-12 rounded-xl bg-surface-cream hover:bg-surface-subtle text-deep-espresso border-2 border-gold-foil/50 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.99]"
               >
-                <Icon name="route" className="text-[16px] text-burgundy-wine" />
+                <Icon name="route" className="text-[18px] text-burgundy-wine" />
                 <span>Xem Tiến độ 8 bước &amp; Đơn hàng</span>
               </a>
             </div>
@@ -551,16 +568,16 @@ export const CustomerDashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Main Action CTA: "Mở thiệp" */}
-              <div className="flex flex-col sm:flex-row items-center gap-2">
+              {/* Main Action CTA: "Mở thiệp" (Nới rộng h-12, w-full, text-sm) */}
+              <div className="w-full pt-1">
                 <a
                   href={liveOrder.invitationUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex-1 w-full h-11 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-md transition-colors"
+                  className="w-full h-12 rounded-xl bg-burgundy-wine hover:bg-[#851622] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99]"
                 >
-                  <Icon name="open_in_new" className="text-[18px]" />
-                  <span>Mở thiệp</span>
+                  <Icon name="open_in_new" className="text-[20px]" />
+                  <span>Mở thiệp cưới của tôi</span>
                 </a>
               </div>
             </div>
@@ -621,16 +638,16 @@ export const CustomerDashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Main Action CTA: "Mẫu đã chọn" (opens demo URL, NOT personal finished URL) */}
-              <div className="flex flex-col sm:flex-row items-center gap-2">
+              {/* Main Action CTA: "Mẫu đã chọn" (Nới rộng h-12, w-full, text-sm) */}
+              <div className="w-full pt-1">
                 <a
                   href={templateDemoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex-1 w-full h-11 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-md transition-colors"
+                  className="w-full h-12 rounded-xl bg-burgundy-wine hover:bg-[#851622] text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99]"
                 >
-                  <Icon name="visibility" className="text-[18px]" />
-                  <span>Mẫu đã chọn</span>
+                  <Icon name="visibility" className="text-[20px]" />
+                  <span>Xem Mẫu thiệp đã chọn</span>
                 </a>
               </div>
             </div>
@@ -761,20 +778,20 @@ export const CustomerDashboardPage: React.FC = () => {
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="flex flex-col gap-2">
+                                  <div className="flex flex-col gap-2.5">
                                     <Link
                                       to={`/thanh-toan/${liveOrder.id}`}
-                                      className="w-full h-10 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                                      className="w-full h-12 rounded-xl bg-burgundy-wine hover:bg-[#851622] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99]"
                                     >
-                                      <Icon name="qr_code_scanner" className="text-[16px]" />
+                                      <Icon name="qr_code_scanner" className="text-[18px]" />
                                       <span>Thanh toán chuyển khoản ngân hàng</span>
                                     </Link>
                                     <button
                                       type="button"
                                       onClick={() => customerSubmitPaymentConfirmation(liveOrder.id)}
-                                      className="w-full h-9 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                                      className="w-full h-11 rounded-xl bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs sm:text-sm font-medium flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-2xs"
                                     >
-                                      <Icon name="check_circle" className="text-[15px] text-emerald-700" />
+                                      <Icon name="check_circle" className="text-[16px] text-emerald-700" />
                                       <span>Tôi đã hoàn tất chuyển khoản</span>
                                     </button>
                                   </div>
@@ -784,14 +801,14 @@ export const CustomerDashboardPage: React.FC = () => {
 
                             {/* STEP 2: Đã thanh toán */}
                             {currentStep === 2 && (
-                              <div className="flex flex-col gap-2">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="flex flex-col gap-2.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                   <button
                                     type="button"
                                     onClick={() => setIsWeddingInfoModalOpen(true)}
-                                    className="h-10 rounded-full bg-deep-espresso hover:bg-black text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                                    className="h-12 w-full rounded-xl bg-deep-espresso hover:bg-black text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.99]"
                                   >
-                                    <Icon name="edit_note" className="text-[16px] text-rose-200" />
+                                    <Icon name="edit_note" className="text-[18px] text-rose-200" />
                                     <span>
                                       {liveOrder.weddingInfoSubmitted ? 'Sửa thông tin lễ cưới' : 'Điền thông tin lễ cưới'}
                                     </span>
@@ -799,9 +816,9 @@ export const CustomerDashboardPage: React.FC = () => {
                                   <button
                                     type="button"
                                     onClick={() => setIsAlbumModalOpen(true)}
-                                    className="h-10 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                                    className="h-12 w-full rounded-xl bg-burgundy-wine hover:bg-[#851622] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.99]"
                                   >
-                                    <Icon name="photo_library" className="text-[16px] text-amber-200" />
+                                    <Icon name="photo_library" className="text-[18px] text-amber-200" />
                                     <span>
                                       {liveOrder.albumSubmitted
                                         ? `Album (${liveOrder.weddingInfo?.albumPhotoCount || liveOrder.weddingInfo?.albumPhotos?.length || 0} ảnh)`
