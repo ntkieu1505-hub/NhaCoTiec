@@ -33,7 +33,7 @@ export const HomePage: React.FC = () => {
           <img
             src={cms.hero.mobileCoverImageUrl || '/hero-mobile.jpg'}
             alt={cms.hero.headline}
-            className="w-full h-full object-cover object-[center_18%] sm:hidden"
+            className="w-full h-full object-cover object-[center_28%] sm:hidden"
           />
           {/* Desktop/Tablet Hero Image (Phong cảnh ngang cho máy tính) */}
           <img
@@ -42,11 +42,11 @@ export const HomePage: React.FC = () => {
             className="w-full h-full object-cover sm:object-[center_28%] hidden sm:block"
           />
           {/* Subtle neutral dark vignette for text readability - strictly NO red/burgundy tint */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/15 sm:to-black/25" />
         </div>
 
         {/* Centered, balanced Hero content with widened container (800–1000px) */}
-        <div className="relative z-10 w-full max-w-4xl lg:max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-16 md:py-24 flex flex-col items-center text-center">
+        <div className="relative z-10 w-full max-w-4xl lg:max-w-5xl mx-auto px-3 sm:px-6 pt-14 pb-8 sm:py-16 md:py-24 flex flex-col items-center text-center">
           {/* 1. Tên thương hiệu - Dòng riêng nằm ngay bên trên tiêu đề */}
           <p className="font-playfair text-xs sm:text-sm md:text-base text-gold-foil font-semibold tracking-[0.15em] mb-2 sm:mb-3 select-none drop-shadow-sm">
             Nhà Có Tiệc
