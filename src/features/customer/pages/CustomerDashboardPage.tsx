@@ -11,6 +11,7 @@ import {
   customerSubmitRevision,
 } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
+import { useZaloSupportUrl } from '../../../mocks/cmsStore';
 import { getTemplateById, getTemplateBySlug, getAllTemplates } from '../../../mocks/templateStore';
 import { Guest, Wish } from '../../../types';
 import { RevisionModal } from '../components/RevisionModal';
@@ -22,6 +23,7 @@ import { formatCurrency, formatDateTime } from '../../../utils/formatters';
 
 export const CustomerDashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const zaloUrl = useZaloSupportUrl();
   const allOrders = useOrders();
   const lastOrderId = getLastCustomerOrderId();
 
@@ -35,6 +37,7 @@ export const CustomerDashboardPage: React.FC = () => {
   const [showDataPreview, setShowDataPreview] = useState(false);
   const [previewTab, setPreviewTab] = useState<'guests' | 'wishes'>('guests');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [useDemoFallback, setUseDemoFallback] = useState(false);
 
   // Dynamically resolve all orders belonging to this customer:
   const customerOrders = useMemo(() => {
@@ -63,34 +66,13 @@ export const CustomerDashboardPage: React.FC = () => {
       }
     }
 
-    // 3. Fallback / Multi-order demo mode:
-    // If list is empty or has only 1 order, pair with NCT02 so customer can test switching between Order 1 & Order 2
-    if (list.length === 0) {
+    // 3. Demo preview mode: Only activated if user explicitly clicked preview demo or testing demo account
+    if (list.length === 0 && (useDemoFallback || user?.email === 'minhanh.wedding@gmail.com')) {
       list = allOrders.slice(0, 2);
-    } else if (list.length === 1) {
-      const secondOrder = allOrders.find((o) => o.id === 'NCT02') || allOrders.find((o) => o.id !== list[0].id) || {
-        id: 'NCT02',
-        customerName: `${list[0].customerName} (Tiệc Nhà Gái)`,
-        customerPhone: list[0].customerPhone,
-        customerEmail: list[0].customerEmail,
-        templateId: 'tpl-thanh-xuan',
-        templateName: 'Thanh Xuân & Hoàng Nam (Mẫu Tiệc Nhà Gái)',
-        category: 'basic' as const,
-        price: 59000,
-        paymentStatus: 'paid' as const,
-        orderStatus: 'designing' as const,
-        paymentMethod: 'vietqr' as const,
-        currentStage: 4 as const,
-        createdAt: '2026-09-08T07:45:00Z',
-        updatedAt: '2026-09-08T11:20:00Z',
-      };
-      if (secondOrder && !list.some((o) => o.id === secondOrder.id)) {
-        list.push(secondOrder);
-      }
     }
 
     return list;
-  }, [allOrders, user, lastOrderId]);
+  }, [allOrders, user, lastOrderId, useDemoFallback]);
 
   const [selectedOrderId, setSelectedOrderId] = useState<string>(() => {
     return lastOrderId || '';
@@ -186,8 +168,144 @@ export const CustomerDashboardPage: React.FC = () => {
     document.body.removeChild(element);
   };
 
+  // Empty State: Render when customer has not selected any template or has no active orders
+  if (customerOrders.length === 0) {
+    return (
+      <div className="flex flex-col w-full text-deep-espresso pb-20">
+        {/* Sticky Header Bar */}
+        <div className="sticky top-[52px] z-40 bg-surface-cream/95 backdrop-blur-md border-b border-border-delicate px-4 py-2.5 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-1.5">
+            <Icon name="dashboard" className="text-[15px] text-burgundy-wine" />
+            <span className="font-label-caps text-[11px] font-bold uppercase tracking-wider text-deep-espresso">
+              CỔNG KHÁCH HÀNG
+            </span>
+          </div>
+          <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-600/20">
+            Chưa có đơn hàng
+          </span>
+        </div>
+
+        {/* Empty State Content */}
+        <div className="max-w-3xl mx-auto px-4 py-10 sm:py-16 flex flex-col items-center text-center">
+          {/* Badge Icon */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center shadow-xs mb-5 border border-burgundy-wine/15">
+            <Icon name="mark_email_unread" className="text-3xl sm:text-4xl text-burgundy-wine" />
+          </div>
+
+          <span className="text-xs sm:text-sm font-semibold text-burgundy-wine uppercase tracking-wider mb-2">
+            Chào mừng {user?.name || 'bạn'} đến với Nhà Có Tiệc
+          </span>
+          <h1 className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-bold text-deep-espresso leading-tight mb-3">
+            Bạn chưa chọn mẫu thiệp cưới nào
+          </h1>
+          <p className="text-sm sm:text-base text-text-muted max-w-xl mb-8 leading-relaxed">
+            Để bắt đầu khởi tạo website thiệp cưới độc bản cho ngày chung đôi, hãy dạo một vòng qua bộ sưu tập và chọn thiết kế mà hai bạn yêu thích nhất nhé!
+          </p>
+
+          {/* 3 Step Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full mb-8 text-left">
+            <div className="p-4 rounded-xl bg-surface-card border border-border-delicate shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center font-bold text-sm mb-3">
+                1
+              </div>
+              <h3 className="font-semibold text-sm text-deep-espresso mb-1">Khám phá & Chọn mẫu</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Xem trực tiếp hiệu ứng lật mở thiệp, nhạc nền và đếm ngược ngày cưới.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-surface-card border border-border-delicate shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center font-bold text-sm mb-3">
+                2
+              </div>
+              <h3 className="font-semibold text-sm text-deep-espresso mb-1">Điền thông tin & Ảnh</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Cung cấp thời gian, địa điểm tổ chức tiệc hai họ và tải lên album ảnh cưới.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-surface-card border border-border-delicate shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-burgundy-wine/10 text-burgundy-wine flex items-center justify-center font-bold text-sm mb-3">
+                3
+              </div>
+              <h3 className="font-semibold text-sm text-deep-espresso mb-1">Nhận thiệp trong 24h</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Ekip hoàn thiện website thiệp cưới gửi bạn duyệt, sẵn sàng chia sẻ cho khách mời.
+              </p>
+            </div>
+          </div>
+
+          {/* Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mb-10">
+            <Link
+              to="/mau-thiep"
+              className="h-12 sm:h-13 w-full sm:w-auto px-8 rounded-xl bg-burgundy-wine hover:bg-burgundy-wine/90 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
+            >
+              <Icon name="favorite" className="text-lg" />
+              <span>Khám phá bộ sưu tập mẫu thiệp</span>
+            </Link>
+            <a
+              href={zaloUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-12 sm:h-13 w-full sm:w-auto px-6 rounded-xl border-2 border-gold-foil/50 bg-white hover:bg-surface-subtle text-deep-espresso font-semibold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all"
+            >
+              <Icon name="chat" className="text-lg text-burgundy-wine" />
+              <span>Tư vấn thiết kế qua Zalo</span>
+            </a>
+          </div>
+
+          {/* Trust Guarantees */}
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-6 border-t border-border-delicate/80 w-full text-xs text-text-muted">
+            <div className="flex items-center gap-1.5">
+              <Icon name="bolt" className="text-amber-600 text-base" />
+              <span>Bàn giao nhanh trong 24h</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Icon name="sell" className="text-emerald-600 text-base" />
+              <span>Chỉ từ 59k - 79k trọn gói</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Icon name="verified" className="text-blue-600 text-base" />
+              <span>Chỉnh sửa không giới hạn</span>
+            </div>
+          </div>
+
+          {/* Demo Button for Testers / Admin */}
+          <div className="mt-10 pt-4 text-center">
+            <button
+              type="button"
+              onClick={() => setUseDemoFallback(true)}
+              className="text-xs text-text-muted hover:text-burgundy-wine underline transition-colors inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-black/5"
+            >
+              <Icon name="visibility" className="text-[14px]" />
+              <span>Xem thử giao diện mẫu thử nghiệm (Demo)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col w-full text-deep-espresso pb-20">
+      {/* Demo Notification Banner if active */}
+      {useDemoFallback && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs text-amber-900">
+          <div className="flex items-center gap-1.5 font-medium">
+            <Icon name="info" className="text-amber-700 text-sm" />
+            <span>Đang xem giao diện mẫu thử nghiệm (Demo) với đơn hàng mẫu.</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setUseDemoFallback(false)}
+            className="font-semibold text-burgundy-wine underline hover:opacity-80 shrink-0 ml-2"
+          >
+            Quay lại trạng thái thật
+          </button>
+        </div>
+      )}
+
       {/* Sticky Anchor Navigation Chips */}
       <div className="sticky top-[52px] z-40 bg-surface-cream/95 backdrop-blur-md border-b border-border-delicate px-4 py-2.5 flex flex-col gap-2 shadow-xs">
         <div className="flex items-center justify-between">
