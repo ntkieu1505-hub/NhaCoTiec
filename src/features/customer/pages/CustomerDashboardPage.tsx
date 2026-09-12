@@ -265,10 +265,6 @@ export const CustomerDashboardPage: React.FC = () => {
               <Icon name="sell" className="text-emerald-600 text-base" />
               <span>Chỉ từ 59k - 79k trọn gói</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Icon name="verified" className="text-blue-600 text-base" />
-              <span>Chỉnh sửa không giới hạn</span>
-            </div>
           </div>
 
           {/* Demo Button for Testers / Admin */}
