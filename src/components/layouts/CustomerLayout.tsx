@@ -5,12 +5,15 @@ import { useZaloSupportUrl } from '../../mocks/cmsStore';
 import { useNotifications } from '../../mocks/notificationStore';
 import { NotificationType } from '../../types/notification';
 import { useAuth } from '../../mocks/authStore';
+import { useOrders, getLastCustomerOrderId } from '../../mocks/orderStore';
 
 export const CustomerLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const zaloUrl = useZaloSupportUrl();
   const { user, logout } = useAuth();
+  const allOrders = useOrders();
+  const lastOrderId = getLastCustomerOrderId();
   const currentUserId = user?.id || '01';
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(currentUserId);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -79,6 +82,62 @@ export const CustomerLayout: React.FC = () => {
     }
   };
 
+  // Dynamically resolve customer's orders:
+  const customerOrders = React.useMemo(() => {
+    let list: typeof allOrders = [];
+    if (user) {
+      list = allOrders.filter(
+        (o) =>
+          (o.userId && o.userId === user.id) ||
+          (user.email && o.customerEmail && o.customerEmail.toLowerCase() === user.email.toLowerCase()) ||
+          (user.phone && o.customerPhone && o.customerPhone === user.phone)
+      );
+    }
+    if (list.length === 0 && lastOrderId) {
+      const last = allOrders.find((o) => o.id === lastOrderId);
+      if (last) {
+        list = allOrders.filter(
+          (o) =>
+            o.id === lastOrderId ||
+            (last.customerPhone && o.customerPhone === last.customerPhone) ||
+            (last.customerEmail && o.customerEmail && o.customerEmail.toLowerCase() === last.customerEmail.toLowerCase())
+        );
+      }
+    }
+    return list;
+  }, [allOrders, user, lastOrderId]);
+
+  const activeOrder = customerOrders[0];
+  const displayName = activeOrder?.customerName || user?.name || (user?.email ? user.email.split('@')[0] : 'Khách hàng');
+
+  const avatarInitials = React.useMemo(() => {
+    if (activeOrder?.customerName) {
+      const parts = activeOrder.customerName.split('&');
+      if (parts.length >= 2) {
+        const p1 = parts[0].trim().split(/\s+/).pop()?.[0] || '';
+        const p2 = parts[1].trim().split(/\s+/).pop()?.[0] || '';
+        return `${p1}&${p2}`.toUpperCase() || 'M&M';
+      }
+    }
+    if (displayName) {
+      const words = displayName.trim().split(/\s+/);
+      if (words.length >= 2) {
+        return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+      }
+      return displayName.slice(0, 2).toUpperCase();
+    }
+    return 'KH';
+  }, [activeOrder, displayName]);
+
+  const weddingDateDisplay = React.useMemo(() => {
+    if (!activeOrder?.weddingInfo?.weddingDate) return null;
+    try {
+      return new Date(activeOrder.weddingInfo.weddingDate).toLocaleDateString('vi-VN');
+    } catch {
+      return null;
+    }
+  }, [activeOrder]);
+
   return (
     <div className="bg-surface-cream text-on-surface antialiased min-h-screen flex flex-col selection:bg-burgundy-wine selection:text-white">
       {/* 1. Header - Burgundy Wine (#6D141A) */}
@@ -101,64 +160,59 @@ export const CustomerLayout: React.FC = () => {
           <a
             href={zaloUrl}
             target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 px-3 py-1 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-[12px] font-medium transition-colors shadow-xs"
-            title="Liên hệ hỗ trợ Zalo"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-[#FDF8EB] text-xs font-semibold backdrop-blur-xs border border-white/20 transition-colors shadow-2xs"
+            title="Nhắn tin hỗ trợ qua Zalo"
           >
-            <Icon name="chat" className="text-[14px]" />
-            <span>Hỗ trợ</span>
+            <Icon name="chat" className="text-[14px] text-amber-200" />
+            <span className="text-[11px] sm:text-xs">Hỗ trợ</span>
           </a>
 
-          {/* Notification Bell 🔔 */}
+          {/* Notification Bell */}
           <button
             type="button"
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-1.5 rounded-full text-white hover:bg-white/10 transition-colors flex items-center justify-center"
             aria-label="Thông báo"
-            title="Trung tâm thông báo"
+            className="relative p-1 text-white hover:text-white/80 transition-colors flex items-center justify-center text-xs ml-0.5"
+            title="Thông báo"
           >
-            <Icon name="notifications" className="text-[21px]" />
+            <Icon name="notifications" className="text-[20px]" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gold-foil text-deep-espresso font-bold text-[10px] flex items-center justify-center shadow-xs ring-2 ring-burgundy-wine animate-in zoom-in">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gold-foil text-deep-espresso text-[9px] font-bold flex items-center justify-center shadow-xs">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>
 
-          {/* Notification Dropdown Panel */}
+          {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-surface-card rounded-2xl shadow-2xl border border-border-delicate text-on-surface z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              {/* Panel Header */}
-              <div className="p-3.5 bg-surface-subtle border-b border-border-delicate flex items-center justify-between">
+            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-surface-card rounded-2xl shadow-xl border border-border-delicate overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 text-deep-espresso">
+              <div className="px-4 py-3 bg-surface-cream border-b border-border-delicate flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Icon name="notifications" className="text-[18px] text-burgundy-wine" />
-                  <span className="font-serif font-bold text-sm text-deep-espresso">
-                    Thông báo ({notifications.length})
-                  </span>
+                  <span className="font-serif font-bold text-sm text-deep-espresso">Thông báo đơn hàng</span>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] font-bold text-burgundy-wine bg-burgundy-wine/10 px-2 py-0.5 rounded-full">
+                    <span className="px-1.5 py-0.5 rounded-full bg-burgundy-wine/10 text-burgundy-wine text-[10px] font-bold">
                       {unreadCount} mới
                     </span>
                   )}
                 </div>
-
                 {unreadCount > 0 && (
                   <button
                     type="button"
-                    onClick={() => markAllAsRead()}
-                    className="text-[11px] text-burgundy-wine font-semibold hover:underline"
+                    onClick={markAllAsRead}
+                    className="text-[11px] text-burgundy-wine hover:underline font-medium"
                   >
-                    Đã đọc tất cả
+                    Đọc tất cả
                   </button>
                 )}
               </div>
 
-              {/* Notification List */}
-              <div className="max-h-[380px] overflow-y-auto divide-y divide-border-delicate/60 flex flex-col">
+              <div className="max-h-[380px] overflow-y-auto divide-y divide-border-delicate/60">
                 {notifications.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-text-muted flex flex-col items-center gap-2">
-                    <Icon name="notifications_none" className="text-[28px] text-text-muted/50" />
-                    <span>Chưa có thông báo nào dành cho bạn.</span>
+                  <div className="py-8 text-center text-text-muted text-xs">
+                    <Icon name="notifications_off" className="text-2xl mb-1 text-text-muted/60" />
+                    <p>Chưa có thông báo nào</p>
                   </div>
                 ) : (
                   notifications.map((noti) => {
@@ -167,36 +221,25 @@ export const CustomerLayout: React.FC = () => {
                       <div
                         key={noti.id}
                         onClick={() => handleNotificationClick(noti.id, noti.actionUrl)}
-                        className={`p-3.5 flex items-start gap-3 hover:bg-surface-subtle/80 cursor-pointer transition-colors ${
-                          !noti.isRead ? 'bg-burgundy-wine/5' : ''
+                        className={`p-3.5 hover:bg-surface-subtle/80 cursor-pointer transition-colors flex items-start gap-3 ${
+                          !noti.isRead ? 'bg-burgundy-wine/[0.03]' : ''
                         }`}
                       >
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${meta.color}`}
-                        >
-                          <Icon name={meta.icon} className="text-[17px]" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${meta.color}`}>
+                          <Icon name={meta.icon} className="text-[16px]" />
                         </div>
-
-                        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                          <div className="flex items-center justify-between gap-1">
-                            <span
-                              className={`text-xs leading-tight font-serif truncate ${
-                                !noti.isRead
-                                  ? 'font-bold text-deep-espresso'
-                                  : 'font-semibold text-deep-espresso/85'
-                              }`}
-                            >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1 mb-0.5">
+                            <span className="font-semibold text-xs text-deep-espresso line-clamp-1">
                               {noti.title}
                             </span>
                             {!noti.isRead && (
                               <span className="w-2 h-2 rounded-full bg-burgundy-wine shrink-0" />
                             )}
                           </div>
-
                           <p className="text-[11px] text-text-muted line-clamp-2 leading-relaxed">
                             {noti.message}
                           </p>
-
                           <div className="flex items-center justify-between pt-1 text-[10px] text-text-muted">
                             <span>{formatNotificationTime(noti.createdAt)}</span>
                             {noti.actionUrl && (
@@ -242,28 +285,52 @@ export const CustomerLayout: React.FC = () => {
         <div className="bg-gradient-to-r from-burgundy-wine/10 via-surface-cream to-burgundy-wine/5 border-b border-border-delicate/80 px-4 py-3.5 flex items-center justify-between max-w-xl mx-auto w-full">
           <div className="flex items-center gap-3 min-w-0">
             <div className="relative flex-shrink-0">
-              <div className="w-12 h-12 rounded-full border-2 border-gold-foil/80 p-0.5 shadow-sm bg-surface-card flex items-center justify-center">
-                <div className="w-full h-full rounded-full bg-burgundy-wine text-white flex items-center justify-center font-serif text-sm font-semibold tracking-wider">
-                  M&M
-                </div>
+              <div className="w-12 h-12 rounded-full border-2 border-gold-foil/80 p-0.5 shadow-sm bg-surface-card flex items-center justify-center overflow-hidden">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={displayName} className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-burgundy-wine text-white flex items-center justify-center font-serif text-sm font-semibold tracking-wider">
+                    {avatarInitials}
+                  </div>
+                )}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-gold-foil text-white flex items-center justify-center text-[9px] shadow-sm ring-1 ring-white">
-                <Icon name="verified" className="text-[10px]" />
+              <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] shadow-sm ring-1 ring-white ${
+                activeOrder ? 'bg-gold-foil' : 'bg-emerald-600'
+              }`}>
+                <Icon name={activeOrder ? 'verified' : 'person'} className="text-[10px]" />
               </span>
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
                 <h2 className="font-headline-sm text-[15px] font-serif font-semibold text-deep-espresso leading-tight truncate">
-                  Nguyễn Minh Anh &amp; Trần Đức Minh
+                  {displayName}
                 </h2>
-                <span className="px-1.5 py-0.2 rounded bg-burgundy-wine text-white font-label-caps text-[8px] tracking-wider uppercase flex-shrink-0 font-bold">
-                  VIP
+                <span className={`px-1.5 py-0.2 rounded font-label-caps text-[8px] tracking-wider uppercase flex-shrink-0 font-bold ${
+                  activeOrder ? 'bg-burgundy-wine text-white' : 'bg-surface-subtle text-text-muted border border-border-delicate'
+                }`}>
+                  {activeOrder ? (activeOrder.category === 'premium' ? 'VIP' : 'TIÊU CHUẨN') : 'THÀNH VIÊN'}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-text-muted mt-0.5">
-                <span className="font-medium text-deep-espresso/80">Đơn hàng: #NCT01</span>
-                <span>•</span>
-                <span className="text-gold-foil font-serif italic text-[11px]">Cưới: 28/12/2026</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-text-muted mt-0.5 truncate">
+                {activeOrder ? (
+                  <>
+                    <span className="font-medium text-deep-espresso/80">Đơn hàng: #{activeOrder.id}</span>
+                    {weddingDateDisplay && (
+                      <>
+                        <span>•</span>
+                        <span className="text-gold-foil font-serif italic text-[11px]">
+                          Cưới: {weddingDateDisplay}
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-text-muted truncate">{user?.email || 'Tài khoản khách'}</span>
+                    <span>•</span>
+                    <span className="text-amber-700 font-medium whitespace-nowrap">Chưa có đơn hàng</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
