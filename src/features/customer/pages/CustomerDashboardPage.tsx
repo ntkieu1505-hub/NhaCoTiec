@@ -37,7 +37,6 @@ export const CustomerDashboardPage: React.FC = () => {
   const [showDataPreview, setShowDataPreview] = useState(false);
   const [previewTab, setPreviewTab] = useState<'guests' | 'wishes'>('guests');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
-  const [useDemoFallback, setUseDemoFallback] = useState(false);
 
   // Dynamically resolve all orders belonging to this customer:
   const customerOrders = useMemo(() => {
@@ -66,13 +65,13 @@ export const CustomerDashboardPage: React.FC = () => {
       }
     }
 
-    // 3. Demo preview mode: Only activated if user explicitly clicked preview demo or testing demo account
-    if (list.length === 0 && (useDemoFallback || user?.email === 'minhanh.wedding@gmail.com')) {
+    // 3. Dedicated demo account fallback (minhanh.wedding@gmail.com)
+    if (list.length === 0 && user?.email === 'minhanh.wedding@gmail.com') {
       list = allOrders.slice(0, 2);
     }
 
     return list;
-  }, [allOrders, user, lastOrderId, useDemoFallback]);
+  }, [allOrders, user, lastOrderId]);
 
   const [selectedOrderId, setSelectedOrderId] = useState<string>(() => {
     return lastOrderId || '';
@@ -266,18 +265,6 @@ export const CustomerDashboardPage: React.FC = () => {
               <span>Chỉ từ 59k - 79k trọn gói</span>
             </div>
           </div>
-
-          {/* Demo Button for Testers / Admin */}
-          <div className="mt-10 pt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setUseDemoFallback(true)}
-              className="text-xs text-text-muted hover:text-burgundy-wine underline transition-colors inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-black/5"
-            >
-              <Icon name="visibility" className="text-[14px]" />
-              <span>Xem thử giao diện mẫu thử nghiệm (Demo)</span>
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -285,22 +272,6 @@ export const CustomerDashboardPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full text-deep-espresso pb-20">
-      {/* Demo Notification Banner if active */}
-      {useDemoFallback && (
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs text-amber-900">
-          <div className="flex items-center gap-1.5 font-medium">
-            <Icon name="info" className="text-amber-700 text-sm" />
-            <span>Đang xem giao diện mẫu thử nghiệm (Demo) với đơn hàng mẫu.</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setUseDemoFallback(false)}
-            className="font-semibold text-burgundy-wine underline hover:opacity-80 shrink-0 ml-2"
-          >
-            Quay lại trạng thái thật
-          </button>
-        </div>
-      )}
 
       {/* Sticky Anchor Navigation Chips */}
       <div className="sticky top-[52px] z-40 bg-surface-cream/95 backdrop-blur-md border-b border-border-delicate px-4 py-2.5 flex flex-col gap-2 shadow-xs">
