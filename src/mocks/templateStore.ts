@@ -13,9 +13,6 @@ const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_templates_channel';
 export function isPurgedTemplate(t: Partial<Template>): boolean {
   if (!t) return true;
   if (t.isDeleted === true || t.status === 'deleted') return true;
-  const name = (t.name || t.title || '').toLowerCase();
-  const slug = (t.slug || '').toLowerCase();
-  if (name.includes('elegant') || slug.includes('elegant')) return true;
   return false;
 }
 
@@ -39,22 +36,22 @@ function saveDeletedIds() {
   } catch (e) {}
 }
 
-// In-memory cache synced with localStorage
+// In-memory cache synced with localStorage, merging baseline mock templates
 let currentTemplates: Template[] = (() => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const list: Template[] = JSON.parse(saved);
-      if (Array.isArray(list)) {
-        let changed = false;
-        list.forEach((t) => {
-          if (isPurgedTemplate(t)) {
-            deletedTemplateIds.add(t.id);
-            changed = true;
+      if (Array.isArray(list) && list.length > 0) {
+        const localMap = new Map<string, Template>(list.map((t) => [t.id, t]));
+        const merged: Template[] = [...list];
+        // Merge in any default seed templates that are missing and not deleted
+        MOCK_TEMPLATES.forEach((mockTpl) => {
+          if (!localMap.has(mockTpl.id) && !deletedTemplateIds.has(mockTpl.id) && !isPurgedTemplate(mockTpl)) {
+            merged.push(mockTpl);
           }
         });
-        if (changed) saveDeletedIds();
-        return list.filter((t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t));
+        return merged.filter((t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t));
       }
     }
   } catch (e) {
@@ -195,7 +192,33 @@ function initFirestoreTemplatesSync() {
           }
 
           if (remoteList.length > 0) {
-            currentTemplates = remoteList.filter(
+            const remoteMap = new Map<string, Template>(remoteList.map((t) => [t.id, t]));
+            const merged: Template[] = [...remoteList];
+
+            // Giữ lại các mẫu mặc định (seed) nếu chưa có trên Firestore và chưa bị xóa
+            MOCK_TEMPLATES.forEach((mockTpl) => {
+              if (
+                !remoteMap.has(mockTpl.id) &&
+                !deletedTemplateIds.has(mockTpl.id) &&
+                !isPurgedTemplate(mockTpl)
+              ) {
+                merged.push(mockTpl);
+              }
+            });
+
+            // Giữ lại các mẫu mới tạo ở phía client nếu chưa kịp đồng bộ lên Firestore
+            currentTemplates.forEach((localTpl) => {
+              if (
+                !remoteMap.has(localTpl.id) &&
+                !deletedTemplateIds.has(localTpl.id) &&
+                !isPurgedTemplate(localTpl) &&
+                !merged.some((m) => m.id === localTpl.id)
+              ) {
+                merged.push(localTpl);
+              }
+            });
+
+            currentTemplates = merged.filter(
               (t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
             );
             try {
@@ -277,6 +300,8 @@ export function createTemplate(
   const id = `tpl-${Date.now()}`;
   const newTemplate: Template = {
     ...data,
+    name: data.name ? data.name.trim() : 'Mẫu thiệp cưới',
+    title: data.title ? data.title.trim() : (data.name ? data.name.trim() : 'Mẫu thiệp cưới'),
     id,
     createdAt: now,
     updatedAt: now,
@@ -318,9 +343,13 @@ export function updateTemplate(
 
   currentTemplates = currentTemplates.map((t) => {
     if (t.id === id) {
+      const newName = updates.name ? updates.name.trim() : t.name;
+      const newTitle = updates.title ? updates.title.trim() : (updates.name ? updates.name.trim() : (t.title || t.name));
       updatedItem = {
         ...t,
         ...updates,
+        name: newName,
+        title: newTitle,
         updatedAt: now,
         isActive: updates.status ? updates.status === 'published' : t.isActive,
       };

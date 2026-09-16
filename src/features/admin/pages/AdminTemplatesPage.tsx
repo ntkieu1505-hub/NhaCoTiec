@@ -87,6 +87,10 @@ export const AdminTemplatesPage: React.FC = () => {
     } else {
       createTemplate(data);
     }
+    // Đảm bảo mẫu vừa lưu luôn hiển thị trên màn hình nếu trạng thái không khớp tab hiện tại
+    if (selectedStatusTab !== 'all' && selectedStatusTab !== data.status) {
+      setSelectedStatusTab(data.status || 'all');
+    }
   };
 
   const handleDelete = (tpl: Template) => {

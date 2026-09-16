@@ -172,6 +172,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
 
     onSave({
       name: name.trim(),
+      title: name.trim(),
       slug: slug.trim().toLowerCase(),
       style: style.trim(),
       description: description.trim(),
