@@ -5,8 +5,8 @@ import { db } from '../services/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { logActivity } from '../services/activityLogService';
 
-const STORAGE_KEY = 'nha_co_tiec_templates_v3';
-const DELETED_STORAGE_KEY = 'nha_co_tiec_deleted_template_ids_v1';
+const STORAGE_KEY = 'nha_co_tiec_templates_v4';
+const DELETED_STORAGE_KEY = 'nha_co_tiec_deleted_template_ids_v2';
 const BROADCAST_CHANNEL_NAME = 'nha_co_tiec_templates_channel';
 
 // Helper to identify test, corrupted or soft-deleted templates
@@ -477,30 +477,38 @@ export function deleteTemplate(id: string): boolean {
  */
 export function purgeCorruptedTemplates(): number {
   let count = 0;
+  const standardMockIds = new Set(MOCK_TEMPLATES.map((m) => m.id));
+
+  // Gỡ bỏ các mẫu mặc định khỏi danh sách xóa nếu vô tình bị đưa vào trước đó
+  standardMockIds.forEach((id) => {
+    if (deletedTemplateIds.has(id)) {
+      deletedTemplateIds.delete(id);
+      count++;
+    }
+  });
+
   currentTemplates.forEach((t) => {
-    if (isPurgedTemplate(t)) {
+    if (isPurgedTemplate(t) && !standardMockIds.has(t.id)) {
       deletedTemplateIds.add(t.id);
       count++;
     }
   });
 
-  if (count > 0 || deletedTemplateIds.size > 0) {
-    saveDeletedIds();
-    currentTemplates = currentTemplates.filter(
-      (t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
-    );
-    notify();
+  saveDeletedIds();
+  currentTemplates = currentTemplates.filter(
+    (t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
+  );
+  notify();
 
-    if (db) {
-      setDoc(
-        doc(db, 'settings', 'templates_meta'),
-        {
-          deletedTemplateIds: Array.from(deletedTemplateIds),
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      ).catch(() => {});
-    }
+  if (db) {
+    setDoc(
+      doc(db, 'settings', 'templates_meta'),
+      {
+        deletedTemplateIds: Array.from(deletedTemplateIds),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    ).catch(() => {});
   }
 
   return count;
@@ -525,6 +533,23 @@ export function resetTemplates(): void {
       { merge: true }
     ).catch((err) => {
       console.warn('Failed to clear deletedTemplateIds in Firestore:', err);
+    });
+
+    // Đồng bộ toàn bộ 6 mẫu chuẩn lên Firestore để mọi máy khách đều nhận đủ
+    MOCK_TEMPLATES.forEach((tpl) => {
+      setDoc(
+        doc(db, 'templates', tpl.id),
+        {
+          ...tpl,
+          name: tpl.name || tpl.title,
+          title: tpl.title || tpl.name,
+          isDeleted: false,
+          status: tpl.status || 'published',
+          isActive: tpl.status === 'published' || tpl.isActive === true,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      ).catch(() => {});
     });
   }
 }
