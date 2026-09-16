@@ -87,7 +87,12 @@ export const AdminTemplatesPage: React.FC = () => {
     } else {
       createTemplate(data);
     }
-    // Đảm bảo mẫu vừa lưu luôn hiển thị trên màn hình nếu trạng thái không khớp tab hiện tại
+    // Xóa bộ lọc tìm kiếm và bộ lọc kiểu dáng/giá để mẫu vừa lưu luôn hiển thị
+    setSearchQuery('');
+    outletCtx.setSearchQuery?.('');
+    setSelectedStyleFilter('');
+    setSelectedPriceFilter('');
+    // Đảm bảo tab phù hợp với trạng thái của mẫu
     if (selectedStatusTab !== 'all' && selectedStatusTab !== data.status) {
       setSelectedStatusTab(data.status || 'all');
     }

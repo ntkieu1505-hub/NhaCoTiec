@@ -23,7 +23,11 @@ const deletedTemplateIds = new Set<string>(
       const saved = localStorage.getItem(DELETED_STORAGE_KEY);
       if (saved) {
         const arr = JSON.parse(saved);
-        if (Array.isArray(arr)) return arr;
+        if (Array.isArray(arr)) {
+          // Bảo vệ các mẫu thiệp mặc định không bị dính blacklist do lỗi phiên bản cũ
+          const standardMockIds = new Set(MOCK_TEMPLATES.map((m) => m.id));
+          return arr.filter((id) => !standardMockIds.has(id));
+        }
       }
     } catch (e) {}
     return [];
@@ -120,8 +124,9 @@ function initFirestoreTemplatesSync() {
           const data = docSnap.data();
           if (data && Array.isArray(data.deletedTemplateIds)) {
             let changed = false;
+            const standardMockIds = new Set(MOCK_TEMPLATES.map((m) => m.id));
             data.deletedTemplateIds.forEach((id: string) => {
-              if (!deletedTemplateIds.has(id)) {
+              if (!standardMockIds.has(id) && !deletedTemplateIds.has(id)) {
                 deletedTemplateIds.add(id);
                 changed = true;
               }
@@ -148,27 +153,13 @@ function initFirestoreTemplatesSync() {
       (snapshot) => {
         if (!snapshot.empty) {
           const remoteList: Template[] = [];
-          let hadPurgedItem = false;
 
           snapshot.forEach((docSnap) => {
             const data = docSnap.data() as Partial<Template>;
             if (!data) return;
 
-            // Check if document is purged (test 'elegant', soft-deleted, or in deleted IDs)
-            if (isPurgedTemplate(data) || deletedTemplateIds.has(docSnap.id)) {
-              if (!deletedTemplateIds.has(docSnap.id)) {
-                deletedTemplateIds.add(docSnap.id);
-                hadPurgedItem = true;
-              }
-              // Soft delete + Hard delete in Firestore to guarantee removal across all devices
-              if (!data.isDeleted || data.status !== 'deleted') {
-                setDoc(
-                  doc(db, 'templates', docSnap.id),
-                  { isDeleted: true, status: 'deleted', updatedAt: new Date().toISOString() },
-                  { merge: true }
-                ).catch(() => {});
-              }
-              deleteDoc(doc(db, 'templates', docSnap.id)).catch(() => {});
+            // Bỏ qua các mục đã bị đánh dấu xóa
+            if (data.isDeleted === true || data.status === 'deleted') {
               return;
             }
 
@@ -183,13 +174,10 @@ function initFirestoreTemplatesSync() {
                 data.thumbnailUrl ||
                 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
               ...data,
+              isDeleted: false,
               id: docSnap.id,
             } as Template);
           });
-
-          if (hadPurgedItem) {
-            saveDeletedIds();
-          }
 
           if (remoteList.length > 0) {
             const remoteMap = new Map<string, Template>(remoteList.map((t) => [t.id, t]));
@@ -303,10 +291,16 @@ export function createTemplate(
     name: data.name ? data.name.trim() : 'Mẫu thiệp cưới',
     title: data.title ? data.title.trim() : (data.name ? data.name.trim() : 'Mẫu thiệp cưới'),
     id,
+    isDeleted: false,
     createdAt: now,
     updatedAt: now,
     isActive: data.status === 'published',
   };
+
+  if (deletedTemplateIds.has(id)) {
+    deletedTemplateIds.delete(id);
+    saveDeletedIds();
+  }
 
   currentTemplates = [newTemplate, ...currentTemplates];
   notify();
@@ -341,13 +335,32 @@ export function updateTemplate(
   const now = new Date().toISOString();
   let updatedItem: Template | undefined;
 
+  // Nếu ID này từng bị đánh dấu trong deletedTemplateIds, gỡ bỏ ngay lập tức
+  if (deletedTemplateIds.has(id)) {
+    deletedTemplateIds.delete(id);
+    saveDeletedIds();
+    if (db) {
+      setDoc(
+        doc(db, 'settings', 'templates_meta'),
+        {
+          deletedTemplateIds: Array.from(deletedTemplateIds),
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      ).catch(() => {});
+    }
+  }
+
+  let found = false;
   currentTemplates = currentTemplates.map((t) => {
     if (t.id === id) {
+      found = true;
       const newName = updates.name ? updates.name.trim() : t.name;
       const newTitle = updates.title ? updates.title.trim() : (updates.name ? updates.name.trim() : (t.title || t.name));
       updatedItem = {
         ...t,
         ...updates,
+        isDeleted: false,
         name: newName,
         title: newTitle,
         updatedAt: now,
@@ -357,6 +370,25 @@ export function updateTemplate(
     }
     return t;
   });
+
+  // Nếu không tìm thấy trong currentTemplates (ví dụ bị ẩn hoặc lọc mất trước đó), tái tạo lại
+  if (!found) {
+    const baseMock = MOCK_TEMPLATES.find((m) => m.id === id);
+    const newName = updates.name ? updates.name.trim() : (baseMock?.name || 'Mẫu thiệp cưới');
+    const newTitle = updates.title ? updates.title.trim() : (updates.name ? updates.name.trim() : (baseMock?.title || newName));
+    updatedItem = {
+      ...(baseMock || {}),
+      ...updates,
+      id,
+      isDeleted: false,
+      name: newName,
+      title: newTitle,
+      createdAt: baseMock?.createdAt || now,
+      updatedAt: now,
+      isActive: updates.status ? updates.status === 'published' : true,
+    } as Template;
+    currentTemplates = [updatedItem, ...currentTemplates.filter((t) => t.id !== id)];
+  }
 
   notify();
 

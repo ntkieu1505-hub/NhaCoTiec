@@ -181,6 +181,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       thumbnailPosition,
       previewUrl: previewUrl.trim(),
       status,
+      isDeleted: false,
       category: price >= 79000 ? 'premium' : 'basic',
       rating: initialData?.rating || 5.0,
       reviewCount: initialData?.reviewCount || 1,
