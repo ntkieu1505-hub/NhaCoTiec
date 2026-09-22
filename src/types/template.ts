@@ -26,6 +26,7 @@ export interface Template {
   musicArtist?: string;
   badgeText?: string;
   isPopular?: boolean;
+  isPinned?: boolean; // Pinned to homepage featured templates section
   isActive?: boolean; // Legacy alias for status === 'published'
 }
 

@@ -9,6 +9,7 @@ import {
   deleteTemplate,
   resetTemplates,
   purgeCorruptedTemplates,
+  togglePinTemplate,
 } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { TemplateFormModal } from '../components/TemplateFormModal';
@@ -20,7 +21,7 @@ export const AdminTemplatesPage: React.FC = () => {
   const templates = useTemplates();
 
   const [searchQuery, setSearchQuery] = useState(outletCtx.searchQuery || '');
-  const [selectedStatusTab, setSelectedStatusTab] = useState<'all' | TemplateStatus>('all');
+  const [selectedStatusTab, setSelectedStatusTab] = useState<'all' | TemplateStatus | 'pinned'>('all');
   const [selectedStyleFilter, setSelectedStyleFilter] = useState('');
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('');
 
@@ -39,11 +40,14 @@ export const AdminTemplatesPage: React.FC = () => {
   const publishedCount = templates.filter((t) => t.status === 'published' || t.isActive).length;
   const draftCount = templates.filter((t) => t.status === 'draft').length;
   const hiddenCount = templates.filter((t) => t.status === 'hidden').length;
+  const pinnedCount = templates.filter((t) => t.isPinned).length;
 
   // Filter templates
   const filteredTemplates = templates.filter((tpl) => {
     // Status tab
-    if (selectedStatusTab !== 'all') {
+    if (selectedStatusTab === 'pinned') {
+      if (!tpl.isPinned) return false;
+    } else if (selectedStatusTab !== 'all') {
       const currentStatus = tpl.status || (tpl.isActive ? 'published' : 'draft');
       if (currentStatus !== selectedStatusTab) return false;
     }
@@ -185,7 +189,10 @@ export const AdminTemplatesPage: React.FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
               {publishedCount} Mở bán
             </span>
-            <span>{draftCount} Nháp • {hiddenCount} Ẩn</span>
+            <span className="text-amber-800 font-semibold flex items-center gap-1">
+              <Icon name="push_pin" className="text-[12px] text-amber-600" />
+              {pinnedCount} Ghim trang chủ
+            </span>
           </div>
         </div>
 
@@ -292,6 +299,18 @@ export const AdminTemplatesPage: React.FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
               <span>Đã ẩn ({hiddenCount})</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatusTab('pinned')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                selectedStatusTab === 'pinned'
+                  ? 'bg-amber-700 text-white shadow-xs'
+                  : 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100'
+              }`}
+            >
+              <Icon name="push_pin" className="text-[13px]" />
+              <span>Đã ghim trang chủ ({pinnedCount})</span>
+            </button>
           </div>
 
           <span className="text-xs text-text-muted shrink-0">
@@ -392,37 +411,47 @@ export const AdminTemplatesPage: React.FC = () => {
                   />
 
                   {/* Top Badges Overlay */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                    {/* Status Badge */}
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-label-caps uppercase font-bold tracking-wider shadow-sm flex items-center gap-1 backdrop-blur-md ${
-                        currentStatus === 'published'
-                          ? 'bg-emerald-900/90 text-white'
-                          : currentStatus === 'draft'
-                          ? 'bg-amber-900/90 text-white'
-                          : 'bg-slate-900/90 text-slate-200'
-                      }`}
-                    >
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none gap-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Status Badge */}
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-label-caps uppercase font-bold tracking-wider shadow-sm flex items-center gap-1 backdrop-blur-md ${
                           currentStatus === 'published'
-                            ? 'bg-emerald-400'
+                            ? 'bg-emerald-900/90 text-white'
                             : currentStatus === 'draft'
-                            ? 'bg-amber-400'
-                            : 'bg-slate-400'
+                            ? 'bg-amber-900/90 text-white'
+                            : 'bg-slate-900/90 text-slate-200'
                         }`}
-                      ></span>
-                      <span>
-                        {currentStatus === 'published'
-                          ? 'Published'
-                          : currentStatus === 'draft'
-                          ? 'Draft'
-                          : 'Hidden'}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            currentStatus === 'published'
+                              ? 'bg-emerald-400'
+                              : currentStatus === 'draft'
+                              ? 'bg-amber-400'
+                              : 'bg-slate-400'
+                          }`}
+                        ></span>
+                        <span>
+                          {currentStatus === 'published'
+                            ? 'Published'
+                            : currentStatus === 'draft'
+                            ? 'Draft'
+                            : 'Hidden'}
+                        </span>
                       </span>
-                    </span>
+
+                      {/* Pinned to Homepage Badge */}
+                      {tpl.isPinned && (
+                        <span className="px-2 py-1 rounded-full text-[10px] font-label-caps uppercase font-bold tracking-wider shadow-sm flex items-center gap-1 backdrop-blur-md bg-amber-500/95 text-white">
+                          <Icon name="push_pin" className="text-[12px]" />
+                          <span>Ghim trang chủ</span>
+                        </span>
+                      )}
+                    </div>
 
                     {/* Style Pill Tag */}
-                    <span className="px-2.5 py-1 rounded-full bg-surface-card/90 backdrop-blur-md text-deep-espresso font-label-caps text-[10px] uppercase font-semibold shadow-xs">
+                    <span className="px-2.5 py-1 rounded-full bg-surface-card/90 backdrop-blur-md text-deep-espresso font-label-caps text-[10px] uppercase font-semibold shadow-xs shrink-0">
                       {tpl.style || 'Thanh Lịch'}
                     </span>
                   </div>
@@ -440,17 +469,37 @@ export const AdminTemplatesPage: React.FC = () => {
                 <div className="p-4 flex-1 flex flex-col justify-between gap-3 text-xs">
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-start justify-between gap-2">
-                      <h2 className="font-serif text-base font-bold text-deep-espresso group-hover:text-burgundy-wine transition-colors leading-snug">
+                      <h2 className="font-serif text-base font-bold text-deep-espresso group-hover:text-burgundy-wine transition-colors leading-snug flex-1">
                         {tpl.name}
                       </h2>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(tpl)}
-                        className="text-text-muted hover:text-rose-700 p-1 rounded transition-colors"
-                        title="Xóa mẫu thiệp"
-                      >
-                        <Icon name="delete" className="text-[16px]" />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* 1-Click Pin / Unpin Button */}
+                        <button
+                          type="button"
+                          onClick={() => togglePinTemplate(tpl.id)}
+                          className={`px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                            tpl.isPinned
+                              ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 shadow-2xs'
+                              : 'bg-surface-subtle hover:bg-surface-cream text-text-muted hover:text-amber-800 border border-border-delicate'
+                          }`}
+                          title={tpl.isPinned ? 'Bỏ ghim khỏi trang chủ' : 'Ghim mẫu này lên trang chủ'}
+                        >
+                          <Icon
+                            name="push_pin"
+                            className={`text-[14px] ${tpl.isPinned ? 'text-amber-700' : 'text-text-muted'}`}
+                          />
+                          <span className="text-[11px]">{tpl.isPinned ? 'Đã ghim' : 'Ghim'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(tpl)}
+                          className="text-text-muted hover:text-rose-700 p-1 rounded transition-colors"
+                          title="Xóa mẫu thiệp"
+                        >
+                          <Icon name="delete" className="text-[16px]" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Style & Slug */}

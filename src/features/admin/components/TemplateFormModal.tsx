@@ -57,6 +57,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const [thumbnailPosition, setThumbnailPosition] = useState('center 30%');
   const [previewUrl, setPreviewUrl] = useState('https://nhacotiec.vn/demo/mau-moi');
   const [status, setStatus] = useState<TemplateStatus>('published');
+  const [isPinned, setIsPinned] = useState(false);
   const [slugEditedManually, setSlugEditedManually] = useState(false);
 
   const DEFAULT_FEATURES = [
@@ -93,6 +94,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setThumbnailPosition(initialData.thumbnailPosition || 'center 30%');
       setPreviewUrl(initialData.previewUrl || 'https://nhacotiec.vn/demo/mau-moi');
       setStatus(initialData.status || (initialData.isActive ? 'published' : 'draft'));
+      setIsPinned(Boolean(initialData.isPinned));
       setMusicTitle(initialData.musicTitle || 'A Thousand Years');
       setMusicArtist(initialData.musicArtist || 'Nhà Có Tiệc Studio');
       setFeatures(
@@ -111,6 +113,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setThumbnailPosition('center 30%');
       setPreviewUrl('https://nhacotiec.vn/demo/mau-moi');
       setStatus('published');
+      setIsPinned(false);
       setMusicTitle('A Thousand Years');
       setMusicArtist('Nhà Có Tiệc Studio');
       setFeatures(DEFAULT_FEATURES);
@@ -181,6 +184,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       thumbnailPosition,
       previewUrl: previewUrl.trim(),
       status,
+      isPinned,
       isDeleted: false,
       category: price >= 79000 ? 'premium' : 'basic',
       rating: initialData?.rating || 5.0,
@@ -746,6 +750,37 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                   </span>
                 </label>
               </div>
+            </div>
+
+            {/* Ghim lên Trang Chủ (Bộ sưu tập nổi bật) */}
+            <div className="p-3.5 rounded-xl border border-amber-300/80 bg-amber-50/60 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                  <Icon name="push_pin" className="text-[18px]" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-deep-espresso flex items-center gap-1.5">
+                    Ghim lên Bộ sưu tập nổi bật ở Trang chủ
+                    {isPinned && (
+                      <span className="text-[10px] bg-amber-200 text-amber-900 font-semibold px-1.5 py-0.2 rounded">
+                        Đang ghim
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[11px] text-text-muted leading-tight mt-0.5">
+                    Mẫu thiệp này sẽ được chọn hiển thị trực tiếp trong mục nổi bật tại trang chủ của khách hàng.
+                  </span>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={isPinned}
+                  onChange={(e) => setIsPinned(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-border-delicate peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+              </label>
             </div>
           </div>
 

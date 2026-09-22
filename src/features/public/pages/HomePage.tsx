@@ -11,9 +11,21 @@ export const HomePage: React.FC = () => {
   const cms = useCmsContent();
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'basic' | 'premium'>('all');
 
+  // Lọc chỉ những mẫu thiệp được ghim lên trang chủ (theo cờ isPinned hoặc có trong cms.featuredTemplates.featuredTemplateIds)
+  const pinnedTemplates = publicTemplates.filter((t) => {
+    if (t.isPinned) return true;
+    if (cms.featuredTemplates?.featuredTemplateIds && Array.isArray(cms.featuredTemplates.featuredTemplateIds)) {
+      return cms.featuredTemplates.featuredTemplateIds.includes(t.id);
+    }
+    return false;
+  });
+
+  // Nếu Admin chưa ghim mẫu nào cụ thể, fallback hiển thị 4 mẫu mở bán đầu tiên để trang chủ không bị trống
+  const baseTemplates = pinnedTemplates.length > 0 ? pinnedTemplates : publicTemplates.slice(0, 4);
+
   const filteredTemplates = selectedCategory === 'all'
-    ? publicTemplates
-    : publicTemplates.filter((t) => (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === selectedCategory);
+    ? baseTemplates
+    : baseTemplates.filter((t) => (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === selectedCategory);
 
   const activeFeatures = (cms.features || [])
     .filter((f) => f.enabled)
@@ -177,71 +189,103 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Templates Grid Cards - Consistent 9:19.5 Modern Smartphone Ratio */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredTemplates.map((template) => (
-            <article
-              key={template.id}
-              className="flex flex-col bg-surface-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border-delicate/60"
+        {filteredTemplates.length === 0 ? (
+          <div className="bg-surface-card rounded-2xl p-10 text-center border border-border-delicate flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-surface-subtle flex items-center justify-center text-text-muted">
+              <Icon name="style" className="text-[24px]" />
+            </div>
+            <p className="text-xs text-text-muted max-w-sm leading-relaxed">
+              Chưa có mẫu thiệp nào thuộc nhóm này được ghim lên trang chủ. Khám phá toàn bộ bộ sưu tập tại trang Mẫu thiệp.
+            </p>
+            <Link
+              to="/mau-thiep"
+              className="mt-1 px-5 py-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold hover:bg-[#851622] transition-colors inline-flex items-center gap-1.5 shadow-xs"
             >
-              <div
-                className="relative w-full aspect-phone bg-surface-subtle overflow-hidden"
-                style={{ aspectRatio: '9 / 16' }}
+              <span>Xem tất cả mẫu thiệp</span>
+              <Icon name="arrow_forward" className="text-[15px]" />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredTemplates.map((template) => (
+              <article
+                key={template.id}
+                className="flex flex-col bg-surface-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border-delicate/60"
               >
-                <Link to={`/mau-thiep/${template.slug}`} className="block w-full h-full">
-                  <img
-                    src={template.thumbnailUrl}
-                    alt={template.name}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                    style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
-                  />
-                </Link>
-                <span className="absolute top-3 left-3 pointer-events-none">
-                  <Badge variant={template.category === 'premium' ? 'premium' : 'basic'}>
-                    {template.category === 'premium' ? 'Cao cấp' : 'Cơ bản'}
-                  </Badge>
-                </span>
-                <span className="absolute bottom-3 right-3 bg-burgundy-wine text-surface-cream font-serif text-sm font-semibold px-3 py-1 rounded-lg shadow-md pointer-events-none">
-                  {formatCurrency(template.price)}
-                </span>
-              </div>
+                <div
+                  className="relative w-full aspect-phone bg-surface-subtle overflow-hidden"
+                  style={{ aspectRatio: '9 / 16' }}
+                >
+                  <Link to={`/mau-thiep/${template.slug}`} className="block w-full h-full">
+                    <img
+                      src={template.thumbnailUrl}
+                      alt={template.name}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
+                    />
+                  </Link>
+                  <span className="absolute top-3 left-3 pointer-events-none">
+                    <Badge variant={template.category === 'premium' ? 'premium' : 'basic'}>
+                      {template.category === 'premium' ? 'Cao cấp' : 'Cơ bản'}
+                    </Badge>
+                  </span>
+                  <span className="absolute bottom-3 right-3 bg-burgundy-wine text-surface-cream font-serif text-sm font-semibold px-3 py-1 rounded-lg shadow-md pointer-events-none">
+                    {formatCurrency(template.price)}
+                  </span>
+                </div>
 
-              <div className="pt-3.5 px-4 pb-4 flex-1 flex flex-col justify-between gap-3">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <Link to={`/mau-thiep/${template.slug}`} className="min-w-0 flex-1">
-                      <h3 className="font-serif text-[16px] sm:text-[17px] font-bold text-deep-espresso hover:text-burgundy-wine transition-colors line-clamp-2 leading-[1.3] min-h-[42px] flex items-center">
-                        {template.name}
-                      </h3>
-                    </Link>
-                    <span className="text-xs text-gold-foil font-semibold flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-gold-foil/10 border border-gold-foil/25 mt-0.5">
-                      <Icon name="star" className="text-[13px]" />
-                      <span>{template.rating || 5.0}</span>
-                    </span>
+                <div className="pt-3.5 px-4 pb-4 flex-1 flex flex-col justify-between gap-3">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2 min-w-0">
+                      <Link to={`/mau-thiep/${template.slug}`} className="min-w-0 flex-1">
+                        <h3 className="font-serif text-[16px] sm:text-[17px] font-bold text-deep-espresso hover:text-burgundy-wine transition-colors line-clamp-2 leading-[1.3] min-h-[42px] flex items-center">
+                          {template.name}
+                        </h3>
+                      </Link>
+                      <span className="text-xs text-gold-foil font-semibold flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-gold-foil/10 border border-gold-foil/25 mt-0.5">
+                        <Icon name="star" className="text-[13px]" />
+                        <span>{template.rating || 5.0}</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-muted line-clamp-2 min-h-[34px] leading-relaxed">
+                      {template.description}
+                    </p>
                   </div>
-                  <p className="text-xs text-text-muted line-clamp-2 min-h-[34px] leading-relaxed">
-                    {template.description}
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-2 pt-2 border-t border-border-delicate">
-                  <Link
-                    to={`/mau-thiep/${template.slug}`}
-                    className="flex-1 h-9 rounded-full bg-surface-subtle hover:bg-surface-container-high text-deep-espresso text-xs font-semibold flex items-center justify-center gap-1 transition-all"
-                  >
-                    <Icon name="visibility" className="text-[16px]" />
-                    <span>Xem mẫu</span>
-                  </Link>
-                  <Link
-                    to={`/mau-thiep/${template.slug}`}
-                    className="flex-1 h-9 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition-all"
-                  >
-                    <Icon name="shopping_bag" className="text-[16px]" />
-                    <span>Chọn mẫu</span>
-                  </Link>
+                  <div className="flex items-center gap-2 pt-2 border-t border-border-delicate">
+                    <Link
+                      to={`/mau-thiep/${template.slug}`}
+                      className="flex-1 h-9 rounded-full bg-surface-subtle hover:bg-surface-container-high text-deep-espresso text-xs font-semibold flex items-center justify-center gap-1 transition-all"
+                    >
+                      <Icon name="visibility" className="text-[16px]" />
+                      <span>Xem mẫu</span>
+                    </Link>
+                    <Link
+                      to={`/mau-thiep/${template.slug}`}
+                      className="flex-1 h-9 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-sm transition-all"
+                    >
+                      <Icon name="shopping_bag" className="text-[16px]" />
+                      <span>Chọn mẫu</span>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
+        )}
+
+        {/* Nút Xem thêm chuyển sang trang danh mục toàn bộ mẫu thiệp (/mau-thiep) */}
+        <div className="flex justify-center items-center mt-10 sm:mt-12">
+          <Link
+            to="/mau-thiep"
+            className="group inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs sm:text-sm font-semibold tracking-wide shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+          >
+            <span>Xem thêm mẫu thiệp cưới</span>
+            <Icon
+              name="arrow_forward"
+              className="text-[17px] transition-transform duration-300 group-hover:translate-x-1"
+            />
+          </Link>
         </div>
       </section>
 

@@ -170,6 +170,10 @@ function initFirestoreTemplatesSync() {
               price: typeof data.price === 'number' ? data.price : 79000,
               status: data.status || 'published',
               isActive: data.isActive ?? (data.status === 'published'),
+              isPinned:
+                data.isPinned !== undefined
+                  ? data.isPinned
+                  : (MOCK_TEMPLATES.find((m) => m.id === docSnap.id)?.isPinned ?? false),
               thumbnailUrl:
                 data.thumbnailUrl ||
                 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
@@ -292,6 +296,7 @@ export function createTemplate(
     title: data.title ? data.title.trim() : (data.name ? data.name.trim() : 'Mẫu thiệp cưới'),
     id,
     isDeleted: false,
+    isPinned: Boolean(data.isPinned),
     createdAt: now,
     updatedAt: now,
     isActive: data.status === 'published',
@@ -365,6 +370,7 @@ export function updateTemplate(
         title: newTitle,
         updatedAt: now,
         isActive: updates.status ? updates.status === 'published' : t.isActive,
+        isPinned: updates.isPinned !== undefined ? updates.isPinned : (t.isPinned ?? false),
       };
       return updatedItem;
     }
@@ -386,6 +392,7 @@ export function updateTemplate(
       createdAt: baseMock?.createdAt || now,
       updatedAt: now,
       isActive: updates.status ? updates.status === 'published' : true,
+      isPinned: updates.isPinned !== undefined ? updates.isPinned : (baseMock?.isPinned ?? false),
     } as Template;
     currentTemplates = [updatedItem, ...currentTemplates.filter((t) => t.id !== id)];
   }
@@ -414,6 +421,15 @@ export function updateTemplate(
  */
 export function changeTemplateStatus(id: string, status: TemplateStatus): Template | undefined {
   return updateTemplate(id, { status });
+}
+
+/**
+ * Admin Action: Quick toggle pinned to homepage
+ */
+export function togglePinTemplate(id: string): Template | undefined {
+  const tpl = currentTemplates.find((t) => t.id === id);
+  if (!tpl) return undefined;
+  return updateTemplate(id, { isPinned: !tpl.isPinned });
 }
 
 /**

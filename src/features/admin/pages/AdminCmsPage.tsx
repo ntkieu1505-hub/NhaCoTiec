@@ -7,10 +7,13 @@ import {
   resetCmsToDefaults,
   DEFAULT_CMS_CONTENT,
 } from '../../../mocks/cmsStore';
+import { useTemplates, togglePinTemplate } from '../../../mocks/templateStore';
+import { formatCurrency } from '../../../utils/formatters';
 import { CmsContent, HomepageFeature, Testimonial } from '../../../types/cms';
 
 export const AdminCmsPage: React.FC = () => {
   const currentCms = useCmsContent();
+  const allTemplates = useTemplates();
   const [formData, setFormData] = useState<CmsContent>(currentCms);
   const [activeTab, setActiveTab] = useState<'homepage' | 'orderForm' | 'contact' | 'social' | 'settings'>('homepage');
   const [activeHomepageSection, setActiveHomepageSection] = useState<
@@ -1476,6 +1479,86 @@ export const AdminCmsPage: React.FC = () => {
                     }
                     className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface text-xs resize-none"
                   />
+                </div>
+
+                {/* Danh sách mẫu thiệp ghim lên Trang chủ */}
+                <div className="flex flex-col gap-3 pt-3 border-t border-border-delicate">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-deep-espresso flex items-center gap-1.5">
+                      <Icon name="push_pin" className="text-[16px] text-amber-700" />
+                      <span>Danh sách mẫu thiệp ghim lên Trang chủ (Bộ sưu tập nổi bật)</span>
+                    </label>
+                    <span className="text-[11px] text-text-muted">
+                      Đã ghim: <strong className="text-amber-800">{allTemplates.filter((t) => t.isPinned).length}</strong> / {allTemplates.length} mẫu
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-relaxed">
+                    Tích chọn những mẫu bạn muốn hiển thị tại mục "Mẫu thiệp cưới độc bản" trên Trang chủ. Bạn có thể bật/tắt nhanh bằng nút ghim bên dưới.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
+                    {allTemplates.map((tpl) => {
+                      const isPinned = Boolean(tpl.isPinned);
+                      return (
+                        <div
+                          key={tpl.id}
+                          className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2.5 ${
+                            isPinned
+                              ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-300/60 shadow-2xs'
+                              : 'bg-surface border-border-delicate hover:bg-surface-subtle'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <img
+                              src={tpl.thumbnailUrl}
+                              alt={tpl.name}
+                              className="w-10 h-14 object-cover rounded-lg border border-border-delicate shrink-0"
+                              style={{ objectPosition: tpl.thumbnailPosition || 'center 30%' }}
+                            />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-bold text-deep-espresso truncate">
+                                {tpl.name}
+                              </span>
+                              <span className="text-[11px] text-text-muted">
+                                {tpl.style || 'Thanh lịch'} • {formatCurrency(tpl.price)}
+                              </span>
+                              <span className={`text-[10px] font-semibold mt-0.5 ${
+                                tpl.status === 'published' ? 'text-emerald-700' : 'text-amber-700'
+                              }`}>
+                                {tpl.status === 'published' ? 'Mở bán' : (tpl.status === 'draft' ? 'Bản nháp' : 'Đã ẩn')}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              togglePinTemplate(tpl.id);
+                              const curIds = formData.featuredTemplates.featuredTemplateIds || [];
+                              const updatedIds = isPinned
+                                ? curIds.filter((id) => id !== tpl.id)
+                                : [...curIds.filter((id) => id !== tpl.id), tpl.id];
+                              setFormData({
+                                ...formData,
+                                featuredTemplates: {
+                                  ...formData.featuredTemplates,
+                                  featuredTemplateIds: updatedIds,
+                                },
+                              });
+                            }}
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0 transition-colors ${
+                              isPinned
+                                ? 'bg-amber-200 text-amber-950 hover:bg-amber-300'
+                                : 'bg-surface-card text-text-muted border border-border-delicate hover:text-amber-800'
+                            }`}
+                          >
+                            <Icon name="push_pin" className={`text-[14px] ${isPinned ? 'text-amber-800' : ''}`} />
+                            <span>{isPinned ? 'Đã ghim' : 'Ghim'}</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

@@ -29,6 +29,7 @@ export const MOCK_TEMPLATES: Template[] = [
     musicArtist: 'Christina Perri',
     badgeText: 'Cao cấp',
     isPopular: true,
+    isPinned: true,
     isActive: true
   },
   {
@@ -58,6 +59,7 @@ export const MOCK_TEMPLATES: Template[] = [
     musicArtist: 'Stephen Sanchez',
     badgeText: 'Cơ bản',
     isPopular: false,
+    isPinned: true,
     isActive: true
   },
   {
@@ -87,6 +89,7 @@ export const MOCK_TEMPLATES: Template[] = [
     musicArtist: 'Kina Grannis',
     badgeText: 'Cao cấp',
     isPopular: true,
+    isPinned: true,
     isActive: true
   },
   {
@@ -115,6 +118,7 @@ export const MOCK_TEMPLATES: Template[] = [
     musicArtist: '911',
     badgeText: 'Cơ bản',
     isPopular: false,
+    isPinned: false,
     isActive: true
   },
   {
@@ -136,14 +140,15 @@ export const MOCK_TEMPLATES: Template[] = [
     thumbnailUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBvjdLmPVealNAO7tDQw4gra8T4Zgn7TDfthbSfkJ2CKwiNYUKYuufvWfJXrIO7tHjQRnM6lacAeTHBnBHh6qB6Bm_lZi8DQ_ZlE3eQ0DRoHJMbhD8WFQoVKBjo8sTes61jTIhYIZ7iktWwLL04jM3AarWdfUShOb8iURjXD0sEU92zr6qRkclc8Ovz-jW9G5FiOeXLgdB_x1bREgsvYoaQjcXN7JZLZXEbZvYTvfzqZz2iw3o4cGyo',
     thumbnailPosition: 'center 25%',
     previewUrl: 'https://nhacotiec.vn/demo/co-dien-romance',
-    status: 'draft',
+    status: 'published',
     createdAt: '2026-09-01T08:00:00Z',
     updatedAt: '2026-09-08T10:00:00Z',
     musicTitle: 'Perfect',
     musicArtist: 'Ed Sheeran',
-    badgeText: 'Bản nháp',
+    badgeText: 'Cao cấp',
     isPopular: false,
-    isActive: false
+    isPinned: true,
+    isActive: true
   },
   {
     id: 'tpl-indochine',
@@ -164,13 +169,14 @@ export const MOCK_TEMPLATES: Template[] = [
     thumbnailUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnb6nBcez5yJYvYR70lHYOMKVREd8AzQ_zapPUkFFN82eS-9OY5ntYCC4vDY3kzT6RLCOml9zp95IBAGuBUHEyf_L3l3gkd7SVwsT7_gDJa2qnuAGISnh4GsA6HyeJHIIUq6bsJNk4bx2uyRkJzKToMfnh_cdh7l0yemGJ_dU5aMPwqhw7FXilbvC6bPq3p9ZI2l7a9w564JUfljq7QMjecquwiK1beMwthFEDkOFGOaa2PdigQrol',
     thumbnailPosition: 'center 25%',
     previewUrl: 'https://nhacotiec.vn/demo/indochine',
-    status: 'hidden',
+    status: 'published',
     createdAt: '2026-07-15T08:00:00Z',
     updatedAt: '2026-09-01T10:00:00Z',
     musicTitle: 'Ánh Trăng Nói Hộ Lòng Tôi',
     musicArtist: 'Teresa Teng',
-    badgeText: 'Đã ẩn',
+    badgeText: 'Cao cấp',
     isPopular: false,
-    isActive: false
+    isPinned: true,
+    isActive: true
   }
 ];
