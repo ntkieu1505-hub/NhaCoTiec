@@ -870,6 +870,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
         isOpen={isAlbumModalOpen}
         onClose={() => setIsAlbumModalOpen(false)}
         existingPhotos={currentOrder.weddingInfo?.albumPhotos || []}
+        orderId={currentOrder.id}
         onSave={handleAlbumSave}
       />
     </div>

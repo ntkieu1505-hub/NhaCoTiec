@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '../../../components/common/Icon';
+import { uploadOrderPhoto } from '../../../services/storageService';
 
 interface PhotoAlbumModalProps {
   isOpen: boolean;
   onClose: () => void;
   existingPhotos?: string[];
+  orderId?: string;
   onSave: (photos: string[]) => void;
 }
 
@@ -13,12 +15,14 @@ interface SelectedImageItem {
   name: string;
   size: string;
   url: string;
+  file?: File;
 }
 
 export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
   isOpen,
   onClose,
   existingPhotos = [],
+  orderId,
   onSave,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,6 +37,7 @@ export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatusText, setUploadStatusText] = useState('');
 
   if (!isOpen) return null;
 
@@ -48,21 +53,17 @@ export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
 
     validFiles.forEach((file) => {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setSelectedImages((prev) => [
-            ...prev,
-            {
-              id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-              name: file.name,
-              size: sizeMB,
-              url: reader.result as string,
-            },
-          ]);
-        }
-      };
-      reader.readAsDataURL(file);
+      const previewUrl = URL.createObjectURL(file);
+      setSelectedImages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          name: file.name,
+          size: sizeMB,
+          url: previewUrl,
+          file,
+        },
+      ]);
     });
   };
 
@@ -88,24 +89,43 @@ export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
     setSelectedImages((prev) => prev.filter((img) => img.id !== id));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (selectedImages.length === 0) {
       alert('Vui lòng chọn ít nhất 1 ảnh để tải lên.');
       return;
     }
 
     setIsUploading(true);
+    setUploadStatusText('Đang chuẩn bị tải ảnh...');
 
-    // Mock upload delay (Architecture prepared for Firebase Storage upload loop)
-    setTimeout(() => {
-      setIsUploading(false);
-      onSave(selectedImages.map((img) => img.url));
+    try {
+      const finalUrls: string[] = [];
+      const total = selectedImages.length;
+
+      for (let i = 0; i < total; i++) {
+        const item = selectedImages[i];
+        if (item.file) {
+          setUploadStatusText(`Đang tải ảnh ${i + 1}/${total}: ${item.name}...`);
+          const uploadedUrl = await uploadOrderPhoto(orderId || 'customer_album', item.file);
+          finalUrls.push(uploadedUrl);
+        } else {
+          finalUrls.push(item.url);
+        }
+      }
+
+      setUploadStatusText('Đã tải lên và lưu trữ thành công!');
+      onSave(finalUrls);
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
-      }, 1800);
-    }, 800);
+      }, 1500);
+    } catch (error) {
+      console.error('Lỗi khi tải ảnh lên:', error);
+      alert('Có lỗi xảy ra khi tải ảnh lên. Vui lòng thử lại.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -244,13 +264,21 @@ export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
 
         {/* Modal Footer */}
         <div className="px-6 py-3.5 border-t border-border-delicate flex items-center justify-between bg-surface-cream/50">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-full border border-border-delicate hover:bg-surface-subtle text-text-muted hover:text-deep-espresso font-semibold text-xs transition-colors"
-          >
-            Hủy
-          </button>
+          <div className="flex items-center gap-2 max-w-[60%]">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isUploading}
+              className="px-4 py-2 rounded-full border border-border-delicate hover:bg-surface-subtle text-text-muted hover:text-deep-espresso font-semibold text-xs transition-colors disabled:opacity-40"
+            >
+              Hủy
+            </button>
+            {uploadStatusText && (
+              <span className="text-[11px] text-burgundy-wine font-medium truncate">
+                {uploadStatusText}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleUpload}

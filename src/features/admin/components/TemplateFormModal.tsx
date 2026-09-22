@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../../components/common/Icon';
 import { Template, TemplateStatus } from '../../../types/template';
 import { formatCurrency } from '../../../utils/formatters';
+import { uploadTemplatePhoto } from '../../../services/storageService';
 
 interface TemplateFormModalProps {
   isOpen: boolean;
@@ -59,6 +60,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const [status, setStatus] = useState<TemplateStatus>('published');
   const [isPinned, setIsPinned] = useState(false);
   const [slugEditedManually, setSlugEditedManually] = useState(false);
+  const [isUploadingThumb, setIsUploadingThumb] = useState(false);
 
   const DEFAULT_FEATURES = [
     'Thiết kế chuẩn tỉ lệ smartphone, hiển thị hoàn hảo trên mọi thiết bị',
@@ -140,17 +142,19 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     }
   };
 
-  // Mock photo upload / replacement (prepared for Firebase Storage upload integration)
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload thumbnail to Firebase Storage (with fallback)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setThumbnailUrl(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      setIsUploadingThumb(true);
+      try {
+        const uploadedUrl = await uploadTemplatePhoto(slug || 'template', file);
+        setThumbnailUrl(uploadedUrl);
+      } catch (err) {
+        console.error('Failed to upload thumbnail:', err);
+      } finally {
+        setIsUploadingThumb(false);
+      }
     }
   };
 
@@ -392,13 +396,14 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3.5 py-1.5 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+                    disabled={isUploadingThumb}
+                    className="px-3.5 py-1.5 rounded-full bg-burgundy-wine hover:bg-[#851622] disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
                   >
-                    <Icon name="upload" className="text-[16px]" />
-                    <span>Thay ảnh</span>
+                    <Icon name={isUploadingThumb ? 'hourglass_top' : 'upload'} className={`text-[16px] ${isUploadingThumb ? 'animate-spin' : ''}`} />
+                    <span>{isUploadingThumb ? 'Đang tải ảnh...' : 'Tải ảnh từ máy'}</span>
                   </button>
                   <span className="text-[11px] text-text-muted">
-                    Hỗ trợ tải ảnh từ máy (Mock Storage) hoặc dán link bên dưới
+                    Hỗ trợ tải ảnh từ máy lên Cloud Storage hoặc dán link bên dưới
                   </span>
                 </div>
 

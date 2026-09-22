@@ -1386,6 +1386,7 @@ export const CustomerDashboardPage: React.FC = () => {
         isOpen={isAlbumModalOpen}
         onClose={() => setIsAlbumModalOpen(false)}
         existingPhotos={liveOrder.weddingInfo?.albumPhotos || []}
+        orderId={liveOrder.id}
         onSave={handleAlbumSave}
       />
     </div>
