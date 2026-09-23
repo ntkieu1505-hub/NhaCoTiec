@@ -142,19 +142,71 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     }
   };
 
-  // Upload thumbnail to Firebase Storage (with fallback)
+  // Helper to quickly compress image locally
+  const compressImageLocally = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxWidth = 1000;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          } else {
+            resolve((e.target?.result as string) || '');
+          }
+        };
+        img.onerror = () => resolve((e.target?.result as string) || '');
+        img.src = (e.target?.result as string) || '';
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Upload thumbnail: render instantly locally, then optionally upload to Storage
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setIsUploadingThumb(true);
-      try {
-        const uploadedUrl = await uploadTemplatePhoto(slug || 'template', file);
-        setThumbnailUrl(uploadedUrl);
-      } catch (err) {
-        console.error('Failed to upload thumbnail:', err);
-      } finally {
-        setIsUploadingThumb(false);
+    if (!file) return;
+
+    setIsUploadingThumb(true);
+    try {
+      // 1. Render thumbnail IMMEDIATELY (< 50ms) so user never sees a broken/empty image
+      const fastPreview = await compressImageLocally(file);
+      if (fastPreview) {
+        setThumbnailUrl(fastPreview);
       }
+
+      // 2. Try background upload to Firebase Storage with a strict 3-second timeout
+      const uploadPromise = uploadTemplatePhoto(slug || 'template', file);
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Storage not yet active or timed out')), 3000)
+      );
+
+      Promise.race([uploadPromise, timeoutPromise])
+        .then((remoteUrl) => {
+          if (remoteUrl && remoteUrl.startsWith('http')) {
+            setThumbnailUrl(remoteUrl);
+          }
+        })
+        .catch(() => {
+          // Gracefully keep fastPreview (no interruption to user)
+        });
+    } catch (err) {
+      console.warn('Failed to load image preview:', err);
+    } finally {
+      setIsUploadingThumb(false);
     }
   };
 

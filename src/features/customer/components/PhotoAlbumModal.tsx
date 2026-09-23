@@ -105,9 +105,17 @@ export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
       for (let i = 0; i < total; i++) {
         const item = selectedImages[i];
         if (item.file) {
-          setUploadStatusText(`Đang tải ảnh ${i + 1}/${total}: ${item.name}...`);
-          const uploadedUrl = await uploadOrderPhoto(orderId || 'customer_album', item.file);
-          finalUrls.push(uploadedUrl);
+          setUploadStatusText(`Đang xử lý ảnh ${i + 1}/${total}: ${item.name}...`);
+          try {
+            const uploadPromise = uploadOrderPhoto(orderId || 'customer_album', item.file);
+            const timeoutPromise = new Promise<string>((_, reject) =>
+              setTimeout(() => reject(new Error('Storage timeout')), 3500)
+            );
+            const uploadedUrl = await Promise.race([uploadPromise, timeoutPromise]);
+            finalUrls.push(uploadedUrl || item.url);
+          } catch {
+            finalUrls.push(item.url);
+          }
         } else {
           finalUrls.push(item.url);
         }
