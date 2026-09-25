@@ -147,6 +147,14 @@ export const CustomerLayout: React.FC = () => {
             <img
               src="/logo.png"
               alt="Nhà Có Tiệc Logo"
+              loading="eager"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.dataset.retried) {
+                  img.dataset.retried = '1';
+                  img.src = '/logo.png?v=' + Date.now();
+                }
+              }}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-xs border border-white/20 group-hover:scale-105 transition-transform shrink-0"
             />
             <div className="flex items-center font-playfair text-[16px] sm:text-[18px] md:text-[20px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none">

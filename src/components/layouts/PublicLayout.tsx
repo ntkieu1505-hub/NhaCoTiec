@@ -38,6 +38,14 @@ export const PublicLayout: React.FC = () => {
             <img
               src="/logo.png"
               alt="Nhà Có Tiệc Logo"
+              loading="eager"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.dataset.retried) {
+                  img.dataset.retried = '1';
+                  img.src = '/logo.png?v=' + Date.now();
+                }
+              }}
               className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm border border-white/20 group-hover:scale-105 transition-transform shrink-0"
             />
             <span className="font-playfair text-[16px] sm:text-[18px] md:text-[23px] font-bold tracking-[0.01em] text-[#FDF8EB] leading-none drop-shadow-xs">
@@ -166,6 +174,14 @@ export const PublicLayout: React.FC = () => {
                 <img
                   src="/logo.png"
                   alt="Nhà Có Tiệc Logo"
+                  loading="eager"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (!img.dataset.retried) {
+                      img.dataset.retried = '1';
+                      img.src = '/logo.png?v=' + Date.now();
+                    }
+                  }}
                   className="w-9 h-9 rounded-full object-cover shadow-sm border border-gold-foil/30 shrink-0"
                 />
                 <span className="font-playfair text-2xl font-bold text-surface-cream">

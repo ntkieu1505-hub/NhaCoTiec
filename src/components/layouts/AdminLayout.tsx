@@ -429,6 +429,14 @@ export const AdminLayout: React.FC = () => {
               <img
                 src="/logo.png"
                 alt="Nhà Có Tiệc Logo"
+                loading="eager"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.retried) {
+                    img.dataset.retried = '1';
+                    img.src = '/logo.png?v=' + Date.now();
+                  }
+                }}
                 className="w-8 sm:w-9 h-8 sm:h-9 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
               />
               <span className="font-playfair text-lg sm:text-xl font-bold text-deep-espresso tracking-tight">
@@ -536,6 +544,14 @@ export const AdminLayout: React.FC = () => {
           <img
             src="/logo.png"
             alt="Nhà Có Tiệc Logo"
+            loading="eager"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (!img.dataset.retried) {
+                img.dataset.retried = '1';
+                img.src = '/logo.png?v=' + Date.now();
+              }
+            }}
             className="w-7 h-7 rounded-full object-cover shadow-xs border border-border-delicate shrink-0"
           />
           <span className="font-playfair font-bold text-sm text-deep-espresso tracking-tight hidden min-[380px]:inline">
