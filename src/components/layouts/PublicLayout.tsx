@@ -226,12 +226,36 @@ export const PublicLayout: React.FC = () => {
               </span>
               <div className="flex items-center gap-2 text-sm text-text-muted">
                 <Icon name="call" className="text-[16px] text-gold-foil" />
-                <span>Hotline: {cms.footer.hotline}</span>
+                <a
+                  href={`tel:${(cms.footer.hotline || cms.footer.phone || '0982 123 456').replace(/\s+/g, '')}`}
+                  className="hover:text-surface-cream transition-colors"
+                >
+                  Hotline: {cms.footer.hotline || cms.footer.phone || '0982 123 456'}
+                </a>
               </div>
               <div className="flex items-center gap-2 text-sm text-text-muted">
                 <Icon name="chat" className="text-[16px] text-gold-foil" />
-                <span>Zalo: {cms.footer.email ? `CSKH (${cms.footer.email})` : 'Nhà Có Tiệc CSKH'}</span>
+                {cms.footer.zaloUrl ? (
+                  <a
+                    href={cms.footer.zaloUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-surface-cream transition-colors underline underline-offset-2"
+                  >
+                    Zalo: {cms.footer.phone || cms.footer.hotline || 'Nhà Có Tiệc CSKH'}
+                  </a>
+                ) : (
+                  <span>Zalo: {cms.footer.phone || cms.footer.hotline || 'Nhà Có Tiệc CSKH'}</span>
+                )}
               </div>
+              {cms.footer.email && (
+                <div className="flex items-center gap-2 text-sm text-text-muted">
+                  <Icon name="mail" className="text-[16px] text-gold-foil" />
+                  <a href={`mailto:${cms.footer.email}`} className="hover:text-surface-cream transition-colors">
+                    {cms.footer.email}
+                  </a>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm text-text-muted">
                 <Icon name="schedule" className="text-[16px] text-gold-foil" />
                 <span>{cms.footer.workingHours}</span>

@@ -4,8 +4,48 @@ import { Icon } from '../../../components/common/Icon';
 import {
   usePaymentSettings,
   updatePaymentSettings,
-  uploadQrImage,
 } from '../../../mocks/paymentSettingsStore';
+
+// Helper to compress uploaded QR images to prevent oversized payload
+const compressQrImage = (file: File, maxWidth = 900, quality = 0.9): Promise<string> => {
+  return new Promise((resolve) => {
+    // If SVG, keep raw data URL
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve((e.target?.result as string) || '');
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } else {
+          resolve((e.target?.result as string) || '');
+        }
+      };
+      img.onerror = () => resolve((e.target?.result as string) || '');
+      img.src = (e.target?.result as string) || '';
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+};
 
 export const AdminPaymentSettingsPage: React.FC = () => {
   const currentSettings = usePaymentSettings();
@@ -21,35 +61,37 @@ export const AdminPaymentSettingsPage: React.FC = () => {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isDirtyRef = useRef(false);
 
-  // Sync state if store updates from another tab/event
+  // Sync state if store updates from Firestore/another tab, BUT ONLY if user hasn't typed unsaved changes
   React.useEffect(() => {
-    setBankName(currentSettings.bankName);
-    setAccountHolder(currentSettings.accountHolder);
-    setAccountNumber(currentSettings.accountNumber);
-    setTransferSyntax(currentSettings.transferSyntax);
-    setPaymentNote(currentSettings.paymentNote);
-    setIsActive(currentSettings.isActive);
-    setQrImagePreview(currentSettings.qrImageUrl);
+    if (!isDirtyRef.current) {
+      setBankName(currentSettings.bankName);
+      setAccountHolder(currentSettings.accountHolder);
+      setAccountNumber(currentSettings.accountNumber);
+      setTransferSyntax(currentSettings.transferSyntax);
+      setPaymentNote(currentSettings.paymentNote);
+      setIsActive(currentSettings.isActive);
+      setQrImagePreview(currentSettings.qrImageUrl);
+    }
   }, [currentSettings]);
 
-  const handleQrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQrFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setQrImagePreview(result);
-        uploadQrImage(result);
-        setUploadMessage(`Đã tải lên ảnh QR mới: ${file.name}`);
-        setTimeout(() => setUploadMessage(null), 3500);
-      };
-      reader.readAsDataURL(file);
+      isDirtyRef.current = true;
+      const compressedDataUrl = await compressQrImage(file);
+      if (compressedDataUrl) {
+        setQrImagePreview(compressedDataUrl);
+        setUploadMessage(`Đã chọn ảnh QR mới: ${file.name}. Vui lòng bấm "Lưu thay đổi" để áp dụng.`);
+        setTimeout(() => setUploadMessage(null), 5000);
+      }
     }
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    isDirtyRef.current = false;
     updatePaymentSettings({
       bankName: bankName.trim(),
       accountHolder: accountHolder.trim(),
@@ -60,6 +102,7 @@ export const AdminPaymentSettingsPage: React.FC = () => {
       qrImageUrl: qrImagePreview,
     });
     setSavedSuccess(true);
+    setUploadMessage(null);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
 
@@ -130,7 +173,10 @@ export const AdminPaymentSettingsPage: React.FC = () => {
               <input
                 type="text"
                 value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
+                onChange={(e) => {
+                  isDirtyRef.current = true;
+                  setBankName(e.target.value);
+                }}
                 placeholder="Ví dụ: MB Bank, Vietcombank, Techcombank..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface text-xs font-medium text-deep-espresso focus:outline-hidden focus:border-burgundy-wine"
                 required
@@ -145,7 +191,10 @@ export const AdminPaymentSettingsPage: React.FC = () => {
               <input
                 type="text"
                 value={accountHolder}
-                onChange={(e) => setAccountHolder(e.target.value)}
+                onChange={(e) => {
+                  isDirtyRef.current = true;
+                  setAccountHolder(e.target.value);
+                }}
                 placeholder="Ví dụ: NGUYEN VAN A"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface text-xs font-semibold uppercase text-deep-espresso focus:outline-hidden focus:border-burgundy-wine"
                 required
@@ -160,7 +209,10 @@ export const AdminPaymentSettingsPage: React.FC = () => {
               <input
                 type="text"
                 value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
+                onChange={(e) => {
+                  isDirtyRef.current = true;
+                  setAccountNumber(e.target.value);
+                }}
                 placeholder="Ví dụ: 0982123456"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface text-xs font-mono font-bold text-deep-espresso focus:outline-hidden focus:border-burgundy-wine"
                 required
@@ -176,7 +228,10 @@ export const AdminPaymentSettingsPage: React.FC = () => {
               <input
                 type="text"
                 value={transferSyntax}
-                onChange={(e) => setTransferSyntax(e.target.value)}
+                onChange={(e) => {
+                  isDirtyRef.current = true;
+                  setTransferSyntax(e.target.value);
+                }}
                 placeholder="Ví dụ: NCT01"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border-delicate bg-surface text-xs font-mono font-bold text-burgundy-wine focus:outline-hidden focus:border-burgundy-wine"
               />
@@ -190,7 +245,10 @@ export const AdminPaymentSettingsPage: React.FC = () => {
               <textarea
                 rows={3}
                 value={paymentNote}
-                onChange={(e) => setPaymentNote(e.target.value)}
+                onChange={(e) => {
+                  isDirtyRef.current = true;
+                  setPaymentNote(e.target.value);
+                }}
                 placeholder="Lời nhắc nhở dâu rể kiểm tra nội dung chuyển khoản..."
                 className="w-full p-3 rounded-xl border border-border-delicate bg-surface text-xs text-deep-espresso focus:outline-hidden focus:border-burgundy-wine leading-relaxed resize-none"
               />
@@ -206,7 +264,10 @@ export const AdminPaymentSettingsPage: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
+                  onChange={(e) => {
+                    isDirtyRef.current = true;
+                    setIsActive(e.target.checked);
+                  }}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-surface-subtle peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-delicate after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-700"></div>

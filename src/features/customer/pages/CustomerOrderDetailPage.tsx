@@ -17,11 +17,13 @@ import {
 } from '../../../mocks/orderStore';
 import { WeddingInformation } from '../../../types/order';
 import { formatCurrency } from '../../../utils/formatters';
-import { useZaloSupportUrl } from '../../../mocks/cmsStore';
+import { useZaloSupportUrl, useCmsContent } from '../../../mocks/cmsStore';
 import { useAuth } from '../../../mocks/authStore';
 
 export const CustomerOrderDetailPage: React.FC = () => {
+  const cms = useCmsContent();
   const zaloUrl = useZaloSupportUrl();
+  const supportPhone = cms.footer?.hotline || cms.footer?.phone || cms.contact?.hotline || '0982 123 456';
   const { user } = useAuth();
   const { orderId } = useParams<{ orderId: string }>();
   const activeOrderId = orderId || 'NCT01';
@@ -832,11 +834,11 @@ export const CustomerOrderDetailPage: React.FC = () => {
         </p>
         <div className="grid grid-cols-2 gap-2 mt-2">
           <a
-            href="tel:0982123456"
+            href={`tel:${supportPhone.replace(/\s+/g, '')}`}
             className="flex items-center justify-center gap-1 h-10 rounded-full bg-surface-card text-deep-espresso text-xs font-semibold shadow-xs hover:bg-surface-cream transition-colors"
           >
             <Icon name="call" className="text-[16px] text-gold-foil" />
-            <span>Gọi hotline</span>
+            <span>Gọi {supportPhone}</span>
           </a>
           <a
             href={zaloUrl}
