@@ -37,17 +37,52 @@ export function isAdminEmail(email?: string | null): boolean {
   return ADMIN_EMAILS.some((adminEmail) => adminEmail.toLowerCase() === normalized);
 }
 
+const PROFILES_STORAGE_KEY = 'nha_co_tiec_user_profiles_v1';
+
+function getStoredProfiles(): Record<string, Partial<AuthUser>> {
+  try {
+    const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveStoredProfile(userId: string, data: Partial<AuthUser>) {
+  try {
+    const profiles = getStoredProfiles();
+    profiles[userId] = { ...profiles[userId], ...data };
+    localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
+  } catch (e) {}
+}
+
+/**
+ * Update customer profile (name, phone)
+ */
+export async function updateCustomerProfile(userId: string, data: { name?: string; phone?: string }): Promise<void> {
+  saveStoredProfile(userId, data);
+  if (currentUser && currentUser.id === userId) {
+    currentUser = {
+      ...currentUser,
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+    };
+    notify();
+  }
+}
+
 /**
  * Map Firebase User object to our app AuthUser type
  */
 function mapFirebaseUser(user: FirebaseUser): AuthUser {
   const isAdmin = isAdminEmail(user.email);
+  const storedProfile = getStoredProfiles()[user.uid] || {};
   return {
     id: user.uid,
     email: user.email || '',
-    name: user.displayName || (isAdmin ? 'Quản Trị Viên Nhà Có Tiệc' : (user.email?.split('@')[0] || 'Khách hàng')),
+    name: storedProfile.name || user.displayName || (isAdmin ? 'Quản Trị Viên Nhà Có Tiệc' : (user.email?.split('@')[0] || 'Khách hàng')),
     role: isAdmin ? 'admin' : 'customer',
-    phone: user.phoneNumber || undefined,
+    phone: storedProfile.phone || user.phoneNumber || undefined,
     avatarUrl: user.photoURL || undefined,
   };
 }
@@ -158,6 +193,7 @@ export function useAuth(): AuthState & {
   registerWithEmail: typeof registerWithEmail;
   loginWithGoogle: typeof loginWithGoogle;
   logout: typeof logout;
+  updateCustomerProfile: typeof updateCustomerProfile;
 } {
   const [user, setUser] = useState<AuthUser | null>(currentUser);
   const [loading, setLoading] = useState<boolean>(isAuthLoading);
@@ -183,5 +219,6 @@ export function useAuth(): AuthState & {
     registerWithEmail,
     loginWithGoogle,
     logout,
+    updateCustomerProfile,
   };
 }

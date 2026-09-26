@@ -1,32 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { useOrders, getLastCustomerOrderId } from '../../../mocks/orderStore';
+import { useOrders } from '../../../mocks/orderStore';
 import { useZaloSupportUrl } from '../../../mocks/cmsStore';
 import { useAuth } from '../../../mocks/authStore';
 
 export const CustomerAccountPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, updateCustomerProfile } = useAuth();
   const zaloUrl = useZaloSupportUrl();
   const allOrders = useOrders();
-  const lastOrderId = getLastCustomerOrderId();
-  const liveOrder =
-    (user ? allOrders.find((o) => o.userId === user.id) : undefined) ||
-    (lastOrderId ? allOrders.find((o) => o.id === lastOrderId) : undefined) ||
-    allOrders.find((o) => o.id === 'NCT01') ||
-    allOrders[0];
+  
+  // Find order strictly belonging to the logged in user
+  const userOrder = user ? allOrders.find((o) => o.userId === user.id) : undefined;
 
-  // Customer Profile State
-  const [customerName, setCustomerName] = useState(
-    user?.name || liveOrder?.customerName || 'Khách hàng Nhà Có Tiệc'
-  );
-  const [customerPhone, setCustomerPhone] = useState(
-    user?.phone || liveOrder?.customerPhone || '0982 123 456'
-  );
-  const [customerEmail, setCustomerEmail] = useState(
-    user?.email || liveOrder?.customerEmail || 'khachhang@nhacotiec.vn'
-  );
+  // Customer Profile State - STRICTLY from user profile, never auto-filled from other orders or dummy defaults!
+  const [customerName, setCustomerName] = useState(user?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(user?.phone || '');
+  const [customerEmail, setCustomerEmail] = useState(user?.email || '');
+
+  // Keep state synced when user profile changes
+  useEffect(() => {
+    if (user) {
+      if (user.name) setCustomerName(user.name);
+      if (user.phone) setCustomerPhone(user.phone);
+      if (user.email) setCustomerEmail(user.email);
+    }
+  }, [user]);
 
   // Change Password State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -37,8 +37,14 @@ export const CustomerAccountPage: React.FC = () => {
   const [passwordErrorMessage, setPasswordErrorMessage] = useState<string | null>(null);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (user?.id) {
+      await updateCustomerProfile(user.id, {
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+      });
+    }
     setIsProfileSaved(true);
     setTimeout(() => setIsProfileSaved(false), 3000);
   };
@@ -92,11 +98,13 @@ export const CustomerAccountPage: React.FC = () => {
               Quản lý thông tin tài khoản và bảo mật mật khẩu cho đơn hàng cưới
             </p>
           </div>
-          <div className="flex items-center px-2.5 py-1 rounded-lg bg-surface-subtle border border-border-delicate">
-            <span className="font-serif text-xs font-bold text-burgundy-wine">
-              #{liveOrder?.id || 'NCT01'}
-            </span>
-          </div>
+          {userOrder && (
+            <div className="flex items-center px-2.5 py-1 rounded-lg bg-surface-subtle border border-border-delicate">
+              <span className="font-serif text-xs font-bold text-burgundy-wine">
+                #{userOrder.id}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -144,31 +152,37 @@ export const CustomerAccountPage: React.FC = () => {
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               className="w-full px-3 py-2 rounded-xl bg-surface-subtle/70 border border-border-delicate focus:border-burgundy-wine focus:ring-1 focus:ring-burgundy-wine text-deep-espresso font-medium outline-none"
-              placeholder="Nguyễn Minh Anh & Trần Đức Minh"
+              placeholder="Chưa cập nhật — Nhập tên đại diện (VD: Minh Anh & Tuấn Kiệt)"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-text-muted font-medium">Số điện thoại:</label>
+              <label className="text-text-muted font-medium">Số điện thoại liên hệ:</label>
               <input
                 type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-surface-subtle/70 border border-border-delicate focus:border-burgundy-wine focus:ring-1 focus:ring-burgundy-wine text-deep-espresso font-mono outline-none"
-                placeholder="0982 123 456"
+                placeholder="Chưa cập nhật — Nhập SĐT để nhận hỗ trợ (VD: 0912 345 678)"
               />
+              <span className="text-[10px] text-text-muted">
+                Dùng để nhận tư vấn và thông báo hoàn thiện thiệp cưới qua Zalo.
+              </span>
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-text-muted font-medium">Email liên hệ:</label>
+              <label className="text-text-muted font-medium">Email đăng nhập:</label>
               <input
                 type="email"
                 value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-surface-subtle/70 border border-border-delicate focus:border-burgundy-wine focus:ring-1 focus:ring-burgundy-wine text-deep-espresso outline-none"
-                placeholder="minhanh.wedding@gmail.com"
+                disabled
+                className="w-full px-3 py-2 rounded-xl bg-surface-subtle/40 border border-border-delicate text-text-muted cursor-not-allowed outline-none"
+                placeholder="email@example.com"
               />
+              <span className="text-[10px] text-text-muted">
+                Email cố định dùng để đăng nhập vào tài khoản của bạn.
+              </span>
             </div>
           </div>
 

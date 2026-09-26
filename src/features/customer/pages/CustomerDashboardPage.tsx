@@ -954,7 +954,7 @@ export const CustomerDashboardPage: React.FC = () => {
                                   <span>Thiệp đang được thiết kế — Studio đang căn chỉnh bố cục và hiệu ứng.</span>
                                 </div>
                                 <a
-                                  href="https://zalo.me"
+                                  href={zaloUrl}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="w-full h-9 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"

@@ -605,5 +605,44 @@ export function useCmsContent(): CmsContent {
 
 export function useZaloSupportUrl(): string {
   const cms = useCmsContent();
-  return cms.settings.zaloSupportUrl || cms.contact.zaloUrl || 'https://zalo.me/0982123456';
+  const candidates = [
+    cms.settings?.zaloSupportUrl,
+    cms.orderForm?.supportZaloLink,
+    cms.contact?.zaloUrl,
+    cms.socialLinks?.zalo?.url,
+  ];
+
+  for (const url of candidates) {
+    if (url && typeof url === 'string') {
+      const trimmed = url.trim();
+      if (trimmed && trimmed !== 'https://zalo.me' && trimmed !== 'https://zalo.me/') {
+        return trimmed;
+      }
+    }
+  }
+
+  const phoneCandidates = [
+    cms.settings?.zaloPhone,
+    cms.orderForm?.supportZalo,
+    cms.settings?.hotline,
+    cms.contact?.hotline,
+    cms.contact?.phone,
+  ];
+
+  for (const phone of phoneCandidates) {
+    if (phone && typeof phone === 'string') {
+      const cleanDigits = phone.replace(/[^0-9]/g, '');
+      if (cleanDigits.length >= 9) {
+        return `https://zalo.me/${cleanDigits}`;
+      }
+    }
+  }
+
+  for (const url of candidates) {
+    if (url && typeof url === 'string' && url.trim()) {
+      return url.trim();
+    }
+  }
+
+  return 'https://zalo.me/0982123456';
 }

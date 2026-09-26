@@ -3,12 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { Badge } from '../../../components/common/Badge';
 import { usePublicTemplates } from '../../../mocks/templateStore';
+import { useZaloSupportUrl } from '../../../mocks/cmsStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { OrderFormModal } from '../components/OrderFormModal';
 import { useAuth } from '../../../mocks/authStore';
 
 export const TemplateDetailPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const zaloUrl = useZaloSupportUrl();
   const { slug } = useParams<{ slug: string }>();
   const templates = usePublicTemplates();
   const template = slug ? templates.find((t) => t.slug === slug) : templates[0];
@@ -234,7 +236,7 @@ export const TemplateDetailPage: React.FC = () => {
               <span>Chọn mẫu này • {formatCurrency(template.price)}</span>
             </Link>
             <a
-              href="https://zalo.me"
+              href={zaloUrl}
               target="_blank"
               rel="noreferrer"
               className="w-full sm:w-auto h-12 px-6 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate font-label-md text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-xs"
