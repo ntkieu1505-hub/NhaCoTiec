@@ -574,28 +574,22 @@ export const CustomerDashboardPage: React.FC = () => {
               {/* Personalized Card Mockup - Modern Smartphone 9:16 Viewport Ratio */}
               <div className="relative rounded-2xl bg-surface-cream p-5 flex flex-col items-center border border-border-delicate">
                 <div
-                  className="relative w-full max-w-[220px] sm:max-w-[240px] rounded-[36px] bg-[#1e1b19] p-2 sm:p-2.5 shadow-xl border-2 border-gold-foil/40 flex flex-col items-center"
+                  className="relative w-full max-w-[210px] sm:max-w-[220px] rounded-[32px] bg-[#181513] p-2 shadow-xl border-2 border-gold-foil/40 flex flex-col"
+                  style={{ aspectRatio: '9 / 19.5' }}
                 >
-                  {/* Top speaker & camera bezel strip */}
-                  <div className="flex items-center justify-center gap-1.5 pb-1.5 pt-0.5 pointer-events-none">
-                    <div className="w-8 h-1 rounded-full bg-white/20" />
-                    <div className="w-1 h-1 rounded-full bg-white/25" />
+                  {/* Phone top notch & speaker bar */}
+                  <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black/70 mr-1.5" />
+                    <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
-                  {/* Screen inner - Exactly 9:16 matching thumbnail */}
-                  <div
-                    className="w-full rounded-[22px] overflow-hidden relative bg-[#181513]"
-                    style={{ aspectRatio: '9 / 16' }}
-                  >
+                  {/* Screen inner */}
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-[#181513]">
                     <img
                       src={selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
                       alt="Wedding Invitation Preview"
                       className="w-full h-full object-cover"
                       style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center 30%' }}
                     />
-                  </div>
-                  {/* Bottom home bar */}
-                  <div className="flex items-center justify-center pt-1.5 pb-0.5 pointer-events-none">
-                    <div className="w-14 h-0.5 rounded-full bg-white/20" />
                   </div>
                 </div>
 
