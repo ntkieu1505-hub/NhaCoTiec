@@ -583,12 +583,11 @@ export const CustomerDashboardPage: React.FC = () => {
                     <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
                   {/* Screen inner */}
-                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-[#181513]">
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white flex items-center justify-center p-2">
                     <img
                       src={selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
                       alt="Wedding Invitation Preview"
-                      className="w-full h-full object-cover"
-                      style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center 30%' }}
+                      className="w-full h-full object-contain rounded-md"
                     />
                   </div>
                 </div>
@@ -681,12 +680,11 @@ export const CustomerDashboardPage: React.FC = () => {
                     <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
                   {/* Screen inner */}
-                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-[#181513]">
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white flex items-center justify-center p-2">
                     <img
                       src={selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
                       alt="Template Preview"
-                      className="w-full h-full object-cover"
-                      style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center 30%' }}
+                      className="w-full h-full object-contain rounded-md"
                     />
                   </div>
                 </div>

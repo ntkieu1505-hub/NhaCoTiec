@@ -66,13 +66,12 @@ export const TemplateDetailPage: React.FC = () => {
               <div className="w-1.5 h-1.5 rounded-full bg-[#1c2d42]/70" />
             </div>
 
-            {/* Screen inner - Modern tall smartphone viewport with template thumbnail */}
-            <div className="w-full h-full rounded-[28px] overflow-hidden relative bg-[#181513]">
+            {/* Screen inner - White viewport with white space margins ensuring full template visibility */}
+            <div className="w-full h-full rounded-[28px] overflow-hidden relative bg-white flex items-center justify-center p-2 sm:p-2.5">
               <img
                 src={template.thumbnailUrl}
                 alt={template.name}
-                className="w-full h-full object-cover"
-                style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
           </div>
