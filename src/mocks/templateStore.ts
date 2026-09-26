@@ -4,6 +4,7 @@ import { MOCK_TEMPLATES } from './mockTemplates';
 import { db } from '../services/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { logActivity } from '../services/activityLogService';
+import { getCmsContent, updateFeaturedTemplates } from './cmsStore';
 
 const STORAGE_KEY = 'nha_co_tiec_templates_v4';
 const DELETED_STORAGE_KEY = 'nha_co_tiec_deleted_template_ids_v2';
@@ -327,6 +328,21 @@ export function createTemplate(
     details: { templateId: newTemplate.id, name: newTemplate.title },
   }).catch(() => {});
 
+  // Sync featuredTemplateIds in CMS if created as pinned
+  if (newTemplate.isPinned) {
+    try {
+      const cms = getCmsContent();
+      const curFeatured = Array.isArray(cms.featuredTemplates?.featuredTemplateIds)
+        ? cms.featuredTemplates.featuredTemplateIds
+        : [];
+      if (!curFeatured.includes(id)) {
+        updateFeaturedTemplates({
+          featuredTemplateIds: [...curFeatured, id],
+        });
+      }
+    } catch (e) {}
+  }
+
   return newTemplate;
 }
 
@@ -413,6 +429,27 @@ export function updateTemplate(
     }).catch(() => {});
   }
 
+  // Sync featuredTemplateIds in CMS store whenever isPinned is changed
+  if (updates.isPinned !== undefined) {
+    try {
+      const cms = getCmsContent();
+      const curFeatured = Array.isArray(cms.featuredTemplates?.featuredTemplateIds)
+        ? cms.featuredTemplates.featuredTemplateIds
+        : [];
+      const nextFeatured = updates.isPinned
+        ? Array.from(new Set([...curFeatured, id]))
+        : curFeatured.filter((tplId) => tplId !== id);
+
+      if (JSON.stringify(curFeatured) !== JSON.stringify(nextFeatured)) {
+        updateFeaturedTemplates({
+          featuredTemplateIds: nextFeatured,
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to sync CMS featuredTemplateIds:', e);
+    }
+  }
+
   return updatedItem;
 }
 
@@ -484,6 +521,19 @@ export function deleteTemplate(id: string): boolean {
     description: `Admin đã xóa mẫu thiệp ID: ${id}`,
     details: { templateId: id },
   }).catch(() => {});
+
+  // Sync CMS featuredTemplateIds
+  try {
+    const cms = getCmsContent();
+    const curFeatured = Array.isArray(cms.featuredTemplates?.featuredTemplateIds)
+      ? cms.featuredTemplates.featuredTemplateIds
+      : [];
+    if (curFeatured.includes(id)) {
+      updateFeaturedTemplates({
+        featuredTemplateIds: curFeatured.filter((tplId) => tplId !== id),
+      });
+    }
+  } catch (e) {}
 
   return true;
 }

@@ -11,14 +11,18 @@ export const HomePage: React.FC = () => {
   const cms = useCmsContent();
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'basic' | 'premium'>('all');
 
-  // Lọc chỉ những mẫu thiệp được ghim lên trang chủ (theo cờ isPinned hoặc có trong cms.featuredTemplates.featuredTemplateIds)
-  const pinnedTemplates = publicTemplates.filter((t) => {
-    if (t.isPinned) return true;
-    if (cms.featuredTemplates?.featuredTemplateIds && Array.isArray(cms.featuredTemplates.featuredTemplateIds)) {
-      return cms.featuredTemplates.featuredTemplateIds.includes(t.id);
-    }
-    return false;
-  });
+  // Lọc chỉ những mẫu thiệp được ghim lên trang chủ (chỉ lấy mẫu có cờ isPinned === true)
+  const pinnedTemplates = publicTemplates
+    .filter((t) => Boolean(t.isPinned))
+    .sort((a, b) => {
+      const ids = cms.featuredTemplates?.featuredTemplateIds || [];
+      const indexA = ids.indexOf(a.id);
+      const indexB = ids.indexOf(b.id);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return 0;
+    });
 
   // Nếu Admin chưa ghim mẫu nào cụ thể, fallback hiển thị 4 mẫu mở bán đầu tiên để trang chủ không bị trống
   const baseTemplates = pinnedTemplates.length > 0 ? pinnedTemplates : publicTemplates.slice(0, 4);
