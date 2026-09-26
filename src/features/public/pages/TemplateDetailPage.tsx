@@ -57,7 +57,7 @@ export const TemplateDetailPage: React.FC = () => {
         <div className="md:col-span-5 flex flex-col items-center">
           {/* Realistic smartphone frame with modern viewport */}
           <div
-            className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-phone rounded-[38px] bg-[#181513] p-2.5 shadow-2xl border-[3.5px] border-gold-foil/40 ring-4 sm:ring-8 ring-deep-espresso/10 flex flex-col"
+            className="relative w-full max-w-[270px] sm:max-w-[285px] aspect-phone rounded-[38px] bg-[#181513] p-2.5 shadow-2xl border-[3.5px] border-gold-foil/40 ring-4 sm:ring-8 ring-deep-espresso/10 flex flex-col"
             style={{ aspectRatio: '9 / 19.5' }}
           >
             {/* Phone top notch & speaker bar */}
@@ -66,13 +66,37 @@ export const TemplateDetailPage: React.FC = () => {
               <div className="w-1.5 h-1.5 rounded-full bg-[#1c2d42]/70" />
             </div>
 
-            {/* Screen inner - White viewport with white space margins ensuring full template visibility */}
-            <div className="w-full h-full rounded-[28px] overflow-hidden relative bg-white flex items-center justify-center p-2 sm:p-2.5">
-              <img
-                src={template.thumbnailUrl}
-                alt={template.name}
-                className="w-full h-full object-contain rounded-lg"
-              />
+            {/* Screen inner: Nhà Có Tiệc top bar + full-width image + home bar */}
+            <div className="w-full h-full rounded-[28px] overflow-hidden relative bg-surface-cream flex flex-col justify-between">
+              {/* Top header bar: Nhà Có Tiệc */}
+              <div className="w-full pt-6 pb-2 px-3 flex items-center justify-center gap-1.5 bg-surface-cream border-b border-border-delicate/70 shrink-0 z-10 shadow-2xs">
+                <img
+                  src="/logo.png"
+                  alt="Nhà Có Tiệc"
+                  className="w-4 h-4 rounded-full object-cover shadow-xs border border-gold-foil/40 shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span className="font-playfair text-[12px] sm:text-[13px] font-bold text-deep-espresso tracking-wide">
+                  Nhà Có Tiệc
+                </span>
+              </div>
+
+              {/* Template image stretched full width horizontally (no white margin) */}
+              <div className="w-full flex-1 min-h-0 overflow-hidden relative bg-surface-subtle flex items-center justify-center">
+                <img
+                  src={template.thumbnailUrl}
+                  alt={template.name}
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: template.thumbnailPosition || 'center 25%' }}
+                />
+              </div>
+
+              {/* Bottom Home Indicator Bar */}
+              <div className="w-full py-2.5 sm:py-3 flex items-center justify-center bg-surface-cream border-t border-border-delicate/70 shrink-0 z-10">
+                <div className="w-20 sm:w-24 h-1 rounded-full bg-deep-espresso/25" />
+              </div>
             </div>
           </div>
 
