@@ -55,19 +55,21 @@ export const TemplateDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         {/* Left: Mobile phone mockup preview (5 cols) */}
         <div className="md:col-span-5 flex flex-col items-center">
-          {/* Realistic smartphone frame with modern 9:19.5 viewport ratio */}
+          {/* Realistic smartphone frame with standard 9:16 ratio matching thumbnail */}
           <div
-            className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-phone rounded-[38px] bg-[#181513] p-2.5 shadow-2xl border-[3.5px] border-gold-foil/40 ring-4 sm:ring-8 ring-deep-espresso/10 flex flex-col"
-            style={{ aspectRatio: '9 / 19.5' }}
+            className="relative w-full max-w-[270px] sm:max-w-[290px] rounded-[38px] bg-[#181513] p-2.5 shadow-2xl border-[3.5px] border-gold-foil/40 ring-4 sm:ring-8 ring-deep-espresso/10 flex flex-col items-center"
           >
             {/* Phone top notch & speaker bar */}
-            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-20 sm:w-22 h-3.5 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
-              <div className="w-2 h-2 rounded-full bg-black/70 mr-2" />
-              <div className="w-1.5 h-1.5 rounded-full bg-[#1c2d42]/70" />
+            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-black/70 mr-1.5" />
+              <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
             </div>
 
-            {/* Screen inner - Modern tall smartphone viewport with template thumbnail */}
-            <div className="w-full h-full rounded-[28px] overflow-hidden relative bg-[#181513]">
+            {/* Screen inner - Exactly 9:16 matching thumbnail */}
+            <div
+              className="w-full rounded-[28px] overflow-hidden relative bg-[#181513]"
+              style={{ aspectRatio: '9 / 16' }}
+            >
               <img
                 src={template.thumbnailUrl}
                 alt={template.name}
