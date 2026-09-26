@@ -56,26 +56,38 @@ export const TemplateDetailPage: React.FC = () => {
         {/* Left: Mobile phone mockup preview (5 cols) */}
         <div className="md:col-span-5 flex flex-col items-center">
           {/* Realistic smartphone frame with standard 9:16 ratio matching thumbnail */}
-          <div
-            className="relative w-full max-w-[270px] sm:max-w-[290px] rounded-[38px] bg-[#181513] p-2.5 shadow-2xl border-[3.5px] border-gold-foil/40 ring-4 sm:ring-8 ring-deep-espresso/10 flex flex-col items-center"
-          >
-            {/* Phone top notch & speaker bar */}
-            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-[#181513] rounded-full z-20 flex items-center justify-center pointer-events-none shadow-sm border border-white/5">
-              <div className="w-1.5 h-1.5 rounded-full bg-black/70 mr-1.5" />
-              <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
-            </div>
+          <div className="relative w-full max-w-[310px] sm:max-w-[330px] flex flex-col items-center">
+            {/* Outer phone chassis with metallic edges and subtle hardware buttons */}
+            <div className="relative w-full p-2.5 sm:p-3 rounded-[40px] bg-[#1e1b19] shadow-2xl border-[3px] border-[#38312b] ring-1 ring-black/20">
+              {/* Left Side Buttons (Volume keys) */}
+              <div className="absolute -left-[5px] top-24 w-[3px] h-9 bg-[#2c2622] rounded-l-sm" />
+              <div className="absolute -left-[5px] top-36 w-[3px] h-9 bg-[#2c2622] rounded-l-sm" />
+              {/* Right Side Button (Power key) */}
+              <div className="absolute -right-[5px] top-28 w-[3px] h-12 bg-[#2c2622] rounded-r-sm" />
 
-            {/* Screen inner - Exactly 9:16 matching thumbnail */}
-            <div
-              className="w-full rounded-[28px] overflow-hidden relative bg-[#181513]"
-              style={{ aspectRatio: '9 / 16' }}
-            >
-              <img
-                src={template.thumbnailUrl}
-                alt={template.name}
-                className="w-full h-full object-cover"
-                style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
-              />
+              {/* Top speaker & camera bezel strip (Placed above screen so it NEVER covers the invitation image) */}
+              <div className="flex items-center justify-center gap-2 pb-2 pt-0.5 pointer-events-none">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white/25" />
+              </div>
+
+              {/* Screen inner: EXACT 9:16 matching thumbnail, clean and uncropped */}
+              <div
+                className="w-full rounded-[26px] overflow-hidden bg-surface-subtle shadow-inner relative"
+                style={{ aspectRatio: '9 / 16' }}
+              >
+                <img
+                  src={template.thumbnailUrl}
+                  alt={template.name}
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
+                />
+              </div>
+
+              {/* Bottom bezel chin with home bar */}
+              <div className="flex items-center justify-center pt-2 pb-0.5 pointer-events-none">
+                <div className="w-20 h-1 rounded-full bg-white/20" />
+              </div>
             </div>
           </div>
 
