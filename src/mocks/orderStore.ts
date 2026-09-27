@@ -11,6 +11,7 @@ import { db } from '../services/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { logActivity } from '../services/activityLogService';
 import { toIsoDateString } from '../utils/formatters';
+import { MOCK_TEMPLATES } from './mockTemplates';
 
 const STORAGE_KEY = 'nha_co_tiec_orders_v7_realtime';
 const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
@@ -47,10 +48,25 @@ export function normalizeOrder(raw: any, idFallback = 'NCT-UNKNOWN'): Order {
     ? `${weddingInfo.groomName} & ${weddingInfo.brideName}`
     : 'Khách hàng';
 
+  const templateId = String(raw?.templateId || 'tpl-minh-anh');
+  let templateThumbnail = typeof raw?.templateThumbnail === 'string' && raw.templateThumbnail.trim()
+    ? raw.templateThumbnail.trim()
+    : undefined;
+
+  if (!templateThumbnail) {
+    const matchedTpl = MOCK_TEMPLATES.find(
+      (t) =>
+        t.id === templateId ||
+        t.slug === templateId ||
+        (raw?.templateName && (raw.templateName.includes(t.name) || t.name.includes(raw.templateName)))
+    );
+    if (matchedTpl?.thumbnailUrl) {
+      templateThumbnail = matchedTpl.thumbnailUrl;
+    }
+  }
+
   return {
     userId: '01',
-    templateId: 'tpl-01',
-    templateName: 'Mẫu thiệp cưới',
     customerName: typeof raw?.customerName === 'string' && raw.customerName.trim()
       ? raw.customerName
       : defaultCustomerName,
@@ -63,6 +79,11 @@ export function normalizeOrder(raw: any, idFallback = 'NCT-UNKNOWN'): Order {
     category: raw?.category === 'premium' ? 'premium' : 'basic',
     ...raw,
     id,
+    templateId,
+    templateName: typeof raw?.templateName === 'string' && raw.templateName.trim()
+      ? raw.templateName
+      : 'Minh Anh Editorial',
+    templateThumbnail: templateThumbnail || MOCK_TEMPLATES[0].thumbnailUrl,
     currentStage: stage,
     createdAt: toIsoDateString(raw?.createdAt),
     updatedAt: toIsoDateString(raw?.updatedAt),
@@ -314,6 +335,7 @@ export interface CreateOrderParams {
   userId?: string;
   templateId: string;
   templateName: string;
+  templateThumbnail?: string;
   category: 'basic' | 'premium';
   price: number;
   weddingInfo?: WeddingInformation;
@@ -334,6 +356,11 @@ export function createOrder(params: CreateOrderParams): Order {
   const customerPhone = params.customerPhone || params.weddingInfo?.customerPhone || '';
   const customerEmail = params.customerEmail || params.weddingInfo?.customerEmail || '';
 
+  const matchedTpl = MOCK_TEMPLATES.find(
+    (t) => t.id === params.templateId || t.slug === params.templateId || t.name === params.templateName
+  );
+  const templateThumbnail = params.templateThumbnail || matchedTpl?.thumbnailUrl || MOCK_TEMPLATES[0]?.thumbnailUrl;
+
   const newOrder: Order = {
     id: orderId,
     userId: params.userId || `guest-${Date.now()}`,
@@ -342,6 +369,7 @@ export function createOrder(params: CreateOrderParams): Order {
     customerEmail,
     templateId: params.templateId,
     templateName: params.templateName,
+    templateThumbnail,
     category: params.category,
     price: params.price,
     paymentStatus: 'unpaid',

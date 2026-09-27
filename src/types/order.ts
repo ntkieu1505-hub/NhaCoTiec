@@ -136,6 +136,7 @@ export interface Order {
   customerEmail: string;
   templateId: string;
   templateName: string;
+  templateThumbnail?: string;
   category: 'basic' | 'premium';
   price: number; // 59000 or 79000
   paymentStatus: PaymentStatus; // 'unpaid' | 'pending_confirmation' | 'paid' | 'rejected'

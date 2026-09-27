@@ -158,6 +158,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
         userId: user?.id,
         templateId: template.id,
         templateName: finalTemplateName,
+        templateThumbnail: template.thumbnailUrl,
         category: template.category || (template.price >= 79000 ? 'premium' : 'basic'),
         price: template.price,
         weddingInfo: {

@@ -322,6 +322,15 @@ export const AdminOrderDetailPage: React.FC = () => {
               Mẫu thiệp &amp; Chi phí
             </h3>
           </div>
+          {order.templateThumbnail && (
+            <div className="w-full h-24 rounded-xl overflow-hidden bg-surface-subtle mb-1 border border-border-delicate">
+              <img
+                src={order.templateThumbnail}
+                alt={order.templateName}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Mẫu thiệp:</span>

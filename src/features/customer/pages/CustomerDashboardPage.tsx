@@ -126,7 +126,8 @@ export const CustomerDashboardPage: React.FC = () => {
   const isDataDelivered = exportData?.status === 'sent';
 
   const selectedTemplate =
-    (liveOrder.templateId ? getTemplateById(liveOrder.templateId) : undefined) ||
+    (liveOrder.templateId ? (getTemplateById(liveOrder.templateId) || getTemplateBySlug(liveOrder.templateId)) : undefined) ||
+    getAllTemplates().find((t) => t.id === liveOrder.templateId || t.name === liveOrder.templateName) ||
     getTemplateBySlug('minh-anh-tuan-kiet') ||
     getAllTemplates()[0];
 
@@ -600,9 +601,10 @@ export const CustomerDashboardPage: React.FC = () => {
                   {/* Screen inner */}
                   <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white flex items-center justify-center p-2">
                     <img
-                      src={selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
+                      src={liveOrder.templateThumbnail || selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
                       alt="Wedding Invitation Preview"
                       className="w-full h-full object-contain rounded-md"
+                      style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center' }}
                     />
                   </div>
                 </div>
@@ -697,9 +699,10 @@ export const CustomerDashboardPage: React.FC = () => {
                   {/* Screen inner */}
                   <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white flex items-center justify-center p-2">
                     <img
-                      src={selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
+                      src={liveOrder.templateThumbnail || selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
                       alt="Template Preview"
                       className="w-full h-full object-contain rounded-md"
+                      style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center' }}
                     />
                   </div>
                 </div>

@@ -18,9 +18,10 @@ import {
   customerApproveDesign,
 } from '../../../mocks/orderStore';
 import { WeddingInformation } from '../../../types/order';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { useZaloSupportUrl, useCmsContent } from '../../../mocks/cmsStore';
 import { useAuth } from '../../../mocks/authStore';
+import { getTemplateById, getTemplateBySlug, getAllTemplates } from '../../../mocks/templateStore';
 
 export const CustomerOrderDetailPage: React.FC = () => {
   const cms = useCmsContent();
@@ -61,6 +62,18 @@ export const CustomerOrderDetailPage: React.FC = () => {
     createdAt: '2026-09-08T19:15:00Z',
     updatedAt: '2026-09-08T22:00:00Z',
   };
+
+  const matchedTemplate =
+    getTemplateById(currentOrder.templateId) ||
+    getTemplateBySlug(currentOrder.templateId) ||
+    getAllTemplates().find(
+      (t) => t.id === currentOrder.templateId || t.name === currentOrder.templateName
+    );
+
+  const displayThumbnail =
+    currentOrder.templateThumbnail ||
+    matchedTemplate?.thumbnailUrl ||
+    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80';
 
   // Real order stage
   const effectiveStage: OrderStatusStage =
@@ -159,12 +172,13 @@ export const CustomerOrderDetailPage: React.FC = () => {
         <div className="flex gap-4 items-center">
           <div className="w-20 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-surface-subtle relative shadow-xs">
             <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN-lETE9cSwp9Q4ZJO66RanMH7oVSO-tOR2U7E7RhhJ3zowI4eTrMcwcXqtRWErE4Gh-6XXrud9EmmrxBcjgVGw2yBsmE5pD9xl82T41rXVn21ISVBAmMPuujD5Uu1ZpYBqwieLGPAjwU4rMvVmu7bt62f0t6oGKqKWv47eg2AUDJplzQwcJjBa-xVVFj6CIo2xjNVAyMgxKNsGI13GETmHdXroKlRNk9QRjGF031UfdBsotq9FcGD"
-              alt="Thiệp cưới mockup"
+              src={displayThumbnail}
+              alt={currentOrder.templateName || 'Thiệp cưới mockup'}
               className="w-full h-full object-cover"
+              style={{ objectPosition: matchedTemplate?.thumbnailPosition || 'center' }}
             />
             <span className="absolute bottom-1 left-1.5 text-[9px] font-label-caps uppercase text-surface-cream font-medium bg-deep-espresso/60 px-1 rounded">
-              Cao cấp
+              {currentOrder.category === 'premium' ? 'Cao cấp' : 'Tiêu chuẩn'}
             </span>
           </div>
 
@@ -175,7 +189,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
                   Mẫu Thiệp Điện Tử
                 </span>
                 <h2 className="font-serif text-base font-bold text-deep-espresso truncate">
-                  {currentOrder.customerName}
+                  {currentOrder.templateName || currentOrder.customerName}
                 </h2>
               </div>
               {/* Payment Status Pill */}
@@ -209,7 +223,9 @@ export const CustomerOrderDetailPage: React.FC = () => {
               </div>
               <div className="flex flex-col items-end">
                 <span className="text-[10px] text-text-muted">Ngày khởi tạo</span>
-                <span className="text-[11px] text-deep-espresso">07/09/2026</span>
+                <span className="text-[11px] text-deep-espresso">
+                  {formatDate(currentOrder.createdAt)}
+                </span>
               </div>
             </div>
           </div>
