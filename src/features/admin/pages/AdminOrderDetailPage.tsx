@@ -118,13 +118,24 @@ export const AdminOrderDetailPage: React.FC = () => {
       return;
     }
     const sizeInKb = (file.size / 1024).toFixed(0);
-    adminUploadExcel(order.id, {
-      fileName: file.name,
-      fileSize: `${sizeInKb} KB`,
-      fileUrl: `/exports/${file.name}`,
-    });
-    setSendSuccessMessage('Đã tải file Excel lên hệ thống. Hãy kiểm tra và bấm "Gửi khách hàng" để hoàn tất.');
-    setTimeout(() => setSendSuccessMessage(null), 4000);
+    const sizeStr = `${sizeInKb} KB`;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const fileDataUrl = reader.result as string;
+      adminUploadExcel(order.id, {
+        fileName: file.name,
+        fileSize: sizeStr,
+        fileUrl: fileDataUrl,
+        fileDataUrl: fileDataUrl,
+      });
+      setSendSuccessMessage('Đã tải file Excel lên hệ thống. Hãy kiểm tra và bấm "Gửi khách hàng" để hoàn tất.');
+      setTimeout(() => setSendSuccessMessage(null), 4000);
+    };
+    reader.onerror = () => {
+      alert('Không thể đọc file. Vui lòng thử lại!');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleFileDrop = (e: React.DragEvent) => {

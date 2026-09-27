@@ -29,7 +29,7 @@ export const AdminGuestsWishesPage: React.FC = () => {
   // Excel Upload Modal State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadTargetOrderId, setUploadTargetOrderId] = useState<string>('NCT01');
-  const [stagedFile, setStagedFile] = useState<{ name: string; size: string } | null>(null);
+  const [stagedFile, setStagedFile] = useState<{ name: string; size: string; fileObj?: File } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,6 +105,7 @@ export const AdminGuestsWishesPage: React.FC = () => {
     setStagedFile({
       name: file.name,
       size: sizeStr,
+      fileObj: file,
     });
   };
 
@@ -116,22 +117,40 @@ export const AdminGuestsWishesPage: React.FC = () => {
       return;
     }
     setIsUploading(true);
-    try {
-      adminUploadExcel(uploadTargetOrderId, {
-        fileName: stagedFile.name,
-        fileSize: stagedFile.size,
-      });
-      setIsUploadModalOpen(false);
-      setActionSuccessMessage(`Đã tải lên file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
-      setTimeout(() => setActionSuccessMessage(null), 4000);
-    } catch (err) {
-      console.error('Lỗi khi tải file lên:', err);
-      setIsUploadModalOpen(false);
-      setActionSuccessMessage(`Đã cập nhật file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
-      setTimeout(() => setActionSuccessMessage(null), 4000);
-    } finally {
-      setIsUploading(false);
-      setStagedFile(null);
+
+    const onComplete = (fileDataUrl?: string) => {
+      try {
+        adminUploadExcel(uploadTargetOrderId, {
+          fileName: stagedFile.name,
+          fileSize: stagedFile.size,
+          fileUrl: fileDataUrl,
+          fileDataUrl: fileDataUrl,
+        });
+        setIsUploadModalOpen(false);
+        setActionSuccessMessage(`Đã tải lên file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
+        setTimeout(() => setActionSuccessMessage(null), 4000);
+      } catch (err) {
+        console.error('Lỗi khi tải file lên:', err);
+        setIsUploadModalOpen(false);
+        setActionSuccessMessage(`Đã cập nhật file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
+        setTimeout(() => setActionSuccessMessage(null), 4000);
+      } finally {
+        setIsUploading(false);
+        setStagedFile(null);
+      }
+    };
+
+    if (stagedFile.fileObj) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        onComplete(reader.result as string);
+      };
+      reader.onerror = () => {
+        onComplete(undefined);
+      };
+      reader.readAsDataURL(stagedFile.fileObj);
+    } else {
+      onComplete(undefined);
     }
   };
 

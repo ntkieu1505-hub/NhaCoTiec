@@ -17,6 +17,7 @@ import { Guest, Wish } from '../../../types';
 import { RevisionModal } from '../components/RevisionModal';
 import { WeddingInfoModal } from '../components/WeddingInfoModal';
 import { PhotoAlbumModal } from '../components/PhotoAlbumModal';
+import { GuestsWishesModal } from '../components/GuestsWishesModal';
 import { ORDER_STAGES, PAYMENT_STATUS_META } from '../../../utils/constants';
 import { Order, OrderStatusStage, ORDER_STATUS_MAP, WeddingInformation } from '../../../types/order';
 import { formatCurrency, formatDateTime } from '../../../utils/formatters';
@@ -31,8 +32,9 @@ export const CustomerDashboardPage: React.FC = () => {
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [isWeddingInfoModalOpen, setIsWeddingInfoModalOpen] = useState(false);
   const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
+  const [isGuestsWishesModalOpen, setIsGuestsWishesModalOpen] = useState(false);
   const [wishes, setWishes] = useState<Wish[]>([]);
-  const [guests] = useState<Guest[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showDataPreview, setShowDataPreview] = useState(false);
   const [previewTab, setPreviewTab] = useState<'guests' | 'wishes'>('guests');
@@ -157,6 +159,122 @@ export const CustomerDashboardPage: React.FC = () => {
     );
   };
 
+  // Populate realistic guest list & wishes matching liveOrder.id
+  useEffect(() => {
+    const demoGuests: Guest[] = [
+      {
+        id: `g1-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        name: 'Nguyễn Hoàng Long',
+        phone: '0901 234 567',
+        rsvpStatus: 'attending',
+        companionCount: 1,
+        tableNumber: 'Bàn 02',
+        notes: 'Ngồi gần bàn cô dâu',
+        submittedAt: '2026-09-20T10:15:00Z',
+      },
+      {
+        id: `g2-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        name: 'Trần Bảo Ngọc',
+        phone: '0912 345 678',
+        rsvpStatus: 'attending',
+        companionCount: 2,
+        tableNumber: 'Bàn 01',
+        notes: 'Đi cùng gia đình',
+        submittedAt: '2026-09-20T11:30:00Z',
+      },
+      {
+        id: `g3-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        name: 'Lê Tuấn Kiệt',
+        phone: '0923 456 789',
+        rsvpStatus: 'pending',
+        companionCount: 1,
+        notes: 'Đang sắp xếp lịch công tác',
+        submittedAt: '2026-09-21T09:00:00Z',
+      },
+      {
+        id: `g4-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        name: 'Phạm Mai Anh',
+        phone: '0934 567 890',
+        rsvpStatus: 'declined',
+        companionCount: 0,
+        notes: 'Bận việc gia đình đột xuất',
+        submittedAt: '2026-09-21T14:20:00Z',
+      },
+      {
+        id: `g5-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        name: 'Đỗ Thanh Tùng',
+        phone: '0945 678 901',
+        rsvpStatus: 'attending',
+        companionCount: 1,
+        tableNumber: 'Bàn 03',
+        notes: 'Bạn cấp 3 chú rể',
+        submittedAt: '2026-09-22T08:45:00Z',
+      },
+      {
+        id: `g6-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        name: 'Vũ Thảo Nguyên',
+        phone: '0956 789 012',
+        rsvpStatus: 'attending',
+        companionCount: 2,
+        tableNumber: 'Bàn 02',
+        notes: 'Có dùng món ăn chay',
+        submittedAt: '2026-09-22T16:10:00Z',
+      },
+    ];
+
+    const demoWishes: Wish[] = [
+      {
+        id: `w1-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        senderName: 'Nguyễn Hoàng Long',
+        relationship: 'Bạn thân chú rể',
+        message: 'Chúc hai bạn trăm năm hạnh phúc, đầu bạc răng long và sớm đón thiên thần nhỏ nhé!',
+        createdAt: '2026-09-20T10:18:00Z',
+        isApproved: true,
+        isPinned: true,
+      },
+      {
+        id: `w2-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        senderName: 'Trần Bảo Ngọc',
+        relationship: 'Em gái cô dâu',
+        message: 'Chúc chị gái yêu quý của em luôn xinh đẹp rạng rỡ và luôn được anh rể cưng chiều hết mực!',
+        createdAt: '2026-09-20T11:35:00Z',
+        isApproved: true,
+        isPinned: false,
+      },
+      {
+        id: `w3-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        senderName: 'Cô Lê Thị Mai',
+        relationship: 'Bác ruột',
+        message: 'Mừng ngày vui của hai cháu. Chúc gia đình nhỏ luôn tràn ngập tiếng cười, thuận hòa và thịnh vượng.',
+        createdAt: '2026-09-21T18:00:00Z',
+        isApproved: true,
+        isPinned: false,
+      },
+      {
+        id: `w4-${liveOrder.id}`,
+        orderId: liveOrder.id,
+        senderName: 'Đỗ Thanh Tùng',
+        relationship: 'Bạn đại học',
+        message: 'Chúc mừng hạnh phúc hai bạn! Ngày cưới thật tuyệt vời và nhiều kỷ niệm đáng nhớ.',
+        createdAt: '2026-09-22T08:50:00Z',
+        isApproved: true,
+        isPinned: false,
+      },
+    ];
+
+    setGuests(demoGuests);
+    setWishes(demoWishes);
+  }, [liveOrder.id]);
+
   const handleCopy = () => {
     if (navigator.clipboard && liveOrder.invitationUrl) {
       navigator.clipboard.writeText(liveOrder.invitationUrl);
@@ -168,20 +286,44 @@ export const CustomerDashboardPage: React.FC = () => {
   const handleDownloadFile = () => {
     setDownloadSuccess(true);
     setTimeout(() => setDownloadSuccess(false), 3000);
+
+    const fileName = exportData?.fileName || `danh-sach-khach-moi-va-loi-chuc-${liveOrder.id}.xlsx`;
+
+    // 1. If admin uploaded an actual file (binary data URL) -> download bit-for-bit identical file
+    if (exportData?.fileDataUrl && exportData.fileDataUrl.startsWith('data:')) {
+      const element = document.createElement('a');
+      element.href = exportData.fileDataUrl;
+      element.download = fileName;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      return;
+    }
+
+    // 2. Fallback: Generate UTF-8 BOM CSV (which Excel opens seamlessly on Windows with no corruption error)
+    const isCsv = fileName.toLowerCase().endsWith('.csv');
+    const finalDownloadName = isCsv ? fileName : fileName.replace(/\.xlsx?$/i, '.csv');
+
+    const csvContent =
+      `Mã đơn,Tên khách mời,Số điện thoại,Trạng thái RSVP,Số người đi cùng,Bàn tiệc,Ghi chú\n` +
+      `${liveOrder.id},Nguyễn Hoàng Long,0901234567,Tham dự,1,Bàn 02,Ngồi gần bàn cô dâu\n` +
+      `${liveOrder.id},Trần Bảo Ngọc,0912345678,Tham dự,2,Bàn 01,Đi cùng gia đình\n` +
+      `${liveOrder.id},Lê Tuấn Kiệt,0923456789,Chờ xác nhận,1,,Đang sắp xếp lịch công tác\n` +
+      `${liveOrder.id},Phạm Mai Anh,0934567890,Bận việc,0,,Bận việc gia đình đột xuất\n` +
+      `${liveOrder.id},Đỗ Thanh Tùng,0945678901,Tham dự,1,Bàn 03,Bạn cấp 3 chú rể\n` +
+      `${liveOrder.id},Vũ Thảo Nguyên,0956789012,Tham dự,2,Bàn 02,Có dùng món ăn chay\n\n` +
+      `Người gửi,Mối quan hệ,Lời chúc mừng\n` +
+      `Nguyễn Hoàng Long,Bạn thân chú rể,"Chúc hai bạn trăm năm hạnh phúc, đầu bạc răng long và sớm đón thiên thần nhỏ nhé!"\n` +
+      `Trần Bảo Ngọc,Em gái cô dâu,"Chúc chị gái yêu quý của em luôn xinh đẹp rạng rỡ và luôn được anh rể cưng chiều hết mực!"\n` +
+      `Cô Lê Thị Mai,Bác ruột,"Mừng ngày vui của hai cháu. Chúc gia đình nhỏ luôn tràn ngập tiếng cười, thuận hòa và thịnh vượng."\n` +
+      `Đỗ Thanh Tùng,Bạn đại học,"Chúc mừng hạnh phúc hai bạn! Ngày cưới thật tuyệt vời và nhiều kỷ niệm đáng nhớ."\n`;
+
+    // UTF-8 BOM \uFEFF enables Microsoft Excel on Windows to read UTF-8 without garbled text or corrupted structure
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
     const element = document.createElement('a');
-    const file = new Blob([
-      `Mã đơn,Tên khách mời,Số điện thoại,Trạng thái RSVP,Ghi chú\n` +
-      `NCT01,Nguyễn Hoàng Long,0901234567,Tham dự,Ngồi gần bàn cô dâu\n` +
-      `NCT01,Trần Bảo Ngọc,0912345678,Tham dự,Đi cùng 1 người\n` +
-      `NCT01,Lê Tuấn Kiệt,0923456789,Chờ xác nhận,-\n` +
-      `NCT01,Phạm Mai Anh,0934567890,Bận việc,-\n\n` +
-      `Người gửi,Mối quan hệ,Lời chúc\n` +
-      `Nguyễn Hoàng Long,Bạn chú rể,Chúc hai bạn trăm năm hạnh phúc, đầu bạc răng long!\n` +
-      `Trần Bảo Ngọc,Em gái cô dâu,Chúc chị gái của em luôn xinh đẹp và hạnh phúc bên anh rể nhé!\n` +
-      `Cô Lê Thị Mai,Bác ruột,Chúc hai cháu luôn yêu thương và thấu hiểu nhau suốt cuộc đời.\n`
-    ], { type: 'text/csv;charset=utf-8;' });
-    element.href = URL.createObjectURL(file);
-    element.download = exportData?.fileName || 'danh-sach-khach-moi-va-loi-chuc-nct01.csv';
+    element.href = URL.createObjectURL(blob);
+    element.download = finalDownloadName;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -1290,23 +1432,37 @@ export const CustomerDashboardPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Primary Actions: "Xem dữ liệu" & "Tải file" */}
+                  {/* Primary Actions: "Xem chi tiết" & "Tải file Excel" */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <button
                       type="button"
-                      onClick={() => setShowDataPreview(!showDataPreview)}
+                      onClick={() => setIsGuestsWishesModalOpen(true)}
                       className="h-10 rounded-full bg-surface-card hover:bg-surface-cream text-deep-espresso text-xs font-semibold border border-border-delicate flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                      title="Mở bảng xem chi tiết danh sách khách mời và lời chúc"
                     >
-                      <Icon name={showDataPreview ? 'expand_less' : 'visibility'} className="text-[16px] text-burgundy-wine" />
-                      <span>{showDataPreview ? 'Thu gọn dữ liệu' : 'Xem dữ liệu'}</span>
+                      <Icon name="visibility" className="text-[16px] text-burgundy-wine" />
+                      <span>Xem chi tiết</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleDownloadFile}
                       className="h-10 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                      title="Tải tệp Excel về máy"
                     >
                       <Icon name="download" className="text-[16px]" />
-                      <span>Tải Excel</span>
+                      <span>Tải file Excel</span>
+                    </button>
+                  </div>
+
+                  {/* Optional quick toggle to view below */}
+                  <div className="flex items-center justify-center pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowDataPreview(!showDataPreview)}
+                      className="text-[11px] text-text-muted hover:text-burgundy-wine font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <Icon name={showDataPreview ? 'expand_less' : 'expand_more'} className="text-[14px]" />
+                      <span>{showDataPreview ? 'Thu gọn bảng xem nhanh' : 'Xem nhanh danh sách bên dưới'}</span>
                     </button>
                   </div>
                 </div>
@@ -1454,6 +1610,19 @@ export const CustomerDashboardPage: React.FC = () => {
         existingPhotos={liveOrder.weddingInfo?.albumPhotos || []}
         orderId={liveOrder.id}
         onSave={handleAlbumSave}
+      />
+
+      {/* Guests & Wishes Detail Modal */}
+      <GuestsWishesModal
+        isOpen={isGuestsWishesModalOpen}
+        onClose={() => setIsGuestsWishesModalOpen(false)}
+        orderId={liveOrder.id}
+        orderTitle={liveOrder.customerName || selectedTemplate?.name}
+        guests={guests}
+        wishes={wishes}
+        exportData={exportData}
+        onDownloadFile={handleDownloadFile}
+        onTogglePinWish={togglePinWish}
       />
     </div>
   );

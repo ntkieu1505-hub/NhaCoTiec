@@ -118,6 +118,7 @@ export interface CustomerExport {
   userId?: string; // "usr-01"
   fileName: string; // e.g. "Danh_Sach_Khach_Moi_Loi_Chuc_NCT01.xlsx"
   fileUrl: string; // File URL / Mock Download
+  fileDataUrl?: string; // Real Data URL / base64 of uploaded file
   fileSize: string; // e.g. "248 KB"
   status: CustomerExportStatus; // 'draft' | 'uploaded' | 'sent'
   deadline: string; // e.g. "25/12/2026 (3 ngày trước ngày cưới)"

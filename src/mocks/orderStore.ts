@@ -1035,7 +1035,7 @@ export function getCustomerExport(orderId: string): CustomerExport {
  */
 export function adminUploadExcel(
   orderId: string,
-  fileData: { fileName: string; fileSize: string; fileUrl?: string }
+  fileData: { fileName: string; fileSize: string; fileUrl?: string; fileDataUrl?: string }
 ): CustomerExport {
   const now = new Date().toISOString();
   const existing = getCustomerExport(orderId);
@@ -1044,7 +1044,8 @@ export function adminUploadExcel(
     ...existing,
     fileName: fileData.fileName,
     fileSize: fileData.fileSize,
-    fileUrl: fileData.fileUrl || '#',
+    fileUrl: fileData.fileUrl || fileData.fileDataUrl || '#',
+    fileDataUrl: fileData.fileDataUrl || existing.fileDataUrl,
     status: 'uploaded', // "Đã tải lên — chưa gửi khách"
     uploadedAt: now,
   };
