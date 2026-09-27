@@ -21,7 +21,7 @@ import { WeddingInformation } from '../../../types/order';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { useZaloSupportUrl, useCmsContent } from '../../../mocks/cmsStore';
 import { useAuth } from '../../../mocks/authStore';
-import { getTemplateById, getTemplateBySlug, getAllTemplates } from '../../../mocks/templateStore';
+import { resolveTemplateForOrder } from '../../../mocks/templateStore';
 
 export const CustomerOrderDetailPage: React.FC = () => {
   const cms = useCmsContent();
@@ -63,17 +63,20 @@ export const CustomerOrderDetailPage: React.FC = () => {
     updatedAt: '2026-09-08T22:00:00Z',
   };
 
-  const matchedTemplate =
-    getTemplateById(currentOrder.templateId) ||
-    getTemplateBySlug(currentOrder.templateId) ||
-    getAllTemplates().find(
-      (t) => t.id === currentOrder.templateId || t.name === currentOrder.templateName
-    );
+  const matchedTemplate = resolveTemplateForOrder(currentOrder.templateId, currentOrder.templateName);
+
+  const isMinhAnhUrl = Boolean(
+    currentOrder.templateThumbnail && (
+      currentOrder.templateThumbnail.includes('AB6AXu') ||
+      currentOrder.templateThumbnail.includes('minh-anh') ||
+      currentOrder.templateThumbnail.includes('aida-public')
+    )
+  );
 
   const displayThumbnail =
-    currentOrder.templateThumbnail ||
-    matchedTemplate?.thumbnailUrl ||
-    'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80';
+    (matchedTemplate && matchedTemplate.id !== 'tpl-minh-anh' && isMinhAnhUrl)
+      ? matchedTemplate.thumbnailUrl
+      : (currentOrder.templateThumbnail || matchedTemplate?.thumbnailUrl || 'https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?auto=format&fit=crop&w=800&q=80');
 
   // Real order stage
   const effectiveStage: OrderStatusStage =

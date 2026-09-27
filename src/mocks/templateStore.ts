@@ -283,6 +283,72 @@ export function getTemplateBySlug(slug: string): Template | undefined {
 }
 
 /**
+ * Safely and accurately resolves the correct Template for any given Order,
+ * matching by templateId, slug, extracted name from "Thiệp cưới ... (Template Name)",
+ * or substring matching.
+ */
+export function resolveTemplateForOrder(
+  templateId?: string,
+  templateName?: string
+): Template | undefined {
+  const all = getAllTemplates();
+  if (!all || all.length === 0) return undefined;
+
+  // 1. Direct match by ID
+  if (templateId) {
+    const byId = all.find(
+      (t) => (t.id === templateId || t.slug === templateId) && !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t)
+    );
+    if (byId) return byId;
+  }
+
+  // 2. Match by templateName
+  if (templateName) {
+    const raw = templateName.trim();
+
+    // 2A. Extract parenthesized template name e.g. "Thiệp cưới i & i (Classic Red)" -> "Classic Red"
+    const parenMatch = raw.match(/\(([^)]+)\)$/);
+    if (parenMatch && parenMatch[1]) {
+      const extracted = parenMatch[1].trim().toLowerCase();
+      const byParen = all.find((t) => {
+        if (deletedTemplateIds.has(t.id) || isPurgedTemplate(t)) return false;
+        const tName = t.name.trim().toLowerCase();
+        const tSlug = t.slug.trim().toLowerCase();
+        return tName === extracted || tSlug === extracted || tName.includes(extracted) || extracted.includes(tName);
+      });
+      if (byParen) return byParen;
+    }
+
+    // 2B. Exact name match
+    const lower = raw.toLowerCase();
+    const byExact = all.find((t) => {
+      if (deletedTemplateIds.has(t.id) || isPurgedTemplate(t)) return false;
+      return t.name.trim().toLowerCase() === lower || t.slug.trim().toLowerCase() === lower;
+    });
+    if (byExact) return byExact;
+
+    // 2C. Substring match
+    const bySub = all.find((t) => {
+      if (deletedTemplateIds.has(t.id) || isPurgedTemplate(t)) return false;
+      const tName = t.name.trim().toLowerCase();
+      return lower.includes(tName) || tName.includes(lower);
+    });
+    if (bySub) return bySub;
+  }
+
+  // 3. Fallback specifically for Classic Red keywords
+  if (
+    (templateName && /classic\s*red/i.test(templateName)) ||
+    (templateId && /classic\s*red/i.test(templateId))
+  ) {
+    const redTpl = all.find((t) => /classic\s*red/i.test(t.name) || /classic\s*red/i.test(t.slug));
+    if (redTpl) return redTpl;
+  }
+
+  return undefined;
+}
+
+/**
  * Admin Action: Create New Template
  * Compatible with Firestore collection 'templates'
  */

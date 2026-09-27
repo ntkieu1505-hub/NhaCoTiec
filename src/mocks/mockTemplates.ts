@@ -2,6 +2,38 @@ import { Template } from '../types/template';
 
 export const MOCK_TEMPLATES: Template[] = [
   {
+    id: 'tpl-classic-red',
+    slug: 'classic-red',
+    name: 'Classic Red',
+    style: 'Đỏ Truyền Thống',
+    title: 'Sắc Đỏ Hoàng Gia & Cổ Điển (Classic Red Elegance)',
+    category: 'premium',
+    price: 79000,
+    rating: 5.0,
+    reviewCount: 156,
+    description: 'Sắc đỏ nhung quý phái kết hợp cùng họa tiết chữ hỷ ép kim vàng sang trọng, mang đến vẻ đẹp truyền thống may mắn và trang trọng cho ngày trọng đại.',
+    features: [
+      'Tone đỏ nhung hoàng gia & họa tiết vàng kim sang trọng',
+      'Hiệu ứng mở phong bao hỷ điện tử trang trọng',
+      'Tích hợp phát nhạc nền tự động êm dịu',
+      'Hệ thống phản hồi RSVP & gửi lời chúc trực tiếp',
+      'Bản đồ chỉ đường Google Maps & Lịch đếm ngược',
+      'Mã QR mừng cưới tiện lợi tích hợp chuyển khoản'
+    ],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?auto=format&fit=crop&w=800&q=80',
+    thumbnailPosition: 'center',
+    previewUrl: 'https://nhacotiec.vn/demo/classic-red',
+    status: 'published',
+    createdAt: '2026-08-01T08:00:00Z',
+    updatedAt: '2026-09-08T10:00:00Z',
+    musicTitle: 'Ánh Trăng Nói Hộ Lòng Tôi',
+    musicArtist: 'Teresa Teng',
+    badgeText: 'Cao cấp',
+    isPopular: true,
+    isPinned: true,
+    isActive: true
+  },
+  {
     id: 'tpl-minh-anh',
     slug: 'minh-anh-tuan-kiet',
     name: 'Minh Anh Editorial',

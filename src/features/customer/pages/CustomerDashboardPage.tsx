@@ -12,7 +12,7 @@ import {
 } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
 import { useZaloSupportUrl } from '../../../mocks/cmsStore';
-import { getTemplateById, getTemplateBySlug, getAllTemplates } from '../../../mocks/templateStore';
+import { getTemplateById, getTemplateBySlug, getAllTemplates, resolveTemplateForOrder } from '../../../mocks/templateStore';
 import { Guest, Wish } from '../../../types';
 import { RevisionModal } from '../components/RevisionModal';
 import { WeddingInfoModal } from '../components/WeddingInfoModal';
@@ -125,11 +125,26 @@ export const CustomerDashboardPage: React.FC = () => {
   const exportData = useCustomerExport(liveOrder.id);
   const isDataDelivered = exportData?.status === 'sent';
 
+  const matchedTpl = resolveTemplateForOrder(liveOrder.templateId, liveOrder.templateName);
   const selectedTemplate =
+    matchedTpl ||
     (liveOrder.templateId ? (getTemplateById(liveOrder.templateId) || getTemplateBySlug(liveOrder.templateId)) : undefined) ||
     getAllTemplates().find((t) => t.id === liveOrder.templateId || t.name === liveOrder.templateName) ||
-    getTemplateBySlug('minh-anh-tuan-kiet') ||
+    getTemplateBySlug('classic-red') ||
     getAllTemplates()[0];
+
+  const isMinhAnhUrl = Boolean(
+    liveOrder.templateThumbnail && (
+      liveOrder.templateThumbnail.includes('AB6AXu') ||
+      liveOrder.templateThumbnail.includes('minh-anh') ||
+      liveOrder.templateThumbnail.includes('aida-public')
+    )
+  );
+
+  const effectiveThumbnail =
+    (matchedTpl && matchedTpl.id !== 'tpl-minh-anh' && isMinhAnhUrl)
+      ? matchedTpl.thumbnailUrl
+      : (liveOrder.templateThumbnail || selectedTemplate?.thumbnailUrl || 'https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?auto=format&fit=crop&w=800&q=80');
 
   // Business Rule: Personalized invitation URL is ONLY shown when orderStatus === 'completed' AND invitationUrl exists
   const isDesignCompleted = liveOrder.orderStatus === 'completed' && Boolean(liveOrder.invitationUrl);
@@ -599,11 +614,11 @@ export const CustomerDashboardPage: React.FC = () => {
                     <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
                   {/* Screen inner */}
-                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white flex items-center justify-center p-2">
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white">
                     <img
-                      src={liveOrder.templateThumbnail || selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
+                      src={effectiveThumbnail}
                       alt="Wedding Invitation Preview"
-                      className="w-full h-full object-contain rounded-md"
+                      className="w-full h-full object-cover"
                       style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center' }}
                     />
                   </div>
@@ -697,11 +712,11 @@ export const CustomerDashboardPage: React.FC = () => {
                     <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
                   {/* Screen inner */}
-                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white flex items-center justify-center p-2">
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white">
                     <img
-                      src={liveOrder.templateThumbnail || selectedTemplate?.thumbnailUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuD2_62rMEgJ8nXC33r0uq3nJqEG9RgG5IEhjCegzLpgI6HPl3lHaJacV4PF85V8TW_q1Pg9kyilcFa790HqwY39FEd02rboRYswC73R6smVsOfBgcgMDlMyrFazP-mOPIqkFMI4TCBfIdEmC8ADLYACFyJrlozCAkRGMAdfG75Z-_4PZLBN4emzTykR8sW_6w5SgmUOnFXbHLPMVrFg3_24Vk6N4_0REnbiMNSz6xrU8E9Qyuavl1g2"}
+                      src={effectiveThumbnail}
                       alt="Template Preview"
-                      className="w-full h-full object-contain rounded-md"
+                      className="w-full h-full object-cover"
                       style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center' }}
                     />
                   </div>
