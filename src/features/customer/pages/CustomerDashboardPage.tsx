@@ -602,14 +602,37 @@ export const CustomerDashboardPage: React.FC = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-black/70 mr-1.5" />
                     <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
-                  {/* Screen inner */}
-                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white">
-                    <img
-                      src={effectiveThumbnail}
-                      alt="Wedding Invitation Preview"
-                      className="w-full h-full object-cover"
-                      style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center' }}
-                    />
+                  {/* Screen inner: Nhà Có Tiệc top bar + full-width image + home bar */}
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-surface-cream flex flex-col justify-between">
+                    {/* Top header bar: Nhà Có Tiệc */}
+                    <div className="w-full pt-5 pb-1.5 px-2.5 flex items-center justify-center gap-1.5 bg-surface-cream border-b border-border-delicate/70 shrink-0 z-10 shadow-2xs">
+                      <img
+                        src="/logo.png"
+                        alt="Nhà Có Tiệc"
+                        className="w-3.5 h-3.5 rounded-full object-cover shadow-xs border border-gold-foil/40 shrink-0"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <span className="font-playfair text-[11px] sm:text-[12px] font-bold text-deep-espresso tracking-wide">
+                        Nhà Có Tiệc
+                      </span>
+                    </div>
+
+                    {/* Template image stretched full width */}
+                    <div className="w-full flex-1 min-h-0 overflow-hidden relative bg-surface-subtle flex items-center justify-center">
+                      <img
+                        src={effectiveThumbnail}
+                        alt="Wedding Invitation Preview"
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center 25%' }}
+                      />
+                    </div>
+
+                    {/* Bottom Home Indicator Bar */}
+                    <div className="w-full py-2 flex items-center justify-center bg-surface-cream border-t border-border-delicate/70 shrink-0 z-10">
+                      <div className="w-16 h-1 rounded-full bg-deep-espresso/25" />
+                    </div>
                   </div>
                 </div>
 
@@ -700,14 +723,37 @@ export const CustomerDashboardPage: React.FC = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-black/70 mr-1.5" />
                     <div className="w-1 h-1 rounded-full bg-[#1c2d42]/70" />
                   </div>
-                  {/* Screen inner */}
-                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-white">
-                    <img
-                      src={effectiveThumbnail}
-                      alt="Template Preview"
-                      className="w-full h-full object-cover"
-                      style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center' }}
-                    />
+                  {/* Screen inner: Nhà Có Tiệc top bar + full-width image + home bar */}
+                  <div className="w-full h-full rounded-[24px] overflow-hidden relative bg-surface-cream flex flex-col justify-between">
+                    {/* Top header bar: Nhà Có Tiệc */}
+                    <div className="w-full pt-5 pb-1.5 px-2.5 flex items-center justify-center gap-1.5 bg-surface-cream border-b border-border-delicate/70 shrink-0 z-10 shadow-2xs">
+                      <img
+                        src="/logo.png"
+                        alt="Nhà Có Tiệc"
+                        className="w-3.5 h-3.5 rounded-full object-cover shadow-xs border border-gold-foil/40 shrink-0"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <span className="font-playfair text-[11px] sm:text-[12px] font-bold text-deep-espresso tracking-wide">
+                        Nhà Có Tiệc
+                      </span>
+                    </div>
+
+                    {/* Template image stretched full width */}
+                    <div className="w-full flex-1 min-h-0 overflow-hidden relative bg-surface-subtle flex items-center justify-center">
+                      <img
+                        src={effectiveThumbnail}
+                        alt="Template Preview"
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: selectedTemplate?.thumbnailPosition || 'center 25%' }}
+                      />
+                    </div>
+
+                    {/* Bottom Home Indicator Bar */}
+                    <div className="w-full py-2 flex items-center justify-center bg-surface-cream border-t border-border-delicate/70 shrink-0 z-10">
+                      <div className="w-16 h-1 rounded-full bg-deep-espresso/25" />
+                    </div>
                   </div>
                 </div>
 
