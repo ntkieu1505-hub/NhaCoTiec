@@ -283,15 +283,56 @@ export function getTemplateBySlug(slug: string): Template | undefined {
 }
 
 /**
+ * Detects whether a thumbnail string is a legacy placeholder/mock URL
+ * that was deleted or superseded by user-uploaded thumbnails.
+ */
+export function isOldOrMockThumbnail(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return true;
+  const s = url.trim();
+  if (!s) return true;
+  if (s.includes('lh3.googleusercontent.com')) return true;
+  if (s.includes('aida-public')) return true;
+  if (s.includes('AB6AXu')) return true;
+  if (s.includes('photo-1607190074257-dd4b7af0309f')) return true;
+  if (s.includes('photo-1519741497674-611481863552')) return true;
+  return false;
+}
+
+/**
+ * Resolves the true, current thumbnail for an order.
+ * If the matched template exists and has an active thumbnail, and the order's saved thumbnail
+ * is missing or is an old deleted mock URL, or if the template has an updated custom thumbnail,
+ * it returns the template's active thumbnail.
+ */
+export function resolveOrderThumbnail(
+  template?: Template,
+  orderSavedThumbnail?: string
+): string {
+  if (template?.thumbnailUrl) {
+    if (!orderSavedThumbnail || isOldOrMockThumbnail(orderSavedThumbnail)) {
+      return template.thumbnailUrl;
+    }
+    if (template.thumbnailUrl.startsWith('data:image')) {
+      return template.thumbnailUrl;
+    }
+  }
+  if (orderSavedThumbnail && !isOldOrMockThumbnail(orderSavedThumbnail)) {
+    return orderSavedThumbnail;
+  }
+  return template?.thumbnailUrl || '';
+}
+
+/**
  * Safely and accurately resolves the correct Template for any given Order,
  * matching by templateId, slug, extracted name from "Thiệp cưới ... (Template Name)",
  * or substring matching.
  */
 export function resolveTemplateForOrder(
   templateId?: string,
-  templateName?: string
+  templateName?: string,
+  customList?: Template[]
 ): Template | undefined {
-  const all = getAllTemplates();
+  const all = (customList && customList.length > 0) ? customList : getAllTemplates();
   if (!all || all.length === 0) return undefined;
 
   // 1. Direct match by ID

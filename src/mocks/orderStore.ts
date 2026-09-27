@@ -12,7 +12,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firesto
 import { logActivity } from '../services/activityLogService';
 import { toIsoDateString } from '../utils/formatters';
 import { MOCK_TEMPLATES } from './mockTemplates';
-import { resolveTemplateForOrder } from './templateStore';
+import { resolveTemplateForOrder, resolveOrderThumbnail } from './templateStore';
 
 const STORAGE_KEY = 'nha_co_tiec_orders_v7_realtime';
 const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
@@ -51,34 +51,7 @@ export function normalizeOrder(raw: any, idFallback = 'NCT-UNKNOWN'): Order {
 
   const templateId = String(raw?.templateId || 'tpl-minh-anh');
   const matchedTpl = resolveTemplateForOrder(templateId, raw?.templateName);
-
-  let templateThumbnail = typeof raw?.templateThumbnail === 'string' && raw.templateThumbnail.trim()
-    ? raw.templateThumbnail.trim()
-    : undefined;
-
-  // Auto-correct if templateThumbnail was wrongly defaulted to Minh Anh when the order is for another template (e.g. Classic Red)
-  const defaultMinhAnhUrl = MOCK_TEMPLATES.find((m) => m.id === 'tpl-minh-anh')?.thumbnailUrl;
-  const isMinhAnhUrl =
-    templateThumbnail === defaultMinhAnhUrl ||
-    Boolean(
-      templateThumbnail &&
-        (templateThumbnail.includes('AB6AXu') ||
-          templateThumbnail.includes('minh-anh') ||
-          templateThumbnail.includes('aida-public'))
-    );
-
-  if (matchedTpl) {
-    if (
-      !templateThumbnail ||
-      (matchedTpl.id !== 'tpl-minh-anh' && isMinhAnhUrl)
-    ) {
-      templateThumbnail = matchedTpl.thumbnailUrl;
-    }
-  }
-
-  if (!templateThumbnail) {
-    templateThumbnail = matchedTpl?.thumbnailUrl || MOCK_TEMPLATES[0].thumbnailUrl;
-  }
+  const templateThumbnail = resolveOrderThumbnail(matchedTpl, raw?.templateThumbnail);
 
   return {
     userId: '01',
@@ -372,23 +345,7 @@ export function createOrder(params: CreateOrderParams): Order {
   const customerEmail = params.customerEmail || params.weddingInfo?.customerEmail || '';
 
   const matchedTpl = resolveTemplateForOrder(params.templateId, params.templateName);
-  let templateThumbnail = params.templateThumbnail;
-  const defaultMinhAnhUrl = MOCK_TEMPLATES.find((m) => m.id === 'tpl-minh-anh')?.thumbnailUrl;
-  const isMinhAnhUrl =
-    templateThumbnail === defaultMinhAnhUrl ||
-    Boolean(
-      templateThumbnail &&
-        (templateThumbnail.includes('AB6AXu') ||
-          templateThumbnail.includes('minh-anh') ||
-          templateThumbnail.includes('aida-public'))
-    );
-
-  if (matchedTpl && matchedTpl.id !== 'tpl-minh-anh' && isMinhAnhUrl) {
-    templateThumbnail = matchedTpl.thumbnailUrl;
-  }
-  if (!templateThumbnail) {
-    templateThumbnail = matchedTpl?.thumbnailUrl || MOCK_TEMPLATES[0]?.thumbnailUrl;
-  }
+  const templateThumbnail = resolveOrderThumbnail(matchedTpl, params.templateThumbnail);
 
   const newOrder: Order = {
     id: orderId,

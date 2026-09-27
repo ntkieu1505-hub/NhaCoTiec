@@ -12,7 +12,7 @@ import {
 } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
 import { useZaloSupportUrl } from '../../../mocks/cmsStore';
-import { getTemplateById, getTemplateBySlug, getAllTemplates, resolveTemplateForOrder } from '../../../mocks/templateStore';
+import { getTemplateById, getTemplateBySlug, resolveTemplateForOrder, resolveOrderThumbnail, useTemplates } from '../../../mocks/templateStore';
 import { Guest, Wish } from '../../../types';
 import { RevisionModal } from '../components/RevisionModal';
 import { WeddingInfoModal } from '../components/WeddingInfoModal';
@@ -125,26 +125,15 @@ export const CustomerDashboardPage: React.FC = () => {
   const exportData = useCustomerExport(liveOrder.id);
   const isDataDelivered = exportData?.status === 'sent';
 
-  const matchedTpl = resolveTemplateForOrder(liveOrder.templateId, liveOrder.templateName);
+  const allTemplates = useTemplates();
+  const matchedTpl = resolveTemplateForOrder(liveOrder.templateId, liveOrder.templateName, allTemplates);
   const selectedTemplate =
     matchedTpl ||
     (liveOrder.templateId ? (getTemplateById(liveOrder.templateId) || getTemplateBySlug(liveOrder.templateId)) : undefined) ||
-    getAllTemplates().find((t) => t.id === liveOrder.templateId || t.name === liveOrder.templateName) ||
-    getTemplateBySlug('classic-red') ||
-    getAllTemplates()[0];
+    allTemplates.find((t) => t.id === liveOrder.templateId || t.name === liveOrder.templateName) ||
+    allTemplates[0];
 
-  const isMinhAnhUrl = Boolean(
-    liveOrder.templateThumbnail && (
-      liveOrder.templateThumbnail.includes('AB6AXu') ||
-      liveOrder.templateThumbnail.includes('minh-anh') ||
-      liveOrder.templateThumbnail.includes('aida-public')
-    )
-  );
-
-  const effectiveThumbnail =
-    (matchedTpl && matchedTpl.id !== 'tpl-minh-anh' && isMinhAnhUrl)
-      ? matchedTpl.thumbnailUrl
-      : (liveOrder.templateThumbnail || selectedTemplate?.thumbnailUrl || 'https://images.unsplash.com/photo-1607190074257-dd4b7af0309f?auto=format&fit=crop&w=800&q=80');
+  const effectiveThumbnail = resolveOrderThumbnail(selectedTemplate, liveOrder.templateThumbnail);
 
   // Business Rule: Personalized invitation URL is ONLY shown when orderStatus === 'completed' AND invitationUrl exists
   const isDesignCompleted = liveOrder.orderStatus === 'completed' && Boolean(liveOrder.invitationUrl);

@@ -15,6 +15,7 @@ import {
 import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/constants';
 import { formatCurrency, formatDateTime, formatDate } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
+import { resolveTemplateForOrder, resolveOrderThumbnail, useTemplates } from '../../../mocks/templateStore';
 
 export const AdminOrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -23,6 +24,10 @@ export const AdminOrderDetailPage: React.FC = () => {
   const orderFromHook = useOrder(activeOrderId);
   const order = orderFromHook || allOrders.find(o => o.id === activeOrderId) || (allOrders.length === 1 ? allOrders[0] : undefined);
   const exportData = useCustomerExport(order?.id || activeOrderId);
+
+  const allTemplates = useTemplates();
+  const matchedTemplate = resolveTemplateForOrder(order?.templateId, order?.templateName, allTemplates);
+  const displayThumbnail = resolveOrderThumbnail(matchedTemplate, order?.templateThumbnail);
 
   const [isConfirmSendModalOpen, setIsConfirmSendModalOpen] = useState(false);
   const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<string | null>(null);
@@ -328,10 +333,10 @@ export const AdminOrderDetailPage: React.FC = () => {
               Mẫu thiệp &amp; Chi phí
             </h3>
           </div>
-          {order.templateThumbnail && (
+          {displayThumbnail && (
             <div className="w-full h-24 rounded-xl overflow-hidden bg-surface-subtle mb-1 border border-border-delicate">
               <img
-                src={order.templateThumbnail}
+                src={displayThumbnail}
                 alt={order.templateName}
                 className="w-full h-full object-cover"
               />
