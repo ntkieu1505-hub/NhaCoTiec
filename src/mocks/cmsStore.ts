@@ -590,10 +590,123 @@ export function updateSocialLinks(data: Partial<SocialLinksConfig>): SocialLinks
   return { ...updated };
 }
 
+export const DUMMY_DEFAULT_PHONES = ['0982 123 456', '0982123456', '0982 123456'];
+
+export function getEffectiveHotline(cms?: CmsContent | null): string {
+  if (!cms) return '0982 123 456';
+  const candidates = [
+    cms.footer?.hotline,
+    cms.footer?.phone,
+    cms.contact?.hotline,
+    cms.contact?.phone,
+    cms.settings?.hotline,
+    cms.settings?.zaloPhone,
+    cms.orderForm?.supportZalo,
+  ];
+
+  for (const val of candidates) {
+    if (val && typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed && !DUMMY_DEFAULT_PHONES.includes(trimmed.replace(/\s+/g, ''))) {
+        return trimmed;
+      }
+    }
+  }
+
+  if (cms.footer?.hotline && cms.footer.hotline.trim()) {
+    return cms.footer.hotline.trim();
+  }
+
+  return '0982 123 456';
+}
+
+export function getEffectiveZaloPhone(cms?: CmsContent | null): string {
+  if (!cms) return '0982 123 456';
+  const candidates = [
+    cms.settings?.zaloPhone,
+    cms.orderForm?.supportZalo,
+    cms.contact?.phone,
+    cms.footer?.phone,
+    cms.footer?.hotline,
+    cms.contact?.hotline,
+    cms.settings?.hotline,
+  ];
+
+  for (const val of candidates) {
+    if (val && typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed && !DUMMY_DEFAULT_PHONES.includes(trimmed.replace(/\s+/g, ''))) {
+        return trimmed;
+      }
+    }
+  }
+
+  const zaloUrl = cms.settings?.zaloSupportUrl || cms.orderForm?.supportZaloLink || cms.contact?.zaloUrl;
+  if (zaloUrl && typeof zaloUrl === 'string') {
+    const cleanDigits = zaloUrl.replace(/[^0-9]/g, '');
+    if (cleanDigits.length >= 9 && cleanDigits !== '0982123456') {
+      return cleanDigits;
+    }
+  }
+
+  return getEffectiveHotline(cms);
+}
+
 export function updateEntireCms(data: Partial<CmsContent>): CmsContent {
+  const candidates = [
+    data.footer?.hotline,
+    data.footer?.phone,
+    data.contact?.hotline,
+    data.contact?.phone,
+    data.settings?.hotline,
+    data.settings?.zaloPhone,
+    data.orderForm?.supportZalo,
+  ];
+
+  let customPhone: string | null = null;
+  for (const c of candidates) {
+    if (c && typeof c === 'string') {
+      const trimmed = c.trim();
+      if (trimmed && !DUMMY_DEFAULT_PHONES.includes(trimmed.replace(/\s+/g, ''))) {
+        customPhone = trimmed;
+        break;
+      }
+    }
+  }
+
+  const mergedFooter = { ...currentCmsContent.footer, ...(data.footer || {}) };
+  const mergedContact = { ...currentCmsContent.contact, ...(data.contact || {}) };
+  const mergedSettings = { ...currentCmsContent.settings, ...(data.settings || {}) };
+  const mergedOrderForm = { ...DEFAULT_ORDER_FORM_CONFIG, ...(currentCmsContent.orderForm || {}), ...(data.orderForm || {}) };
+
+  if (customPhone) {
+    if (!mergedFooter.hotline || DUMMY_DEFAULT_PHONES.includes(mergedFooter.hotline.replace(/\s+/g, ''))) {
+      mergedFooter.hotline = customPhone;
+    }
+    if (!mergedFooter.phone || DUMMY_DEFAULT_PHONES.includes(mergedFooter.phone.replace(/\s+/g, ''))) {
+      mergedFooter.phone = customPhone;
+    }
+    if (!mergedSettings.hotline || DUMMY_DEFAULT_PHONES.includes(mergedSettings.hotline.replace(/\s+/g, ''))) {
+      mergedSettings.hotline = customPhone;
+    }
+    if (!mergedSettings.zaloPhone || DUMMY_DEFAULT_PHONES.includes(mergedSettings.zaloPhone.replace(/\s+/g, ''))) {
+      mergedSettings.zaloPhone = customPhone;
+    }
+    if (!mergedContact.hotline || DUMMY_DEFAULT_PHONES.includes(mergedContact.hotline.replace(/\s+/g, ''))) {
+      mergedContact.hotline = customPhone;
+    }
+    if (!mergedContact.phone || DUMMY_DEFAULT_PHONES.includes(mergedContact.phone.replace(/\s+/g, ''))) {
+      mergedContact.phone = customPhone;
+    }
+  }
+
   currentCmsContent = {
     ...currentCmsContent,
     ...data,
+    footer: mergedFooter,
+    contact: mergedContact,
+    settings: mergedSettings,
+    orderForm: mergedOrderForm,
   };
   notify('Cập nhật toàn bộ nội dung CMS');
   return { ...currentCmsContent };
@@ -625,43 +738,32 @@ export function useCmsContent(): CmsContent {
 
 export function useZaloSupportUrl(): string {
   const cms = useCmsContent();
-  const candidates = [
+  const effectiveZaloPhone = getEffectiveZaloPhone(cms);
+  const cleanDigits = effectiveZaloPhone.replace(/[^0-9]/g, '');
+
+  const urlCandidates = [
     cms.settings?.zaloSupportUrl,
     cms.orderForm?.supportZaloLink,
     cms.contact?.zaloUrl,
     cms.socialLinks?.zalo?.url,
   ];
 
-  for (const url of candidates) {
+  for (const url of urlCandidates) {
     if (url && typeof url === 'string') {
       const trimmed = url.trim();
-      if (trimmed && trimmed !== 'https://zalo.me' && trimmed !== 'https://zalo.me/') {
+      if (
+        trimmed &&
+        trimmed !== 'https://zalo.me' &&
+        trimmed !== 'https://zalo.me/' &&
+        trimmed !== 'https://zalo.me/0982123456'
+      ) {
         return trimmed;
       }
     }
   }
 
-  const phoneCandidates = [
-    cms.settings?.zaloPhone,
-    cms.orderForm?.supportZalo,
-    cms.settings?.hotline,
-    cms.contact?.hotline,
-    cms.contact?.phone,
-  ];
-
-  for (const phone of phoneCandidates) {
-    if (phone && typeof phone === 'string') {
-      const cleanDigits = phone.replace(/[^0-9]/g, '');
-      if (cleanDigits.length >= 9) {
-        return `https://zalo.me/${cleanDigits}`;
-      }
-    }
-  }
-
-  for (const url of candidates) {
-    if (url && typeof url === 'string' && url.trim()) {
-      return url.trim();
-    }
+  if (cleanDigits.length >= 9) {
+    return `https://zalo.me/${cleanDigits}`;
   }
 
   return 'https://zalo.me/0982123456';

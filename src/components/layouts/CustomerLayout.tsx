@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../common/Icon';
-import { useZaloSupportUrl, useCmsContent } from '../../mocks/cmsStore';
+import { useZaloSupportUrl, useCmsContent, getEffectiveHotline } from '../../mocks/cmsStore';
 import { useNotifications } from '../../mocks/notificationStore';
 import { NotificationType } from '../../types/notification';
 import { useAuth } from '../../mocks/authStore';
@@ -12,6 +12,7 @@ export const CustomerLayout: React.FC = () => {
   const navigate = useNavigate();
   const cms = useCmsContent();
   const zaloUrl = useZaloSupportUrl();
+  const displayHotline = getEffectiveHotline(cms);
   const { user, logout } = useAuth();
   const allOrders = useOrders();
   const lastOrderId = getLastCustomerOrderId();
@@ -381,10 +382,10 @@ export const CustomerLayout: React.FC = () => {
         <span>
           Cổng Khách Hàng {cms.footer?.brandName || 'Nhà Có Tiệc'} • Hotline kỹ thuật:{' '}
           <a
-            href={`tel:${(cms.footer?.hotline || cms.footer?.phone || cms.contact?.hotline || '0982 123 456').replace(/\s+/g, '')}`}
+            href={`tel:${displayHotline.replace(/\s+/g, '')}`}
             className="font-semibold text-deep-espresso hover:text-burgundy-wine underline"
           >
-            {cms.footer?.hotline || cms.footer?.phone || cms.contact?.hotline || '0982 123 456'}
+            {displayHotline}
           </a>
         </span>
       </div>

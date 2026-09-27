@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Icon } from '../common/Icon';
 import { SocialIcon, SOCIAL_PLATFORMS_LIST } from '../common/SocialIcon';
-import { useCmsContent, DEFAULT_CMS_CONTENT, useZaloSupportUrl } from '../../mocks/cmsStore';
+import {
+  useCmsContent,
+  DEFAULT_CMS_CONTENT,
+  useZaloSupportUrl,
+  getEffectiveHotline,
+  getEffectiveZaloPhone,
+} from '../../mocks/cmsStore';
 import { useAuth } from '../../mocks/authStore';
 
 export const PublicLayout: React.FC = () => {
@@ -12,21 +18,8 @@ export const PublicLayout: React.FC = () => {
   const zaloUrl = useZaloSupportUrl();
   const { isAuthenticated, isAdmin, logout } = useAuth();
 
-  const displayHotline =
-    cms.settings?.hotline ||
-    cms.contact?.hotline ||
-    cms.contact?.phone ||
-    cms.footer?.hotline ||
-    cms.footer?.phone ||
-    '0982 123 456';
-  const displayZaloPhone =
-    cms.settings?.zaloPhone ||
-    cms.orderForm?.supportZalo ||
-    cms.contact?.phone ||
-    cms.settings?.hotline ||
-    cms.footer?.phone ||
-    cms.footer?.hotline ||
-    displayHotline;
+  const displayHotline = getEffectiveHotline(cms);
+  const displayZaloPhone = getEffectiveZaloPhone(cms);
 
   const socialConfig = cms.socialLinks || DEFAULT_CMS_CONTENT.socialLinks;
   const activeSocials = SOCIAL_PLATFORMS_LIST.map((platform) => {

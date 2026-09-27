@@ -1679,12 +1679,15 @@ export const AdminCmsPage: React.FC = () => {
                   <input
                     type="text"
                     value={formData.footer.hotline}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = e.target.value;
                       setFormData({
                         ...formData,
-                        footer: { ...formData.footer, hotline: e.target.value },
-                      })
-                    }
+                        footer: { ...formData.footer, hotline: val, phone: val },
+                        settings: { ...formData.settings, hotline: val },
+                        contact: { ...formData.contact, hotline: val, phone: val },
+                      });
+                    }}
                     className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface text-xs"
                   />
                 </div>
@@ -1853,15 +1856,26 @@ export const AdminCmsPage: React.FC = () => {
                   <input
                     type="text"
                     value={formData.orderForm?.supportZalo || ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = e.target.value;
                       setFormData({
                         ...formData,
                         orderForm: {
                           ...(formData.orderForm || DEFAULT_CMS_CONTENT.orderForm!),
-                          supportZalo: e.target.value,
+                          supportZalo: val,
                         },
-                      })
-                    }
+                        settings: {
+                          ...formData.settings,
+                          zaloPhone: val,
+                          hotline: val,
+                        },
+                        footer: {
+                          ...formData.footer,
+                          phone: val,
+                          hotline: val,
+                        },
+                      });
+                    }}
                     className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface-card text-xs text-deep-espresso focus:border-burgundy-wine focus:outline-none"
                     placeholder="0982 123 456"
                   />
@@ -2334,12 +2348,15 @@ export const AdminCmsPage: React.FC = () => {
               <input
                 type="text"
                 value={formData.contact.hotline}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const val = e.target.value;
                   setFormData({
                     ...formData,
-                    contact: { ...formData.contact, hotline: e.target.value },
-                  })
-                }
+                    contact: { ...formData.contact, hotline: val, phone: val },
+                    footer: { ...formData.footer, hotline: val, phone: val },
+                    settings: { ...formData.settings, hotline: val },
+                  });
+                }}
                 className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface text-xs font-semibold text-burgundy-wine"
               />
             </div>
@@ -2707,15 +2724,22 @@ export const AdminCmsPage: React.FC = () => {
                     type="text"
                     placeholder="0982 123 456"
                     value={formData.settings.zaloPhone || ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = e.target.value;
                       setFormData({
                         ...formData,
                         settings: {
                           ...formData.settings,
-                          zaloPhone: e.target.value,
+                          zaloPhone: val,
+                          hotline: val,
                         },
-                      })
-                    }
+                        footer: {
+                          ...formData.footer,
+                          hotline: val,
+                          phone: val,
+                        },
+                      });
+                    }}
                     className="w-full px-3 py-1.5 rounded-lg border border-border-delicate bg-surface text-xs mt-1"
                   />
                   <span className="text-[10px] text-text-muted">Số điện thoại liên hệ</span>
