@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import {
   useOrder,
+  useOrders,
   adminConfirmPayment,
   adminRejectPayment,
   adminAdvanceStage,
@@ -17,9 +18,11 @@ import { OrderStatusStage } from '../../../types/order';
 
 export const AdminOrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const activeOrderId = orderId || 'NCT01';
-  const order = useOrder(activeOrderId);
-  const exportData = useCustomerExport(activeOrderId);
+  const allOrders = useOrders();
+  const activeOrderId = orderId || allOrders[0]?.id || 'NCT01';
+  const orderFromHook = useOrder(activeOrderId);
+  const order = orderFromHook || allOrders.find(o => o.id === activeOrderId) || (allOrders.length === 1 ? allOrders[0] : undefined);
+  const exportData = useCustomerExport(order?.id || activeOrderId);
 
   const [isConfirmSendModalOpen, setIsConfirmSendModalOpen] = useState(false);
   const [selectedPhotoPreview, setSelectedPhotoPreview] = useState<string | null>(null);
@@ -85,6 +88,9 @@ export const AdminOrderDetailPage: React.FC = () => {
 
   const handleQuickAdvance = () => {
     if (order.currentStage < 8) {
+      if (order.paymentStatus !== 'paid') {
+        adminConfirmPayment(order.id);
+      }
       const next = (order.currentStage + 1) as OrderStatusStage;
       adminAdvanceStage(order.id, next);
     }
@@ -379,7 +385,7 @@ export const AdminOrderDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={handleQuickAdvance}
-              disabled={order.currentStage === 8 || order.paymentStatus !== 'paid'}
+              disabled={order.currentStage === 8}
               className="w-full h-9 rounded-full bg-burgundy-wine text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:bg-[#851622] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Icon name="step" className="text-[16px]" />
@@ -421,8 +427,15 @@ export const AdminOrderDetailPage: React.FC = () => {
                 key={stg}
                 type="button"
                 onClick={() => {
-                  if (order.paymentStatus !== 'paid' && stg > 1) {
-                    alert('Cần xác nhận thanh toán trước khi chuyển sang các bước tiếp theo.');
+                  if (order.paymentStatus !== 'paid' && stg >= 2) {
+                    adminConfirmPayment(order.id);
+                    if (stg > 2) {
+                      if (stg === 7) {
+                        handleCompleteDesign();
+                      } else {
+                        adminAdvanceStage(order.id, stg);
+                      }
+                    }
                     return;
                   }
                   if (stg === 7) {

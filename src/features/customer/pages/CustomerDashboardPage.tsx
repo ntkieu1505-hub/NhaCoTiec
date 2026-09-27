@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import {
@@ -70,12 +70,27 @@ export const CustomerDashboardPage: React.FC = () => {
       list = allOrders.slice(0, 2);
     }
 
+    // 4. Fallback for single order or Admin previewing Customer Portal:
+    // If customer has no specific matching order but there are orders in system, display system orders
+    if (list.length === 0 && allOrders.length > 0) {
+      list = allOrders;
+    }
+
     return list;
   }, [allOrders, user, lastOrderId]);
 
   const [selectedOrderId, setSelectedOrderId] = useState<string>(() => {
     return lastOrderId || '';
   });
+
+  // Automatically keep selectedOrderId in sync with available orders
+  useEffect(() => {
+    if (customerOrders.length > 0) {
+      if (!selectedOrderId || !customerOrders.some((o) => o.id === selectedOrderId)) {
+        setSelectedOrderId(customerOrders[0].id);
+      }
+    }
+  }, [customerOrders, selectedOrderId]);
 
   const liveOrder = useMemo(() => {
     if (selectedOrderId) {

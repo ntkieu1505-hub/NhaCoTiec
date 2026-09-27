@@ -8,6 +8,8 @@ import { WeddingInfoModal } from '../components/WeddingInfoModal';
 import { PhotoAlbumModal } from '../components/PhotoAlbumModal';
 import {
   useOrder,
+  useOrders,
+  getLastCustomerOrderId,
   customerSubmitPaymentConfirmation,
   customerSubmitWeddingInfo,
   customerSubmitAlbum,
@@ -26,20 +28,24 @@ export const CustomerOrderDetailPage: React.FC = () => {
   const supportPhone = cms.footer?.hotline || cms.footer?.phone || cms.contact?.hotline || '0982 123 456';
   const { user } = useAuth();
   const { orderId } = useParams<{ orderId: string }>();
-  const activeOrderId = orderId || 'NCT01';
-  const order = useOrder(activeOrderId);
+  const allOrders = useOrders();
+  const lastOrderId = getLastCustomerOrderId();
+  const activeOrderId = orderId || lastOrderId || allOrders[0]?.id || 'NCT01';
+  const orderFromHook = useOrder(activeOrderId);
+  const resolvedOrder = orderFromHook || allOrders.find(o => o.id === activeOrderId) || (allOrders.length === 1 ? allOrders[0] : undefined);
 
-  // Authorization check: User can only view their own order
+  // Authorization check: User can view if admin, guest, or matching userId/order
   const isOwner =
-    !order ||
+    !resolvedOrder ||
     user?.role === 'admin' ||
-    !order.userId ||
-    order.userId === user?.id ||
-    order.userId.startsWith('guest-') ||
-    (user?.id === '01' && activeOrderId === 'NCT01');
+    !resolvedOrder.userId ||
+    resolvedOrder.userId === user?.id ||
+    resolvedOrder.userId.startsWith('guest-') ||
+    (user?.id === '01' && activeOrderId === 'NCT01') ||
+    allOrders.length === 1;
 
   // Fallback if not loaded yet
-  const currentOrder = order || {
+  const currentOrder = resolvedOrder || {
     id: activeOrderId,
     customerName: 'Nguyễn Minh Anh & Trần Đức Minh',
     customerPhone: '0982 123 456',
@@ -69,22 +75,22 @@ export const CustomerOrderDetailPage: React.FC = () => {
   const [copiedLink, setCopiedLink] = useState(false);
 
   const handleCustomerPaymentSubmit = () => {
-    customerSubmitPaymentConfirmation(activeOrderId, {
+    customerSubmitPaymentConfirmation(currentOrder.id, {
       note: 'Khách hàng gửi yêu cầu đối soát sau khi quét mã QR',
       proof: 'vietqr_proof_nct01.jpg',
     });
   };
 
   const handleWeddingInfoSave = (data: Partial<WeddingInformation>) => {
-    customerSubmitWeddingInfo(activeOrderId, data);
+    customerSubmitWeddingInfo(currentOrder.id, data);
   };
 
   const handleAlbumSave = (photos: string[]) => {
-    customerSubmitAlbum(activeOrderId, photos);
+    customerSubmitAlbum(currentOrder.id, photos);
   };
 
   const handleRevisionSubmit = (data: { topics: string[]; content: string; referenceUrl?: string }) => {
-    customerSubmitRevision(activeOrderId, data);
+    customerSubmitRevision(currentOrder.id, data);
   };
 
   const handleCopyLink = () => {
@@ -390,7 +396,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
                             </div>
                             <button
                               type="button"
-                              onClick={() => customerCompleteDataSubmission(activeOrderId)}
+                              onClick={() => customerCompleteDataSubmission(currentOrder.id)}
                               className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold shadow-md hover:bg-[#851622] active:scale-95 transition-all mt-1"
                             >
                               <Icon name="send" className="text-[16px]" />
@@ -451,7 +457,7 @@ export const CustomerOrderDetailPage: React.FC = () => {
                   <div className="flex flex-col gap-2">
                     <button
                       type="button"
-                      onClick={() => customerApproveDesign(activeOrderId)}
+                      onClick={() => customerApproveDesign(currentOrder.id)}
                       className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-md active:scale-95 transition-transform"
                     >
                       <Icon name="check_circle" className="text-[18px]" />

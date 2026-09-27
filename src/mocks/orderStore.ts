@@ -126,6 +126,39 @@ if (typeof window !== 'undefined') {
   });
 }
 
+/**
+ * Recursively cleans an object for Firestore by converting undefined fields to null
+ * or stripping them, as Firestore throws on undefined values.
+ */
+export function sanitizeForFirestore<T>(data: T): any {
+  if (data === undefined) return null;
+  if (data === null || typeof data !== 'object') return data;
+  if (data instanceof Date) return data.toISOString();
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeForFirestore(item));
+  }
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      clean[key] = sanitizeForFirestore(value);
+    }
+  }
+  return clean;
+}
+
+export function syncOrderToFirestore(order: Order): Promise<void> {
+  if (!db || !order?.id) return Promise.resolve();
+  try {
+    const cleanDoc = sanitizeForFirestore(order);
+    return setDoc(doc(db, 'orders', order.id), cleanDoc, { merge: true }).catch((err) => {
+      console.warn('Firestore setDoc failed for order ' + order.id + ':', err);
+    });
+  } catch (e) {
+    console.warn('Failed to serialize order for Firestore:', e);
+    return Promise.resolve();
+  }
+}
+
 // Optional Firestore Real-time Sync (for multi-browser / incognito / cross-device)
 let isFirestoreListening = false;
 function initFirestoreSync() {
@@ -135,14 +168,52 @@ function initFirestoreSync() {
     onSnapshot(
       collection(db, 'orders'),
       (snapshot) => {
-        const firestoreOrders: Order[] = [];
+        const remoteList: Order[] = [];
         snapshot.forEach((docSnap) => {
           const raw = docSnap.data();
-          firestoreOrders.push(normalizeOrder(raw, docSnap.id));
+          remoteList.push(normalizeOrder(raw, docSnap.id));
         });
 
-        // If Firestore has data or is confirmed empty, reflect exact remote state
-        currentOrders = firestoreOrders;
+        // Merge smartly between remote Firestore and local storage:
+        // Do NOT let an older Firestore snapshot overwrite newer approved/advanced local progress!
+        const localMap = new Map<string, Order>(currentOrders.map((o) => [o.id, o]));
+        const merged: Order[] = [];
+
+        remoteList.forEach((remoteOrd) => {
+          const localOrd = localMap.get(remoteOrd.id);
+          if (!localOrd) {
+            merged.push(remoteOrd);
+          } else {
+            const localStage = Number(localOrd.currentStage || 1);
+            const remoteStage = Number(remoteOrd.currentStage || 1);
+            const localIsPaid = localOrd.paymentStatus === 'paid';
+            const remoteIsPaid = remoteOrd.paymentStatus === 'paid';
+
+            const localUpdated = new Date(localOrd.updatedAt || localOrd.createdAt || 0).getTime();
+            const remoteUpdated = new Date(remoteOrd.updatedAt || remoteOrd.createdAt || 0).getTime();
+
+            if (
+              (localIsPaid && !remoteIsPaid) ||
+              localStage > remoteStage ||
+              localUpdated > remoteUpdated + 500
+            ) {
+              // Local is more advanced or newer -> Keep local and re-sync to Firestore!
+              merged.push(localOrd);
+              syncOrderToFirestore(localOrd);
+            } else {
+              merged.push(remoteOrd);
+            }
+          }
+          localMap.delete(remoteOrd.id);
+        });
+
+        // Retain any locally created orders not yet on Firestore and sync them up
+        localMap.forEach((localOrd) => {
+          merged.push(localOrd);
+          syncOrderToFirestore(localOrd);
+        });
+
+        currentOrders = merged;
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(currentOrders));
         } catch (e) {}
@@ -177,10 +248,10 @@ function notify(updatedOrder?: Order) {
   } catch (e) {}
 
   // Sync to Firestore for multi-browser / incognito / mobile
-  if (updatedOrder && db) {
-    try {
-      setDoc(doc(db, 'orders', updatedOrder.id), updatedOrder, { merge: true }).catch(() => {});
-    } catch (e) {}
+  if (updatedOrder) {
+    syncOrderToFirestore(updatedOrder);
+  } else {
+    currentOrders.forEach((ord) => syncOrderToFirestore(ord));
   }
 
   listeners.forEach((fn) => fn());
@@ -462,6 +533,8 @@ export function adminAdvanceStage(orderId: string, nextStage: OrderStatusStage):
         ...ord,
         currentStage: nextStage,
         orderStatus: STAGE_TO_ORDER_STATUS[nextStage],
+        paymentStatus: nextStage >= 2 ? 'paid' : ord.paymentStatus,
+        paymentDate: nextStage >= 2 && !ord.paymentDate ? now : ord.paymentDate,
         updatedAt: now,
       };
       return targetOrder;
@@ -491,6 +564,7 @@ export function adminAdvanceStage(orderId: string, nextStage: OrderStatusStage):
 export function adminCompleteDesign(orderId: string, customUrl?: string): Order {
   const now = new Date().toISOString();
   let customerUserId = '01';
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
       customerUserId = ord.userId || '01';
@@ -505,18 +579,21 @@ export function adminCompleteDesign(orderId: string, customUrl?: string): Order 
             .replace(/^-|-$/g, '')
         : 'minhanh-ducminh';
       const defaultUrl = `https://nhacotiec.vn/invitation/${brideGroomSlug || 'khach-hang'}`;
-      return {
+      targetOrder = {
         ...ord,
+        paymentStatus: 'paid',
+        paymentDate: ord.paymentDate || now,
         currentStage: 7,
         orderStatus: 'completed',
         invitationUrl: customUrl || ord.invitationUrl || defaultUrl,
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
 
   // Trigger system notification to customer
   createSystemNotification(
@@ -541,9 +618,10 @@ export function customerSubmitWeddingInfo(
   data?: Partial<WeddingInformation>
 ): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
-      return {
+      targetOrder = {
         ...ord,
         weddingInfo: {
           ...(ord.weddingInfo || {
@@ -560,11 +638,12 @@ export function customerSubmitWeddingInfo(
         weddingInfoSubmitted: true,
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
   return getOrderById(orderId)!;
 }
 
@@ -578,6 +657,7 @@ export function customerSubmitAlbum(
   photos: string[]
 ): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
       const existingInfo = ord.weddingInfo || {
@@ -588,7 +668,7 @@ export function customerSubmitAlbum(
         venueName: 'Trung tâm Hội nghị Tiệc cưới GEM Center',
         venueAddress: 'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh',
       };
-      return {
+      targetOrder = {
         ...ord,
         weddingInfo: {
           ...existingInfo,
@@ -599,11 +679,12 @@ export function customerSubmitAlbum(
         albumSubmitted: true,
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
   return getOrderById(orderId)!;
 }
 
@@ -615,6 +696,7 @@ export function customerSubmitRevision(
   data: { topics: string[]; content: string; referenceUrl?: string }
 ): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
       const newRev = {
@@ -626,18 +708,19 @@ export function customerSubmitRevision(
         createdAt: now,
         status: 'pending' as const,
       };
-      return {
+      targetOrder = {
         ...ord,
         currentStage: 6,
         orderStatus: 'revision',
         updatedAt: now,
         revisionRequests: [newRev, ...(ord.revisionRequests || [])],
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
   return getOrderById(orderId)!;
 }
 
@@ -647,19 +730,21 @@ export function customerSubmitRevision(
  */
 export function customerCompleteDataSubmission(orderId: string): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
-      return {
+      targetOrder = {
         ...ord,
         currentStage: 3,
         orderStatus: 'information_received',
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
 
   createSystemNotification(
     'order',
@@ -679,6 +764,7 @@ export function customerCompleteDataSubmission(orderId: string): Order {
  */
 export function customerApproveDesign(orderId: string): Order {
   const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
   currentOrders = currentOrders.map((ord) => {
     if (ord.id === orderId) {
       const brideGroomSlug = ord.weddingInfo
@@ -692,18 +778,19 @@ export function customerApproveDesign(orderId: string): Order {
             .replace(/^-|-$/g, '')
         : 'minhanh-ducminh';
       const defaultUrl = `https://nhacotiec.vn/invitation/${brideGroomSlug || 'khach-hang'}`;
-      return {
+      targetOrder = {
         ...ord,
         currentStage: 7,
         orderStatus: 'completed',
         invitationUrl: ord.invitationUrl || defaultUrl,
         updatedAt: now,
       };
+      return targetOrder;
     }
     return ord;
   });
 
-  notify();
+  notify(targetOrder);
 
   createSystemNotification(
     'invitation',
