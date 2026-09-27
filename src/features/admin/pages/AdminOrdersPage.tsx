@@ -63,7 +63,9 @@ export const AdminOrdersPage: React.FC = () => {
     });
   }, [orders, selectedStage, searchQuery]);
 
-  const pendingConfirmations = orders.filter((o) => o.paymentStatus === 'pending_confirmation');
+  const pendingConfirmations = orders.filter(
+    (o) => o.paymentStatus !== 'paid' && o.currentStage <= 2
+  );
 
   const handleQuickAdvance = (orderId: string, current: OrderStatusStage) => {
     if (current < 8) {
@@ -152,19 +154,19 @@ export const AdminOrdersPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-label-caps text-[10px] font-bold text-amber-950 uppercase tracking-wider bg-amber-200 px-2 py-0.5 rounded-full border border-amber-300">
-                    Cần Admin xác nhận
+                    Cần Admin duyệt thanh toán
                   </span>
                   <span className="text-xs text-amber-900 font-semibold">
-                    {pendingConfirmations.length} yêu cầu chuyển khoản chờ duyệt
+                    {pendingConfirmations.length} đơn hàng chưa hoàn tất thanh toán
                   </span>
                 </div>
                 <h2 className="font-serif text-base font-bold text-deep-espresso mt-0.5">
-                  Khách hàng đã gửi xác nhận chuyển khoản ngân hàng
+                  Đối soát giao dịch chuyển khoản &amp; Duyệt thanh toán để kích hoạt thiệp
                 </h2>
               </div>
             </div>
             <span className="text-[11px] text-amber-800 font-medium">
-              Khách hàng chưa thể tự đánh dấu đơn là Đã thanh toán
+              Bấm "Duyệt thanh toán" để hệ thống tự động gửi thông báo cho khách hàng
             </span>
           </div>
 
@@ -436,38 +438,36 @@ export const AdminOrdersPage: React.FC = () => {
                   </td>
                   <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {ord.paymentStatus === 'pending_confirmation' ? (
+                      {ord.paymentStatus !== 'paid' ? (
                         <>
                           <button
                             type="button"
                             onClick={() => adminConfirmPayment(ord.id)}
-                            className="px-2.5 py-1 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors"
-                            title="Xác nhận thanh toán"
+                            className="px-2.5 py-1 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-semibold flex items-center gap-1 shadow-xs transition-colors"
+                            title="Xác nhận & Duyệt thanh toán cho đơn hàng này"
                           >
-                            <Icon name="check" className="text-[14px]" />
-                            <span>Duyệt</span>
+                            <Icon name="check_circle" className="text-[14px]" />
+                            <span>Duyệt TT</span>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReject(ord.id)}
-                            className="px-2 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-[11px] font-semibold flex items-center gap-1 transition-colors"
-                            title="Yêu cầu kiểm tra lại"
-                          >
-                            <Icon name="close" className="text-[14px]" />
-                            <span>Từ chối</span>
-                          </button>
+                          {ord.paymentStatus === 'pending_confirmation' && (
+                            <button
+                              type="button"
+                              onClick={() => handleReject(ord.id)}
+                              className="px-2 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                              title="Yêu cầu kiểm tra lại"
+                            >
+                              <Icon name="close" className="text-[14px]" />
+                              <span>Từ chối</span>
+                            </button>
+                          )}
                         </>
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleQuickAdvance(ord.id, ord.currentStage)}
-                          disabled={ord.currentStage === 8 || ord.paymentStatus !== 'paid'}
+                          disabled={ord.currentStage === 8}
                           className="px-2.5 py-1 rounded-full bg-surface-subtle hover:bg-surface-container-high text-deep-espresso text-[11px] font-medium border border-border-delicate disabled:opacity-30 disabled:cursor-not-allowed"
-                          title={
-                            ord.paymentStatus !== 'paid'
-                              ? 'Chưa thể chuyển bước khi chưa thanh toán'
-                              : 'Chuyển sang bước tiếp theo'
-                          }
+                          title="Chuyển sang bước tiếp theo"
                         >
                           +1 Bước
                         </button>
@@ -575,30 +575,35 @@ export const AdminOrdersPage: React.FC = () => {
                   </span>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    {ord.paymentStatus === 'pending_confirmation' ? (
+                    {ord.paymentStatus !== 'paid' ? (
                       <>
                         <button
                           type="button"
                           onClick={() => adminConfirmPayment(ord.id)}
-                          className="px-2.5 py-1 rounded-full bg-emerald-700 text-white text-[10px] font-semibold flex items-center gap-1"
+                          className="px-2.5 py-1 rounded-full bg-emerald-700 text-white text-[10px] font-semibold flex items-center gap-1 shadow-xs transition-colors"
+                          title="Duyệt thanh toán"
                         >
-                          <Icon name="check" className="text-[12px]" />
-                          <span>Duyệt</span>
+                          <Icon name="check_circle" className="text-[12px]" />
+                          <span>Duyệt TT</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleReject(ord.id)}
-                          className="px-2 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 text-[10px] font-semibold"
-                        >
-                          Từ chối
-                        </button>
+                        {ord.paymentStatus === 'pending_confirmation' && (
+                          <button
+                            type="button"
+                            onClick={() => handleReject(ord.id)}
+                            className="px-2 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200 text-[10px] font-semibold"
+                            title="Yêu cầu kiểm tra lại"
+                          >
+                            Từ chối
+                          </button>
+                        )}
                       </>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleQuickAdvance(ord.id, ord.currentStage)}
-                        disabled={ord.currentStage === 8 || ord.paymentStatus !== 'paid'}
+                        disabled={ord.currentStage === 8}
                         className="px-2 py-1 rounded-full bg-surface-subtle text-deep-espresso text-[10px] font-medium border border-border-delicate disabled:opacity-30"
+                        title="Chuyển sang bước tiếp theo"
                       >
                         +1 Bước
                       </button>

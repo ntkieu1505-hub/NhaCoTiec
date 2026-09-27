@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { useOrders } from '../../../mocks/orderStore';
-import { useAuth } from '../../../mocks/authStore';
+import { useAuth, ADMIN_EMAILS } from '../../../mocks/authStore';
 import { User } from '../../../types';
 import { formatDateTime } from '../../../utils/formatters';
 import { matchQuery } from '../../../utils/searchHelper';
@@ -23,9 +23,9 @@ export const AdminUsersPage: React.FC = () => {
     // 1. Current Administrator
     list.push({
       id: currentAdmin?.id || 'admin-01',
-      fullName: currentAdmin?.name || 'Admin Tuyết Nga (Quản trị viên)',
+      fullName: currentAdmin?.name || 'Quản trị viên Nhà Có Tiệc',
       phone: currentAdmin?.phone || '0901 000 999',
-      email: currentAdmin?.email || 'admin@nhacotiec.vn',
+      email: currentAdmin?.email || ADMIN_EMAILS[0],
       role: 'admin',
       orderCount: 0,
       status: 'active',

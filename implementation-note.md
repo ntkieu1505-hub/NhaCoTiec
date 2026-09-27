@@ -99,3 +99,9 @@ Hệ thống hiện đang chạy trên gói miễn phí **Firebase Spark Plan** 
   1. Mở cửa sổ trình duyệt bình thường: Đăng nhập tài khoản Admin (`kieumllnn@gmail.com`) và vào trang `/admin/don-hang`.
   2. Mở một cửa sổ **Ẩn danh (Incognito)**: Đăng ký một tài khoản khách hàng mới, chọn mẫu thiệp và gửi form đặt thiệp.
   3. Bạn sẽ thấy tab Admin bên kia **ngay lập tức nhận được thông báo đơn hàng mới** và hiển thị đơn hàng trong danh sách mà không cần bấm F5 tải lại trang!
+
+### 4.5. Duyệt Thanh Toán Trực Tiếp & Bảo Mật Quyền Quản Trị Tuyệt Đối (Cập nhật mới)
+- **Nút "Duyệt thanh toán":** Hiển thị trực tiếp và nổi bật ở mọi đơn hàng chưa thanh toán (`paymentStatus !== 'paid'`) trong danh sách đơn (`AdminOrdersPage`), chi tiết đơn (`AdminOrderDetailPage`) và trên cả giao diện di động. Admin có thể chủ động đối soát và bấm duyệt bất cứ lúc nào.
+- **Tự động gửi thông báo khách hàng:** Ngay khi Admin bấm "Duyệt thanh toán", hệ thống tự động bắn một thông báo thời gian thực đến Cổng khách hàng (`CustomerLayout` & `CustomerDashboardPage`), hiển thị chuông đỏ và thông báo chúc mừng thiệp đang bắt đầu được thiết kế.
+- **Khóa hoàn toàn tài khoản demo `admin@nhacotiec*`:** Loại bỏ hoàn toàn email demo `admin@nhacotiec.vn` khỏi danh sách Admin, thiết lập danh sách cấm (`BLOCKED_ADMIN_EMAILS`) và tự động chặn/đăng xuất bất kỳ phiên nào cố gắng đăng nhập với tài khoản này. Chỉ các email cá nhân được cấp quyền trước đó mới có thể truy cập `/admin`.
+- **Đồng bộ Hotline & Zalo chân trang (Footer):** Số điện thoại và đường dẫn Zalo ở chân trang trên toàn bộ website hiện được đồng bộ động 100% với thông tin Admin cấu hình trong trang Cài đặt CMS.

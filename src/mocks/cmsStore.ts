@@ -539,18 +539,38 @@ export function updateFooter(data: Partial<SiteFooter>): SiteFooter {
 }
 
 export function updateContactContent(data: Partial<ContactPageContent>): ContactPageContent {
+  const updatedContact = { ...currentCmsContent.contact, ...data };
+  const updatedFooter = {
+    ...currentCmsContent.footer,
+    ...(data.hotline ? { hotline: data.hotline } : {}),
+    ...(data.phone ? { phone: data.phone } : {}),
+    ...(data.zaloUrl ? { zaloUrl: data.zaloUrl } : {}),
+    ...(data.email ? { email: data.email } : {}),
+    ...(data.address ? { address: data.address } : {}),
+    ...(data.workingHours ? { workingHours: data.workingHours, openingHours: data.workingHours } : {}),
+  };
   currentCmsContent = {
     ...currentCmsContent,
-    contact: { ...currentCmsContent.contact, ...data },
+    contact: updatedContact,
+    footer: updatedFooter,
   };
   notify('Cập nhật thông tin trang Liên hệ & hỗ trợ Zalo');
   return { ...currentCmsContent.contact };
 }
 
 export function updateSiteSettings(data: Partial<SiteSettings>): SiteSettings {
+  const updatedSettings = { ...currentCmsContent.settings, ...data };
+  const updatedFooter = {
+    ...currentCmsContent.footer,
+    ...(data.hotline ? { hotline: data.hotline } : {}),
+    ...(data.zaloPhone ? { phone: data.zaloPhone } : {}),
+    ...(data.zaloSupportUrl ? { zaloUrl: data.zaloSupportUrl } : {}),
+    ...(data.supportEmail ? { email: data.supportEmail } : {}),
+  };
   currentCmsContent = {
     ...currentCmsContent,
-    settings: { ...currentCmsContent.settings, ...data },
+    settings: updatedSettings,
+    footer: updatedFooter,
   };
   notify('Cập nhật cấu hình website & kênh hỗ trợ Zalo');
   return { ...currentCmsContent.settings };

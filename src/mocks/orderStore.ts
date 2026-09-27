@@ -393,8 +393,8 @@ export function adminConfirmPayment(orderId: string): Order {
     'payment',
     orderId,
     customerUserId,
-    'Thanh toán đã được xác nhận',
-    `Đơn hàng #${orderId} của bạn đã được Admin xác nhận thanh toán thành công.`,
+    'Thanh toán đã được xác nhận thành công 🎉',
+    `Đơn hàng #${orderId} của bạn đã được Admin xác nhận thanh toán thành công. Đội ngũ Nhà Có Tiệc đã bắt đầu xử lý và thiết kế thiệp cưới cho bạn!`,
     `/dashboard/don-hang/${orderId}`
   );
 

@@ -22,10 +22,15 @@ export const ADMIN_EMAILS: string[] = [
   'vutrang280805@gmail.com',
   'haiyenng4598@gmail.com',
   'tranthihuyentrang07122005@gmail.com',
-  'admin@nhacotiec.vn',
   ...((import.meta as any).env?.VITE_ADMIN_EMAILS
     ? String((import.meta as any).env.VITE_ADMIN_EMAILS).split(',').map((e: string) => e.trim().toLowerCase())
     : []),
+];
+
+export const BLOCKED_ADMIN_EMAILS: string[] = [
+  'admin@nhacotiec',
+  'admin@nhacotiec.vn',
+  'admin@nhacotiec.com',
 ];
 
 /**
@@ -34,6 +39,9 @@ export const ADMIN_EMAILS: string[] = [
 export function isAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
+  if (BLOCKED_ADMIN_EMAILS.some((b) => normalized === b || normalized.startsWith('admin@nhacotiec'))) {
+    return false;
+  }
   return ADMIN_EMAILS.some((adminEmail) => adminEmail.toLowerCase() === normalized);
 }
 
@@ -98,7 +106,13 @@ function notify() {
 // Global Firebase auth state listener
 onAuthStateChanged(auth, (firebaseUser) => {
   if (firebaseUser) {
-    currentUser = mapFirebaseUser(firebaseUser);
+    const email = firebaseUser.email?.trim().toLowerCase() || '';
+    if (BLOCKED_ADMIN_EMAILS.some((b) => email === b || email.startsWith('admin@nhacotiec'))) {
+      signOut(auth).catch(() => {});
+      currentUser = null;
+    } else {
+      currentUser = mapFirebaseUser(firebaseUser);
+    }
   } else {
     currentUser = null;
   }
@@ -117,6 +131,11 @@ export function getCurrentUser(): AuthUser | null {
  * Log in with Email and Password via Firebase
  */
 export async function loginWithEmail(email: string, password: string): Promise<{ user: AuthUser; redirectTo: string }> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (BLOCKED_ADMIN_EMAILS.some((b) => normalizedEmail === b || normalizedEmail.startsWith('admin@nhacotiec'))) {
+    throw new Error('Tài khoản này đã bị thu hồi quyền truy cập trang quản trị. Vui lòng đăng nhập bằng email quản trị viên cá nhân đã được cấp phép.');
+  }
+
   const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
   const user = mapFirebaseUser(credential.user);
   currentUser = user;

@@ -2,14 +2,31 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Icon } from '../common/Icon';
 import { SocialIcon, SOCIAL_PLATFORMS_LIST } from '../common/SocialIcon';
-import { useCmsContent, DEFAULT_CMS_CONTENT } from '../../mocks/cmsStore';
+import { useCmsContent, DEFAULT_CMS_CONTENT, useZaloSupportUrl } from '../../mocks/cmsStore';
 import { useAuth } from '../../mocks/authStore';
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const cms = useCmsContent();
+  const zaloUrl = useZaloSupportUrl();
   const { isAuthenticated, isAdmin, logout } = useAuth();
+
+  const displayHotline =
+    cms.settings?.hotline ||
+    cms.contact?.hotline ||
+    cms.contact?.phone ||
+    cms.footer?.hotline ||
+    cms.footer?.phone ||
+    '0982 123 456';
+  const displayZaloPhone =
+    cms.settings?.zaloPhone ||
+    cms.orderForm?.supportZalo ||
+    cms.contact?.phone ||
+    cms.settings?.hotline ||
+    cms.footer?.phone ||
+    cms.footer?.hotline ||
+    displayHotline;
 
   const socialConfig = cms.socialLinks || DEFAULT_CMS_CONTENT.socialLinks;
   const activeSocials = SOCIAL_PLATFORMS_LIST.map((platform) => {
@@ -227,26 +244,23 @@ export const PublicLayout: React.FC = () => {
               <div className="flex items-center gap-2 text-sm text-text-muted">
                 <Icon name="call" className="text-[16px] text-gold-foil" />
                 <a
-                  href={`tel:${(cms.footer.hotline || cms.footer.phone || '0982 123 456').replace(/\s+/g, '')}`}
+                  href={`tel:${displayHotline.replace(/\s+/g, '')}`}
                   className="hover:text-surface-cream transition-colors"
                 >
-                  Hotline: {cms.footer.hotline || cms.footer.phone || '0982 123 456'}
+                  Hotline: {displayHotline}
                 </a>
               </div>
               <div className="flex items-center gap-2 text-sm text-text-muted">
                 <Icon name="chat" className="text-[16px] text-gold-foil" />
-                {cms.footer.zaloUrl ? (
-                  <a
-                    href={cms.footer.zaloUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-surface-cream transition-colors underline underline-offset-2"
-                  >
-                    Zalo: {cms.footer.phone || cms.footer.hotline || 'Nhà Có Tiệc CSKH'}
-                  </a>
-                ) : (
-                  <span>Zalo: {cms.footer.phone || cms.footer.hotline || 'Nhà Có Tiệc CSKH'}</span>
-                )}
+                <a
+                  href={zaloUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-surface-cream transition-colors underline underline-offset-2 flex items-center gap-1.5"
+                >
+                  <span>Zalo: {displayZaloPhone}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-foil/20 text-gold-foil font-medium">Hỗ trợ 24/7</span>
+                </a>
               </div>
               {cms.footer.email && (
                 <div className="flex items-center gap-2 text-sm text-text-muted">

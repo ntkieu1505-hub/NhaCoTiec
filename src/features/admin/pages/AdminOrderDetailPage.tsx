@@ -169,6 +169,16 @@ export const AdminOrderDetailPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {order.paymentStatus !== 'paid' && (
+            <button
+              type="button"
+              onClick={() => adminConfirmPayment(order.id)}
+              className="px-4 py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <Icon name="check_circle" className="text-[16px]" />
+              <span>Duyệt thanh toán ngay</span>
+            </button>
+          )}
           <Link
             to="/admin/don-hang"
             className="px-3.5 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
@@ -202,16 +212,23 @@ export const AdminOrderDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* PENDING PAYMENT ACTION BANNER (IF APPLICABLE) */}
-      {order.paymentStatus === 'pending_confirmation' && (
+      {/* PAYMENT ACTION BANNER (FOR ANY UNPAID OR PENDING ORDER) */}
+      {order.paymentStatus !== 'paid' && (
         <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-amber-950 font-bold text-sm">
-              <Icon name="hourglass_top" className="text-[20px] text-amber-700 animate-spin" />
-              <span>Khách hàng yêu cầu đối soát thanh toán chuyển khoản ngân hàng</span>
+              <Icon
+                name={order.paymentStatus === 'pending_confirmation' ? 'hourglass_top' : 'account_balance_wallet'}
+                className="text-[20px] text-amber-700"
+              />
+              <span>
+                {order.paymentStatus === 'pending_confirmation'
+                  ? 'Khách hàng đã gửi yêu cầu đối soát thanh toán chuyển khoản'
+                  : 'Đơn hàng đang ở trạng thái Chưa thanh toán - Admin có thể bấm Duyệt thanh toán ngay bên dưới'}
+              </span>
             </div>
             <span className="text-xs text-amber-900">
-              Gửi lúc: {formatDateTime(order.paymentSubmissionTime || order.updatedAt)}
+              Cập nhật: {formatDateTime(order.paymentSubmissionTime || order.updatedAt)}
             </span>
           </div>
           <div className="p-3 rounded-xl bg-surface-card/80 border border-amber-200 text-xs flex flex-col gap-1.5">
@@ -238,23 +255,25 @@ export const AdminOrderDetailPage: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
             <button
               type="button"
               onClick={() => adminConfirmPayment(order.id)}
-              className="px-5 h-10 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+              className="px-5 h-10 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
             >
               <Icon name="check_circle" className="text-[18px]" />
-              <span>Xác nhận thanh toán (Chuyển sang Đã thanh toán)</span>
+              <span>Xác nhận &amp; Duyệt thanh toán (Chuyển sang Đã thanh toán)</span>
             </button>
-            <button
-              type="button"
-              onClick={handleRejectPayment}
-              className="px-4 h-10 rounded-full bg-surface-card hover:bg-rose-50 text-rose-800 border border-rose-300 text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
-            >
-              <Icon name="cancel" className="text-[16px]" />
-              <span>Yêu cầu kiểm tra lại</span>
-            </button>
+            {order.paymentStatus === 'pending_confirmation' && (
+              <button
+                type="button"
+                onClick={handleRejectPayment}
+                className="px-4 h-10 rounded-full bg-surface-card hover:bg-rose-50 text-rose-800 border border-rose-300 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <Icon name="cancel" className="text-[16px]" />
+                <span>Yêu cầu kiểm tra lại</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -345,6 +364,18 @@ export const AdminOrderDetailPage: React.FC = () => {
           </div>
 
           <div className="pt-2 mt-auto border-t border-border-delicate flex flex-col gap-2">
+            {order.paymentStatus !== 'paid' && (
+              <button
+                type="button"
+                onClick={() => adminConfirmPayment(order.id)}
+                className="w-full h-9 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                title="Duyệt thanh toán để mở khóa quy trình 8 bước"
+              >
+                <Icon name="check_circle" className="text-[16px]" />
+                <span>Duyệt thanh toán ngay</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleQuickAdvance}

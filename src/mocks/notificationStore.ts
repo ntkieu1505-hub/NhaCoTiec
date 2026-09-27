@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Notification, NotificationType } from '../types/notification';
 
 const STORAGE_KEY = 'nha_co_tiec_notifications_v1';
@@ -105,8 +105,15 @@ export function getNotifications(): Notification[] {
   return [...notifications];
 }
 
-export function getUserNotifications(userId: string): Notification[] {
-  return notifications.filter((n) => n.userId === userId);
+export function getUserNotifications(userId?: string, extraOrderIds: string[] = []): Notification[] {
+  if (!userId) return [...notifications];
+  const orderIdSet = new Set(extraOrderIds);
+  return notifications.filter((n) => {
+    if (n.userId === userId) return true;
+    if (n.orderId && orderIdSet.has(n.orderId)) return true;
+    if (userId === '01' && (n.userId === '01' || !n.userId)) return true;
+    return false;
+  });
 }
 
 export function markNotificationAsRead(id: string): void {
@@ -117,11 +124,13 @@ export function markNotificationAsRead(id: string): void {
   notify();
 }
 
-export function markAllNotificationsAsRead(userId: string): void {
+export function markAllNotificationsAsRead(userId: string, extraOrderIds: string[] = []): void {
   const now = new Date().toISOString();
-  notifications = notifications.map((n) =>
-    n.userId === userId ? { ...n, isRead: true, readAt: n.readAt || now } : n
-  );
+  const orderIdSet = new Set(extraOrderIds);
+  notifications = notifications.map((n) => {
+    const isTarget = n.userId === userId || (n.orderId && orderIdSet.has(n.orderId));
+    return isTarget ? { ...n, isRead: true, readAt: n.readAt || now } : n;
+  });
   notify();
 }
 
@@ -187,20 +196,21 @@ export function createSystemNotification(
 /**
  * Reactive hook for customer or admin notifications
  */
-export function useNotifications(userId?: string) {
+export function useNotifications(userId?: string, extraOrderIds: string[] = []) {
+  const extraKey = extraOrderIds.join(',');
   const [data, setData] = useState<Notification[]>(() =>
-    userId ? getUserNotifications(userId) : getNotifications()
+    userId ? getUserNotifications(userId, extraOrderIds) : getNotifications()
   );
 
   useEffect(() => {
     const handler = () => {
-      setData(userId ? getUserNotifications(userId) : getNotifications());
+      setData(userId ? getUserNotifications(userId, extraOrderIds) : getNotifications());
     };
     listeners.add(handler);
     return () => {
       listeners.delete(handler);
     };
-  }, [userId]);
+  }, [userId, extraKey]);
 
   const unreadCount = data.filter((n) => !n.isRead).length;
 
@@ -210,7 +220,7 @@ export function useNotifications(userId?: string) {
     markAsRead: markNotificationAsRead,
     markAllAsRead: () => {
       if (userId) {
-        markAllNotificationsAsRead(userId);
+        markAllNotificationsAsRead(userId, extraOrderIds);
       }
     },
     createNotification,

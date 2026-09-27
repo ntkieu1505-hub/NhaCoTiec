@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Outlet, NavLink, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon } from '../common/Icon';
-import { useAuth } from '../../mocks/authStore';
+import { useAuth, ADMIN_EMAILS } from '../../mocks/authStore';
 import { useOrders } from '../../mocks/orderStore';
 import { getAllTemplates } from '../../mocks/templateStore';
 import { ORDER_STAGES } from '../../utils/constants';
@@ -355,9 +355,9 @@ export const AdminLayout: React.FC = () => {
     const realUsers: { id: string; fullName: string; phone: string; email: string; role: string; orderCount: number }[] = [
       {
         id: user?.id || 'admin-01',
-        fullName: user?.name || 'Admin Tuyết Nga',
+        fullName: user?.name || 'Quản trị viên',
         phone: user?.phone || '0901 000 999',
-        email: user?.email || 'admin@nhacotiec.vn',
+        email: user?.email || ADMIN_EMAILS[0],
         role: 'admin',
         orderCount: 0,
       },

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from '../common/Icon';
 import { useZaloSupportUrl, useCmsContent } from '../../mocks/cmsStore';
@@ -16,7 +16,23 @@ export const CustomerLayout: React.FC = () => {
   const allOrders = useOrders();
   const lastOrderId = getLastCustomerOrderId();
   const currentUserId = user?.id || '01';
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(currentUserId);
+
+  const customerOrderIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (lastOrderId) ids.add(lastOrderId);
+    allOrders.forEach((o) => {
+      if (
+        (user?.id && o.userId === user.id) ||
+        (user?.email && o.customerEmail && o.customerEmail.toLowerCase() === user.email.toLowerCase()) ||
+        (user?.phone && o.customerPhone && o.customerPhone === user.phone)
+      ) {
+        ids.add(o.id);
+      }
+    });
+    return Array.from(ids);
+  }, [allOrders, user, lastOrderId]);
+
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(currentUserId, customerOrderIds);
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 

@@ -220,8 +220,8 @@ flowchart LR
 - `vutrang280805@gmail.com`
 - `haiyenng4598@gmail.com`
 - `tranthihuyentrang07122005@gmail.com`
-- `admin@nhacotiec.vn`
 - Hỗ trợ biến môi trường mở rộng: `VITE_ADMIN_EMAILS` trên Vercel.
+- *Lưu ý bảo mật:* Tài khoản `admin@nhacotiec*` bị chặn truy cập quản trị viên hoàn toàn nhằm đảm bảo an toàn tuyệt đối.
 
 ---
 

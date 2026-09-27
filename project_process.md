@@ -88,7 +88,7 @@
   - `vutrang280805@gmail.com`
   - `haiyenng4598@gmail.com`
   - `tranthihuyentrang07122005@gmail.com`
-  - `admin@nhacotiec.vn`
+- *Lưu ý bảo mật:* Tài khoản `admin@nhacotiec` / `admin@nhacotiec.vn` với mật khẩu 123456 đã bị chặn truy cập quản trị viên hoàn toàn để đảm bảo an toàn. Chỉ các email cá nhân trong allowlist trên mới được cấp quyền Admin.
 - Khi cần cấp quyền quản trị cho nhân sự mới, có 2 cách:
   - **Cách 1:** Thêm email vào mảng `ADMIN_EMAILS` trong `authStore.ts`, sau đó commit và push.
   - **Cách 2:** Thêm biến môi trường `VITE_ADMIN_EMAILS` trên trang cấu hình Vercel (các email cách nhau bởi dấu phẩy).
