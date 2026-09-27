@@ -256,10 +256,9 @@ export const PublicLayout: React.FC = () => {
                   href={zaloUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-surface-cream transition-colors underline underline-offset-2 flex items-center gap-1.5"
+                  className="hover:text-surface-cream transition-colors underline underline-offset-2"
                 >
-                  <span>Zalo: {displayZaloPhone}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold-foil/20 text-gold-foil font-medium">Hỗ trợ 24/7</span>
+                  Zalo: {displayZaloPhone}
                 </a>
               </div>
               {cms.footer.email && (

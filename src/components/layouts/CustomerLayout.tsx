@@ -379,7 +379,7 @@ export const CustomerLayout: React.FC = () => {
       {/* Bottom Floating Bar / Footer note */}
       <div className="max-w-xl mx-auto w-full py-4 text-center text-xs text-text-muted">
         <span>
-          Cổng Khách Hàng {cms.footer?.brandName || 'Nhà Có Tiệc'} • Hotline kỹ thuật 24/7:{' '}
+          Cổng Khách Hàng {cms.footer?.brandName || 'Nhà Có Tiệc'} • Hotline kỹ thuật:{' '}
           <a
             href={`tel:${(cms.footer?.hotline || cms.footer?.phone || cms.contact?.hotline || '0982 123 456').replace(/\s+/g, '')}`}
             className="font-semibold text-deep-espresso hover:text-burgundy-wine underline"
