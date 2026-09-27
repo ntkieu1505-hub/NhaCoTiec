@@ -2427,6 +2427,7 @@ export const AdminCmsPage: React.FC = () => {
                   setFormData({
                     ...formData,
                     contact: { ...formData.contact, address: e.target.value },
+                    footer: { ...formData.footer, address: e.target.value },
                   })
                 }
                 className="w-full px-3.5 py-2 rounded-xl border border-border-delicate bg-surface text-xs"

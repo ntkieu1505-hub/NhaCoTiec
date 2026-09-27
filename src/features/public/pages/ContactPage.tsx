@@ -127,7 +127,7 @@ export const ContactPage: React.FC = () => {
 
           <div className="pt-4 border-t border-border-delicate/70 flex flex-col gap-1.5">
             <span className="text-[10px] text-text-muted font-label-caps uppercase font-semibold tracking-wider">
-              Địa chỉ hòm thư
+              Hòm thư điện tử
             </span>
             <a
               href={`mailto:${contact.email || 'chao@nhacotiec.vn'}`}
@@ -136,9 +136,9 @@ export const ContactPage: React.FC = () => {
               <Icon name="alternate_email" className="text-[16px] text-gold-foil shrink-0" />
               <span className="truncate">{contact.email || 'chao@nhacotiec.vn'}</span>
             </a>
-            <span className="text-[11px] text-text-muted flex items-start gap-1.5 mt-0.5">
-              <Icon name="place" className="text-[14px] text-gold-foil shrink-0 mt-0.5" />
-              <span className="line-clamp-1">{contact.address || 'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh'}</span>
+            <span className="text-[11px] text-text-muted flex items-center gap-1.5 mt-0.5">
+              <Icon name="schedule" className="text-[14px] text-gold-foil shrink-0" />
+              <span>{contact.workingHours || '8:30 - 22:00 hàng ngày'}</span>
             </span>
           </div>
         </div>

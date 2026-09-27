@@ -236,7 +236,7 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
     phone: '0982 123 456',
     hotline: '0982 123 456',
     email: 'chao@nhacotiec.vn',
-    address: 'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh',
+    address: '',
     facebookUrl: 'https://facebook.com',
     tiktokUrl: 'https://tiktok.com',
     instagramUrl: 'https://instagram.com',
@@ -256,7 +256,7 @@ export const DEFAULT_CMS_CONTENT: CmsContent = {
     phone: '0982 123 456',
     hotline: '0982 123 456',
     email: 'chao@nhacotiec.vn',
-    address: 'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh',
+    address: '',
     facebookUrl: 'https://facebook.com',
     tiktokUrl: 'https://tiktok.com',
     instagramUrl: 'https://instagram.com',
@@ -328,9 +328,29 @@ let currentCmsContent: CmsContent = (() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
+      const DUMMY_DEFAULT_ADDRESSES = [
+        'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh',
+        'Số 8 Nguyễn Bỉnh Khiêm',
+      ];
+      const cleanAddress = (addr?: string) =>
+        !addr || DUMMY_DEFAULT_ADDRESSES.some((d) => addr.includes(d)) ? '' : addr;
+
+      const footerAddress = cleanAddress(parsed.footer?.address);
+      const contactAddress = cleanAddress(parsed.contact?.address);
+
       return {
         ...DEFAULT_CMS_CONTENT,
         ...parsed,
+        footer: {
+          ...DEFAULT_CMS_CONTENT.footer,
+          ...(parsed.footer || {}),
+          address: footerAddress,
+        },
+        contact: {
+          ...DEFAULT_CMS_CONTENT.contact,
+          ...(parsed.contact || {}),
+          address: contactAddress,
+        },
         orderForm: {
           ...DEFAULT_ORDER_FORM_CONFIG,
           ...(parsed.orderForm || {}),
@@ -542,12 +562,12 @@ export function updateContactContent(data: Partial<ContactPageContent>): Contact
   const updatedContact = { ...currentCmsContent.contact, ...data };
   const updatedFooter = {
     ...currentCmsContent.footer,
-    ...(data.hotline ? { hotline: data.hotline } : {}),
-    ...(data.phone ? { phone: data.phone } : {}),
-    ...(data.zaloUrl ? { zaloUrl: data.zaloUrl } : {}),
-    ...(data.email ? { email: data.email } : {}),
-    ...(data.address ? { address: data.address } : {}),
-    ...(data.workingHours ? { workingHours: data.workingHours, openingHours: data.workingHours } : {}),
+    ...(data.hotline !== undefined ? { hotline: data.hotline } : {}),
+    ...(data.phone !== undefined ? { phone: data.phone } : {}),
+    ...(data.zaloUrl !== undefined ? { zaloUrl: data.zaloUrl } : {}),
+    ...(data.email !== undefined ? { email: data.email } : {}),
+    ...(data.address !== undefined ? { address: data.address } : {}),
+    ...(data.workingHours !== undefined ? { workingHours: data.workingHours, openingHours: data.workingHours } : {}),
   };
   currentCmsContent = {
     ...currentCmsContent,
@@ -698,6 +718,12 @@ export function updateEntireCms(data: Partial<CmsContent>): CmsContent {
     if (!mergedContact.phone || DUMMY_DEFAULT_PHONES.includes(mergedContact.phone.replace(/\s+/g, ''))) {
       mergedContact.phone = customPhone;
     }
+  }
+
+  if (data.contact && data.contact.address !== undefined) {
+    mergedFooter.address = data.contact.address;
+  } else if (data.footer && data.footer.address !== undefined) {
+    mergedContact.address = data.footer.address;
   }
 
   currentCmsContent = {
