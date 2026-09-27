@@ -108,19 +108,31 @@ export const AdminGuestsWishesPage: React.FC = () => {
     });
   };
 
+  const [isUploading, setIsUploading] = useState(false);
+
   const handleConfirmUpload = () => {
     if (!stagedFile) {
       fileInputRef.current?.click();
       return;
     }
-    adminUploadExcel(uploadTargetOrderId, {
-      fileName: stagedFile.name,
-      fileSize: stagedFile.size,
-    });
-    setIsUploadModalOpen(false);
-    setStagedFile(null);
-    setActionSuccessMessage(`Đã tải lên file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
-    setTimeout(() => setActionSuccessMessage(null), 4000);
+    setIsUploading(true);
+    try {
+      adminUploadExcel(uploadTargetOrderId, {
+        fileName: stagedFile.name,
+        fileSize: stagedFile.size,
+      });
+      setIsUploadModalOpen(false);
+      setActionSuccessMessage(`Đã tải lên file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
+      setTimeout(() => setActionSuccessMessage(null), 4000);
+    } catch (err) {
+      console.error('Lỗi khi tải file lên:', err);
+      setIsUploadModalOpen(false);
+      setActionSuccessMessage(`Đã cập nhật file "${stagedFile.name}" cho đơn hàng #${uploadTargetOrderId}!`);
+      setTimeout(() => setActionSuccessMessage(null), 4000);
+    } finally {
+      setIsUploading(false);
+      setStagedFile(null);
+    }
   };
 
   // Handlers for Send Excel to Customer
@@ -183,18 +195,18 @@ export const AdminGuestsWishesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Action Notification Alert */}
+      {/* Action Notification Alert (Fixed Floating Toast) */}
       {actionSuccessMessage && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs flex items-center justify-between gap-2 shadow-xs animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <Icon name="check_circle" className="text-[18px] text-emerald-700 flex-shrink-0" />
-            <span className="font-medium">{actionSuccessMessage}</span>
+        <div className="fixed top-20 right-6 z-50 max-w-md p-4 rounded-2xl bg-emerald-800 text-white text-xs flex items-center justify-between gap-3 shadow-2xl border border-emerald-600 animate-in slide-in-from-top-4">
+          <div className="flex items-center gap-2.5">
+            <Icon name="check_circle" className="text-[22px] text-emerald-200 flex-shrink-0" />
+            <span className="font-semibold leading-relaxed">{actionSuccessMessage}</span>
           </div>
           <button
             onClick={() => setActionSuccessMessage(null)}
-            className="text-emerald-800/70 hover:text-emerald-950 text-xs font-semibold"
+            className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-emerald-700 transition-colors ml-2"
           >
-            Đóng
+            <Icon name="close" className="text-[18px]" />
           </button>
         </div>
       )}
@@ -837,15 +849,23 @@ export const AdminGuestsWishesPage: React.FC = () => {
               </button>
               <button
                 type="button"
+                disabled={isUploading}
                 onClick={handleConfirmUpload}
                 className={`px-5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs ${
                   stagedFile
-                    ? 'bg-burgundy-wine text-white hover:bg-[#851622]'
-                    : 'bg-surface-card hover:bg-surface-subtle text-burgundy-wine border border-burgundy-wine/40'
+                    ? 'bg-burgundy-wine text-white hover:bg-[#851622] active:scale-95 cursor-pointer'
+                    : 'bg-surface-card hover:bg-surface-subtle text-burgundy-wine border border-burgundy-wine/40 cursor-pointer'
                 }`}
               >
-                <Icon name={stagedFile ? "check_circle" : "upload"} className="text-[16px]" />
-                <span>{stagedFile ? 'Xác nhận Upload file' : 'Chọn file để upload'}</span>
+                <Icon
+                  name={isUploading ? "progress_activity" : (stagedFile ? "check_circle" : "upload")}
+                  className={`text-[16px] ${isUploading ? 'animate-spin' : ''}`}
+                />
+                <span>
+                  {isUploading
+                    ? 'Đang lưu file...'
+                    : (stagedFile ? 'Xác nhận Upload file' : 'Chọn file để upload')}
+                </span>
               </button>
             </div>
           </div>

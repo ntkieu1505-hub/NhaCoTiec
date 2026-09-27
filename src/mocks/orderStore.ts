@@ -1003,14 +1003,25 @@ function notifyExports(updatedOrderId?: string) {
     console.error('Failed to save exports to localStorage', e);
   }
 
-  // Sync to Firestore
+  // Sync to Firestore safely
   if (updatedOrderId && db && currentExports[updatedOrderId]) {
-    setDoc(doc(db, 'customerExports', updatedOrderId), currentExports[updatedOrderId], { merge: true }).catch((err) => {
-      console.warn('Failed to sync customer export to Firestore:', err);
-    });
+    try {
+      const sanitized = JSON.parse(JSON.stringify(currentExports[updatedOrderId]));
+      setDoc(doc(db, 'customerExports', updatedOrderId), sanitized, { merge: true }).catch((err) => {
+        console.warn('Failed to sync customer export to Firestore:', err);
+      });
+    } catch (e) {
+      console.warn('Failed to prepare customer export for Firestore:', e);
+    }
   }
 
-  exportListeners.forEach((fn) => fn());
+  exportListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch (e) {
+      console.error('Export listener error:', e);
+    }
+  });
 }
 
 export function getCustomerExport(orderId: string): CustomerExport {
@@ -1054,14 +1065,16 @@ export function adminUploadExcel(
 
   notifyExports(orderId);
 
-  logActivity({
-    type: 'admin_setting_changed',
-    actorName: 'Admin',
-    actorRole: 'admin',
-    title: 'Tải lên file Excel khách mời',
-    description: `Admin đã tải lên file "${fileData.fileName}" (${fileData.fileSize}) cho đơn hàng #${orderId}`,
-    orderId,
-  }).catch(() => {});
+  try {
+    logActivity({
+      type: 'admin_setting_changed',
+      actorName: 'Admin',
+      actorRole: 'admin',
+      title: 'Tải lên file Excel khách mời',
+      description: `Admin đã tải lên file "${fileData.fileName}" (${fileData.fileSize}) cho đơn hàng #${orderId}`,
+      orderId,
+    }).catch(() => {});
+  } catch (e) {}
 
   return currentExports[orderId];
 }
