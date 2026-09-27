@@ -95,6 +95,11 @@ export const AdminGuestsWishesPage: React.FC = () => {
   };
 
   const handleFileSelect = (file: File) => {
+    const ext = file.name.toLowerCase();
+    if (!ext.endsWith('.xlsx') && !ext.endsWith('.xls') && !ext.endsWith('.csv')) {
+      alert('Vui lòng chọn file định dạng Excel (.xlsx, .xls) hoặc .csv');
+      return;
+    }
     const sizeInKb = Math.round(file.size / 1024);
     const sizeStr = sizeInKb > 1024 ? `${(sizeInKb / 1024).toFixed(1)} MB` : `${sizeInKb} KB`;
     setStagedFile({
@@ -104,7 +109,10 @@ export const AdminGuestsWishesPage: React.FC = () => {
   };
 
   const handleConfirmUpload = () => {
-    if (!stagedFile) return;
+    if (!stagedFile) {
+      fileInputRef.current?.click();
+      return;
+    }
     adminUploadExcel(uploadTargetOrderId, {
       fileName: stagedFile.name,
       fileSize: stagedFile.size,
@@ -721,61 +729,96 @@ export const AdminGuestsWishesPage: React.FC = () => {
               Tải lên file Excel tổng hợp cho đơn hàng <strong>#{uploadTargetOrderId}</strong>. File hỗ trợ: <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code>.
             </p>
 
+            {/* Hidden native file input placed OUTSIDE the clickable dropzone to prevent recursive bubbling / double invocation */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onClick={(e) => {
+                (e.target as HTMLInputElement).value = '';
+              }}
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleFileSelect(e.target.files[0]);
+                }
+              }}
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+            />
+
             {/* Dropzone */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setIsDragging(true);
               }}
-              onDragLeave={() => setIsDragging(false)}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+              }}
               onDrop={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setIsDragging(false);
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                   handleFileSelect(e.dataTransfer.files[0]);
                 }
               }}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all ${
+              className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer transition-all ${
                 isDragging
-                  ? 'border-burgundy-wine bg-burgundy-wine/5'
-                  : 'border-border-delicate bg-surface-subtle/50 hover:bg-surface-cream'
+                  ? 'border-burgundy-wine bg-burgundy-wine/5 ring-4 ring-burgundy-wine/10'
+                  : stagedFile
+                  ? 'border-emerald-500/60 bg-emerald-50/20'
+                  : 'border-border-delicate bg-surface-subtle/50 hover:bg-surface-cream hover:border-burgundy-wine/50'
               }`}
             >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleFileSelect(e.target.files[0]);
-                  }
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-2xs ${
+                stagedFile ? 'bg-emerald-100 text-emerald-800' : 'bg-surface-subtle text-text-muted'
+              }`}>
+                <Icon name={stagedFile ? "task_alt" : "cloud_upload"} className="text-[28px]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-deep-espresso">
+                  {stagedFile ? 'Đã chọn file thành công' : 'Kéo thả file vào đây hoặc bấm để duyệt file'}
+                </span>
+                <span className="text-[11px] text-text-muted mt-0.5">
+                  {stagedFile ? stagedFile.name : 'Dung lượng tối đa: 15MB (.xlsx, .xls, .csv)'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
                 }}
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-              />
-              <Icon name="cloud_upload" className="text-[32px] text-text-muted" />
-              <span className="text-xs font-semibold text-deep-espresso">
-                Kéo thả file vào đây hoặc bấm để duyệt file
-              </span>
-              <span className="text-[11px] text-text-muted">Dung lượng tối đa: 15MB</span>
+                className="mt-1 px-4 py-1.5 rounded-full bg-surface-card border border-border-delicate text-deep-espresso text-xs font-semibold hover:bg-surface-subtle shadow-2xs transition-colors"
+              >
+                {stagedFile ? 'Chọn file khác' : 'Chọn file từ máy tính'}
+              </button>
             </div>
 
             {/* Staged File Info */}
             {stagedFile && (
-              <div className="p-3 rounded-xl bg-surface-subtle border border-border-delicate flex items-center justify-between text-xs">
+              <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-300 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon name="description" className="text-[20px] text-emerald-700 flex-shrink-0" />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0">
+                    <Icon name="description" className="text-[20px]" />
+                  </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-semibold text-deep-espresso truncate">
                       {stagedFile.name}
                     </span>
-                    <span className="text-[11px] text-text-muted">{stagedFile.size}</span>
+                    <span className="text-[11px] text-emerald-800 font-medium">
+                      {stagedFile.size} • Sẵn sàng tải lên
+                    </span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setStagedFile(null)}
-                  className="p-1 text-text-muted hover:text-rose-700"
+                  className="p-1.5 rounded-lg text-text-muted hover:text-rose-700 hover:bg-rose-50 transition-colors"
                   title="Gỡ bỏ"
                 >
                   <Icon name="delete" className="text-[18px]" />
@@ -788,22 +831,21 @@ export const AdminGuestsWishesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsUploadModalOpen(false)}
-                className="px-4 py-2 rounded-full bg-surface-card text-deep-espresso border border-border-delicate text-xs font-medium hover:bg-surface-subtle"
+                className="px-4 py-2 rounded-full bg-surface-card text-deep-espresso border border-border-delicate text-xs font-medium hover:bg-surface-subtle transition-colors"
               >
                 Hủy
               </button>
               <button
                 type="button"
-                disabled={!stagedFile}
                 onClick={handleConfirmUpload}
                 className={`px-5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs ${
                   stagedFile
                     ? 'bg-burgundy-wine text-white hover:bg-[#851622]'
-                    : 'bg-border-delicate text-text-muted cursor-not-allowed'
+                    : 'bg-surface-card hover:bg-surface-subtle text-burgundy-wine border border-burgundy-wine/40'
                 }`}
               >
-                <Icon name="upload" className="text-[16px]" />
-                <span>Upload file</span>
+                <Icon name={stagedFile ? "check_circle" : "upload"} className="text-[16px]" />
+                <span>{stagedFile ? 'Xác nhận Upload file' : 'Chọn file để upload'}</span>
               </button>
             </div>
           </div>

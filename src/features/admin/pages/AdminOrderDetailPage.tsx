@@ -107,6 +107,11 @@ export const AdminOrderDetailPage: React.FC = () => {
   };
 
   const handleFileUpload = (file: File) => {
+    const ext = file.name.toLowerCase();
+    if (!ext.endsWith('.xlsx') && !ext.endsWith('.xls') && !ext.endsWith('.csv')) {
+      alert('Vui lòng chọn file định dạng Excel (.xlsx, .xls) hoặc .csv');
+      return;
+    }
     const sizeInKb = (file.size / 1024).toFixed(0);
     adminUploadExcel(order.id, {
       fileName: file.name,
@@ -119,6 +124,7 @@ export const AdminOrderDetailPage: React.FC = () => {
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileUpload(e.dataTransfer.files[0]);
@@ -809,13 +815,30 @@ export const AdminOrderDetailPage: React.FC = () => {
 
         {/* Upload Zone & File Card */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          {/* Hidden native file input placed outside dropzone */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onClick={(e) => {
+              (e.target as HTMLInputElement).value = '';
+            }}
+            onChange={handleFileInputChange}
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+          />
+
           {/* Box 1: Tải lên / Cập nhật file Excel */}
           <div
             onDragOver={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setIsDragging(true);
             }}
-            onDragLeave={() => setIsDragging(false)}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragging(false);
+            }}
             onDrop={handleFileDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer transition-all ${
@@ -824,13 +847,6 @@ export const AdminOrderDetailPage: React.FC = () => {
                 : 'border-border-delicate bg-surface-subtle/40 hover:bg-surface-cream hover:border-burgundy-wine/50'
             }`}
           >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileInputChange}
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-            />
             <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 shadow-2xs">
               <Icon name="upload_file" className="text-[24px]" />
             </div>
@@ -844,7 +860,11 @@ export const AdminOrderDetailPage: React.FC = () => {
             </div>
             <button
               type="button"
-              className="mt-1 px-4 py-1.5 rounded-full bg-surface-card border border-border-delicate text-deep-espresso text-xs font-semibold hover:bg-surface-subtle shadow-2xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+              className="mt-1 px-4 py-1.5 rounded-full bg-surface-card border border-border-delicate text-deep-espresso text-xs font-semibold hover:bg-surface-subtle shadow-2xs transition-colors"
             >
               Chọn file từ máy
             </button>
