@@ -8,6 +8,7 @@ interface TemplateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: Template | null;
+  existingTemplates?: Template[];
   onSave: (data: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => void;
 }
 
@@ -40,10 +41,20 @@ const SAMPLE_THUMBNAILS = [
   }
 ];
 
+export const DEFAULT_PUBLISHED_FEATURES: string[] = [
+  'Thông tin cưới hỏi cặp đôi',
+  'Hỗ trợ thiết kế chỉnh sửa từ A-Z',
+  'File Excel tổng hợp số người tham gia và lời chúc gửi tới cặp đôi',
+  'Tích hợp bản đồ Google Maps chỉ đường',
+  'Hộp mừng cưới',
+  'Bài hát yêu thích của cặp đôi'
+];
+
 export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   isOpen,
   onClose,
   initialData,
+  existingTemplates,
   onSave
 }) => {
   const isEdit = Boolean(initialData);
@@ -62,17 +73,28 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   const [slugEditedManually, setSlugEditedManually] = useState(false);
   const [isUploadingThumb, setIsUploadingThumb] = useState(false);
 
-  const DEFAULT_FEATURES = [
-    'Thiết kế chuẩn tỉ lệ smartphone, hiển thị hoàn hảo trên mọi thiết bị',
-    'Tích hợp nhạc nền tự động phát lãng mạn',
-    'Sổ lưu bút & xác nhận tham dự (RSVP) trực tuyến thời gian thực',
-    'Tích hợp bản đồ Google Maps chỉ đường chuẩn xác đến sảnh tiệc',
-    'Đếm ngược ngày cưới & lưu lịch Google / Apple Calendar tiện lợi'
-  ];
+  // Helper to extract default features from existing published templates
+  const getSynchronizedFeatures = (): string[] => {
+    if (existingTemplates && existingTemplates.length > 0) {
+      const publishedWithFeatures = existingTemplates.find(
+        (t) => (t.status === 'published' || t.isActive) && t.features && t.features.length > 0
+      );
+      if (publishedWithFeatures?.features && publishedWithFeatures.features.length > 0) {
+        return [...publishedWithFeatures.features];
+      }
+      const anyWithFeatures = existingTemplates.find(
+        (t) => t.features && t.features.length > 0
+      );
+      if (anyWithFeatures?.features && anyWithFeatures.features.length > 0) {
+        return [...anyWithFeatures.features];
+      }
+    }
+    return [...DEFAULT_PUBLISHED_FEATURES];
+  };
 
   const [musicTitle, setMusicTitle] = useState('A Thousand Years');
   const [musicArtist, setMusicArtist] = useState('Nhà Có Tiệc Studio');
-  const [features, setFeatures] = useState<string[]>(DEFAULT_FEATURES);
+  const [features, setFeatures] = useState<string[]>(DEFAULT_PUBLISHED_FEATURES);
   const [newFeatureText, setNewFeatureText] = useState('');
 
   // Helper to extract vertical percentage from object-position string
@@ -102,7 +124,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setFeatures(
         initialData.features && initialData.features.length > 0
           ? initialData.features
-          : DEFAULT_FEATURES
+          : getSynchronizedFeatures()
       );
       setSlugEditedManually(true);
     } else {
@@ -118,10 +140,10 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       setIsPinned(false);
       setMusicTitle('A Thousand Years');
       setMusicArtist('Nhà Có Tiệc Studio');
-      setFeatures(DEFAULT_FEATURES);
+      setFeatures(getSynchronizedFeatures());
       setSlugEditedManually(false);
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, existingTemplates]);
 
   if (!isOpen) return null;
 
@@ -644,7 +666,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
 
             {/* SECTION: TEMPLATE FEATURES */}
             <div className="p-4 rounded-xl bg-surface-subtle/70 border border-border-delicate flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-burgundy-wine/15 text-burgundy-wine flex items-center justify-center">
                     <Icon name="verified" className="text-[14px]" />
@@ -653,16 +675,52 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                     Mô Tả Tính Năng Mẫu Thiệp (Features / Checklist)
                   </h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setFeatures(DEFAULT_FEATURES)}
-                  className="text-[11px] text-burgundy-wine hover:underline font-medium"
-                >
-                  + Nạp 5 tính năng mẫu chuẩn
-                </button>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Dropdown to copy from any existing template */}
+                  {existingTemplates && existingTemplates.filter((t) => t.features && t.features.length > 0).length > 0 && (
+                    <select
+                      aria-label="Sao chép tính năng từ mẫu khác"
+                      className="text-[11px] bg-surface-card border border-border-delicate text-deep-espresso rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-burgundy-wine cursor-pointer shadow-2xs"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (!selectedId) return;
+                        const found = existingTemplates.find((t) => t.id === selectedId);
+                        if (found?.features && found.features.length > 0) {
+                          setFeatures([...found.features]);
+                        }
+                        e.target.value = '';
+                      }}
+                    >
+                      <option value="" disabled>
+                        Sao chép từ mẫu khác...
+                      </option>
+                      {existingTemplates
+                        .filter((t) => t.features && t.features.length > 0)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>
+                            Mẫu: {t.name} ({t.features?.length} tính năng)
+                          </option>
+                        ))}
+                    </select>
+                  )}
+
+                  {/* Button to sync with published templates */}
+                  <button
+                    type="button"
+                    onClick={() => setFeatures(getSynchronizedFeatures())}
+                    className="text-[11px] text-burgundy-wine hover:underline font-medium flex items-center gap-1 bg-burgundy-wine/10 hover:bg-burgundy-wine/15 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                    title="Đồng bộ lại danh sách tính năng theo các mẫu thiệp đã đăng chuẩn"
+                  >
+                    <Icon name="sync" className="text-[13px]" />
+                    <span>Đồng bộ theo mẫu đã đăng</span>
+                  </button>
+                </div>
               </div>
+
               <p className="text-[11px] text-text-muted">
-                Các tính năng này sẽ hiển thị trong mục "Tính năng bao gồm trong mẫu này" trên trang xem chi tiết thiệp của khách.
+                Các tính năng này sẽ hiển thị trong mục "Tính năng bao gồm trong mẫu này" trên trang xem chi tiết thiệp của khách. Bạn có thể chỉnh sửa trực tiếp từng dòng hoặc thêm tính năng mới bên dưới.
               </p>
 
               {/* Feature items */}
@@ -696,7 +754,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               <div className="flex items-center gap-2 mt-1">
                 <input
                   type="text"
-                  placeholder="Nhập tính năng mới (ví dụ: Tích hợp hiệu ứng hạt hoa bay)..."
+                  placeholder="Nhập tính năng mới (ví dụ: Hộp QR mừng cưới tiện lợi)..."
                   value={newFeatureText}
                   onChange={(e) => setNewFeatureText(e.target.value)}
                   onKeyDown={(e) => {

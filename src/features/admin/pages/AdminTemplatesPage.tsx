@@ -555,6 +555,7 @@ export const AdminTemplatesPage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={editingTemplate}
+        existingTemplates={templates}
         onSave={handleSaveTemplate}
       />
     </div>
