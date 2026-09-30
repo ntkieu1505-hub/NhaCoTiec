@@ -356,7 +356,7 @@ export const AdminLayout: React.FC = () => {
       {
         id: user?.id || 'admin-01',
         fullName: user?.name || 'Quản trị viên',
-        phone: user?.phone || '0901 000 999',
+        phone: user?.phone || '',
         email: user?.email || ADMIN_EMAILS[0],
         role: 'admin',
         orderCount: 0,

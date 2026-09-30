@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AuthUser, AuthState } from '../types/auth';
-import { auth, googleProvider } from '../services/firebase';
+import { auth, googleProvider, db } from '../services/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -65,6 +66,29 @@ function saveStoredProfile(userId: string, data: Partial<AuthUser>) {
 }
 
 /**
+ * Sync user profile to Firestore `users` collection without fake phone numbers
+ */
+export function syncUserToFirestore(authUser: AuthUser) {
+  if (!db || !authUser?.id || !authUser?.email) return;
+  try {
+    const payload: Record<string, any> = {
+      email: authUser.email,
+      fullName: authUser.name,
+      role: authUser.role === 'admin' ? 'Admin' : 'Customer',
+      updatedAt: new Date().toISOString(),
+    };
+    if (authUser.phone && authUser.phone.trim()) {
+      payload.phone = authUser.phone.trim();
+    }
+    setDoc(doc(db, 'users', authUser.id), payload, { merge: true }).catch((err) => {
+      console.warn('Failed to sync user doc to Firestore:', err);
+    });
+  } catch (e) {
+    console.warn('syncUserToFirestore error:', e);
+  }
+}
+
+/**
  * Update customer profile (name, phone)
  */
 export async function updateCustomerProfile(userId: string, data: { name?: string; phone?: string }): Promise<void> {
@@ -76,6 +100,7 @@ export async function updateCustomerProfile(userId: string, data: { name?: strin
       ...(data.phone !== undefined ? { phone: data.phone } : {}),
     };
     notify();
+    syncUserToFirestore(currentUser);
   }
 }
 
@@ -112,6 +137,7 @@ onAuthStateChanged(auth, (firebaseUser) => {
       currentUser = null;
     } else {
       currentUser = mapFirebaseUser(firebaseUser);
+      syncUserToFirestore(currentUser);
     }
   } else {
     currentUser = null;

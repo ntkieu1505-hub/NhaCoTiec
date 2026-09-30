@@ -3,10 +3,36 @@ import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { useOrders } from '../../../mocks/orderStore';
 import { useAuth, ADMIN_EMAILS } from '../../../mocks/authStore';
+import { db } from '../../../services/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { User } from '../../../types';
 import { formatDateTime } from '../../../utils/formatters';
 import { matchQuery } from '../../../utils/searchHelper';
 import { AdminOutletContext } from '../../../components/layouts/AdminLayout';
+
+export function isValidUserPhone(phone?: string | null): boolean {
+  if (!phone) return false;
+  const clean = phone.trim();
+  if (
+    !clean ||
+    clean === 'Chưa cung cấp' ||
+    clean === 'Chưa có' ||
+    clean === '0901 000 999' ||
+    clean === '0901000999' ||
+    clean === '0900000000' ||
+    clean === '0900 000 000' ||
+    clean === '0982 123 456' ||
+    clean === '0912 888 999' ||
+    clean === 'i' ||
+    clean === '-'
+  ) {
+    return false;
+  }
+  const digits = clean.replace(/\D/g, '');
+  if (digits.length < 9 || digits.length > 11) return false;
+  if (/^(\d)\1+$/.test(digits)) return false;
+  return true;
+}
 
 export const AdminUsersPage: React.FC = () => {
   const outletCtx = useOutletContext<AdminOutletContext>() || {};
@@ -16,53 +42,158 @@ export const AdminUsersPage: React.FC = () => {
   const initialSearch = searchParams.get('search') || outletCtx.searchQuery || '';
   const [searchQuery, setSearchQuery] = useState(initialSearch);
 
-  // Dynamic real-time user list generated from actual orders + current admin
+  // Live Firestore users subscription
+  const [firestoreUsers, setFirestoreUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    if (!db) return;
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, 'users'),
+        (snapshot) => {
+          const list: User[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data() as any;
+            const email = String(data.email || '').trim();
+            const role =
+              data.role === 'Admin' ||
+              data.role === 'admin' ||
+              ADMIN_EMAILS.some((e) => e.toLowerCase() === email.toLowerCase())
+                ? 'admin'
+                : 'customer';
+
+            const rawPhone = typeof data.phone === 'string' ? data.phone.trim() : '';
+            const phone = isValidUserPhone(rawPhone) ? rawPhone : undefined;
+
+            list.push({
+              id: docSnap.id,
+              fullName:
+                data.fullName ||
+                data.fullname ||
+                data.name ||
+                (role === 'admin' ? 'Quản trị viên Nhà Có Tiệc' : (email.split('@')[0] || 'Khách hàng')),
+              phone,
+              email,
+              role,
+              orderCount: 0,
+              status: data.status === 'inactive' ? 'inactive' : 'active',
+              createdAt: data.createdAt
+                ? typeof data.createdAt === 'string'
+                  ? data.createdAt
+                  : data.createdAt?.toDate
+                  ? data.createdAt.toDate().toISOString()
+                  : new Date().toISOString()
+                : new Date().toISOString(),
+              lastLogin: data.updatedAt
+                ? typeof data.updatedAt === 'string'
+                  ? data.updatedAt
+                  : data.updatedAt?.toDate
+                  ? data.updatedAt.toDate().toISOString()
+                  : undefined
+                : undefined,
+            });
+          });
+          setFirestoreUsers(list);
+        },
+        (err) => {
+          console.warn('Error syncing users from Firestore:', err);
+        }
+      );
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn('Failed to setup Firestore users listener:', e);
+    }
+  }, []);
+
+  // Dynamic real-time user list generated from Firestore users + actual orders + current admin
   const realUsers = useMemo<User[]>(() => {
-    const list: User[] = [];
+    const userMap = new Map<string, User>();
 
-    // 1. Current Administrator
-    list.push({
-      id: currentAdmin?.id || 'admin-01',
-      fullName: currentAdmin?.name || 'Quản trị viên Nhà Có Tiệc',
-      phone: currentAdmin?.phone || '0901 000 999',
-      email: currentAdmin?.email || ADMIN_EMAILS[0],
-      role: 'admin',
-      orderCount: 0,
-      status: 'active',
-      createdAt: '2026-01-01T00:00:00Z',
-      lastLogin: new Date().toISOString(),
-    });
+    // 1. Current Administrator (strictly real phone, never a fake default!)
+    if (currentAdmin && currentAdmin.email) {
+      const emailKey = currentAdmin.email.trim().toLowerCase();
+      const adminPhone = isValidUserPhone(currentAdmin.phone) ? currentAdmin.phone?.trim() : undefined;
+      userMap.set(emailKey, {
+        id: currentAdmin.id || 'admin-01',
+        fullName: currentAdmin.name || 'Quản trị viên Nhà Có Tiệc',
+        phone: adminPhone,
+        email: currentAdmin.email,
+        role: 'admin',
+        orderCount: 0,
+        status: 'active',
+        createdAt: '2026-01-01T00:00:00Z',
+        lastLogin: new Date().toISOString(),
+      });
+    }
 
-    // 2. Real customer accounts derived from actual orders
-    const customerMap = new Map<string, User>();
-    orders.forEach((ord) => {
-      const key = (ord.customerPhone || ord.customerEmail || ord.customerName || '').trim();
+    // 2. Real registered users loaded live from Firestore
+    firestoreUsers.forEach((fu) => {
+      const key = (fu.email || fu.id).trim().toLowerCase();
       if (!key) return;
 
-      if (!customerMap.has(key)) {
-        customerMap.set(key, {
-          id: `usr-${ord.id}`,
-          fullName: ord.customerName || 'Khách hàng',
-          phone: ord.customerPhone || 'Chưa cung cấp',
-          email: ord.customerEmail || 'Chưa cung cấp',
-          role: 'customer',
-          orderCount: 1,
-          status: 'active',
-          createdAt: ord.createdAt,
-          lastLogin: ord.updatedAt || ord.createdAt,
-        });
+      if (!userMap.has(key)) {
+        userMap.set(key, { ...fu });
       } else {
-        const item = customerMap.get(key)!;
-        item.orderCount += 1;
-        if (new Date(ord.createdAt) < new Date(item.createdAt)) {
-          item.createdAt = ord.createdAt;
+        const existing = userMap.get(key)!;
+        if (!existing.phone && fu.phone) existing.phone = fu.phone;
+        if (fu.fullName && existing.fullName === 'Quản trị viên Nhà Có Tiệc') {
+          existing.fullName = fu.fullName;
         }
       }
     });
 
-    customerMap.forEach((cust) => list.push(cust));
-    return list;
-  }, [orders, currentAdmin]);
+    // 3. Customers derived from actual orders
+    orders.forEach((ord) => {
+      const emailKey = (ord.customerEmail || '').trim().toLowerCase();
+      const phoneKey = isValidUserPhone(ord.customerPhone) ? ord.customerPhone?.trim() : '';
+      const orderPhone = isValidUserPhone(ord.customerPhone) ? ord.customerPhone?.trim() : undefined;
+      const orderName = (ord.customerName || '').trim();
+
+      // Attempt to match existing user by email or phone
+      let matchedKey: string | undefined;
+      if (emailKey && userMap.has(emailKey)) {
+        matchedKey = emailKey;
+      } else if (phoneKey) {
+        for (const [k, u] of userMap.entries()) {
+          if (u.phone && u.phone === phoneKey) {
+            matchedKey = k;
+            break;
+          }
+        }
+      }
+
+      if (matchedKey) {
+        const item = userMap.get(matchedKey)!;
+        item.orderCount += 1;
+        if (!item.phone && orderPhone) {
+          item.phone = orderPhone;
+        }
+        if (ord.createdAt && (!item.createdAt || new Date(ord.createdAt) < new Date(item.createdAt))) {
+          item.createdAt = ord.createdAt;
+        }
+      } else if (emailKey || phoneKey || orderName) {
+        // Guest user who placed an order
+        const guestKey = emailKey || phoneKey || `guest-${ord.id}`;
+        if (!userMap.has(guestKey)) {
+          userMap.set(guestKey, {
+            id: `usr-${ord.id}`,
+            fullName: orderName || 'Khách hàng',
+            phone: orderPhone,
+            email: ord.customerEmail || '',
+            role: 'customer',
+            orderCount: 1,
+            status: 'active',
+            createdAt: ord.createdAt,
+            lastLogin: ord.updatedAt || ord.createdAt,
+          });
+        } else {
+          userMap.get(guestKey)!.orderCount += 1;
+        }
+      }
+    });
+
+    return Array.from(userMap.values());
+  }, [orders, currentAdmin, firestoreUsers]);
 
   useEffect(() => {
     if (outletCtx.searchQuery !== undefined && outletCtx.searchQuery !== searchQuery) {
@@ -93,7 +224,7 @@ export const AdminUsersPage: React.FC = () => {
       if (searchQuery.trim()) {
         const q = searchQuery.trim();
         const matchName = matchQuery(usr.fullName, q);
-        const matchPhone = matchQuery(usr.phone, q);
+        const matchPhone = isValidUserPhone(usr.phone) ? matchQuery(usr.phone, q) : false;
         const matchEmail = matchQuery(usr.email, q);
         const matchRole = matchQuery(usr.role === 'admin' ? 'Quản trị viên Admin' : 'Khách hàng', q);
         if (!matchName && !matchPhone && !matchEmail && !matchRole) return false;
@@ -193,8 +324,24 @@ export const AdminUsersPage: React.FC = () => {
                     {usr.fullName}
                   </td>
                   <td className="py-3.5 px-4 text-text-muted">
-                    <div>{usr.phone}</div>
-                    <div className="text-[11px]">{usr.email}</div>
+                    {isValidUserPhone(usr.phone) ? (
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-deep-espresso">{usr.phone}</span>
+                        {usr.email && (
+                          <span className="text-[11px] text-text-muted">{usr.email}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="font-semibold text-deep-espresso">
+                          {usr.email || 'Chưa cung cấp email'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 font-medium">
+                          <Icon name="mail" className="text-[12px] text-amber-700" />
+                          <span>Đăng nhập qua Email • Chưa thiết lập SĐT</span>
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="py-3.5 px-4">
                     <span

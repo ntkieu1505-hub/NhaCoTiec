@@ -121,16 +121,17 @@ export const AdminOrdersPage: React.FC = () => {
           <button
             type="button"
             onClick={() => {
-              const customerName = window.prompt('Nhập tên dâu rể hoặc khách hàng:', 'Trần Tuấn Anh & Mai Phương');
+              const customerName = window.prompt('Nhập tên dâu rể hoặc khách hàng:');
               if (!customerName || !customerName.trim()) return;
-              const phone = window.prompt('Nhập số điện thoại khách hàng:', '0912 888 999') || '0912 888 999';
+              const phone = window.prompt('Nhập số điện thoại khách hàng (để trống nếu đăng ký qua email):') || '';
+              const email = window.prompt('Nhập email khách hàng (để trống nếu chưa có):') || '';
               createOrder({
                 templateId: 'tpl-thanh-xuan',
                 templateName: 'Thanh Xuân & Hoàng Nam',
                 category: 'premium',
                 customerName: customerName.trim(),
                 customerPhone: phone.trim(),
-                customerEmail: 'khachhang@gmail.com',
+                customerEmail: email.trim(),
                 price: 79000,
               });
             }}

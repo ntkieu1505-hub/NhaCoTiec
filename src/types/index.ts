@@ -27,7 +27,7 @@ export interface Wish {
 export interface User {
   id: string;
   fullName: string;
-  phone: string;
+  phone?: string;
   email: string;
   role: 'customer' | 'admin' | 'designer';
   orderCount: number;
