@@ -13,6 +13,7 @@ import { logActivity } from '../services/activityLogService';
 import { toIsoDateString } from '../utils/formatters';
 import { MOCK_TEMPLATES } from './mockTemplates';
 import { resolveTemplateForOrder, resolveOrderThumbnail } from './templateStore';
+import { trackPurchase } from '../services/analytics';
 
 const STORAGE_KEY = 'nha_co_tiec_orders_v7_realtime';
 const LAST_ORDER_KEY = 'nha_co_tiec_last_order_id';
@@ -472,6 +473,17 @@ export function adminConfirmPayment(orderId: string): Order {
   });
 
   notify(targetOrder);
+
+  // Track GA4 Ecommerce Purchase Event
+  if (targetOrder) {
+    trackPurchase({
+      id: targetOrder.id,
+      price: targetOrder.price || 79000,
+      templateName: targetOrder.templateName,
+      templateId: targetOrder.templateId,
+      customerName: targetOrder.customerName,
+    });
+  }
 
   // Trigger system notification to customer
   createSystemNotification(

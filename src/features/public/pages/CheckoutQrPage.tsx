@@ -5,6 +5,7 @@ import { formatCurrency } from '../../../utils/formatters';
 import { usePaymentSettings } from '../../../mocks/paymentSettingsStore';
 import { customerSubmitPaymentConfirmation, useOrder } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
+import { trackBeginCheckout, trackPurchase } from '../../../services/analytics';
 
 export const CheckoutQrPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,7 +55,29 @@ export const CheckoutQrPage: React.FC = () => {
     if (order?.paymentStatus === 'pending_confirmation') {
       setIsSubmitted(true);
     }
-  }, [order?.paymentStatus]);
+    if (order?.paymentStatus === 'paid') {
+      trackPurchase({
+        id: order.id,
+        price: order.price || amount,
+        templateName: order.templateName,
+        templateId: order.templateId || templateSlug,
+        customerName: order.customerName,
+      });
+    }
+  }, [order?.paymentStatus, order?.id, order?.price, amount, order?.templateName, order?.templateId, templateSlug, order?.customerName]);
+
+  // Track begin_checkout when QR checkout is viewed
+  useEffect(() => {
+    if (order) {
+      trackBeginCheckout({
+        id: order.id,
+        price: order.price || amount,
+        templateName: order.templateName,
+        templateId: order.templateId || templateSlug,
+        customerName: order.customerName,
+      });
+    }
+  }, [order?.id, order?.price, amount, order?.templateName, order?.templateId, templateSlug, order?.customerName]);
 
   const handleCopy = (text: string, field: string) => {
     if (navigator.clipboard) {
@@ -73,6 +96,13 @@ export const CheckoutQrPage: React.FC = () => {
       proof: 'chuyen_khoan_receipt.jpg',
     });
     setIsSubmitted(true);
+    trackPurchase({
+      id: orderId,
+      price: amount,
+      templateName: order?.templateName,
+      templateId: order?.templateId || templateSlug,
+      customerName: order?.customerName,
+    });
   };
 
   return (
