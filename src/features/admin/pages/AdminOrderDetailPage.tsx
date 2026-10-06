@@ -20,6 +20,95 @@ import { resolveTemplateForOrder, resolveOrderThumbnail, useTemplates } from '..
 import { downloadImage, downloadAllImages } from '../../../utils/fileDownloader';
 import { uploadOrderPhoto, fileToCompressedDataUrl } from '../../../services/storageService';
 
+interface AlbumPhotoCardProps {
+  url: string;
+  index: number;
+  orderId: string;
+  isBlob: boolean;
+  onPreview: () => void;
+  onDelete: () => void;
+}
+
+const AlbumPhotoCard: React.FC<AlbumPhotoCardProps> = ({
+  url,
+  index,
+  orderId,
+  isBlob,
+  onPreview,
+  onDelete,
+}) => {
+  const [hasError, setHasError] = useState(isBlob);
+
+  if (hasError) {
+    return (
+      <div className="relative aspect-square rounded-xl overflow-hidden border border-rose-200 bg-rose-50/90 flex flex-col items-center justify-center p-2 text-center text-rose-700 shadow-2xs">
+        <Icon name="broken_image" className="text-[24px] text-rose-500 mb-1" />
+        <span className="font-semibold text-[11px] text-rose-800 leading-tight">Link ảnh đã hết hạn</span>
+        <span className="text-[9px] text-rose-600/80 mt-0.5 line-clamp-1">(Phiên bản thử nghiệm cũ)</span>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="mt-2 px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-semibold flex items-center gap-1 shadow-2xs transition-colors"
+          title="Xoá ảnh hỏng này để dọn dẹp danh sách"
+        >
+          <Icon name="delete" className="text-[12px]" />
+          <span>Xoá ngay</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative aspect-square rounded-xl overflow-hidden border border-border-delicate bg-surface-subtle hover:ring-2 hover:ring-burgundy-wine transition-all shadow-2xs">
+      <img
+        src={url}
+        alt={`Ảnh ${index + 1}`}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform cursor-pointer"
+        onClick={onPreview}
+        onError={() => setHasError(true)}
+      />
+      {/* Hover Action Overlay */}
+      <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-opacity text-white">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreview();
+          }}
+          className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+          title="Phóng to ảnh"
+        >
+          <Icon name="zoom_in" className="text-[16px]" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            downloadImage(url, `anh-cuoi-${orderId}-${index + 1}.jpg`);
+          }}
+          className="w-7 h-7 rounded-full bg-burgundy-wine hover:bg-[#851622] flex items-center justify-center transition-colors"
+          title="Tải ảnh này về máy"
+        >
+          <Icon name="file_download" className="text-[16px]" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (confirm('Bạn có chắc muốn xoá ảnh này khỏi album?')) {
+              onDelete();
+            }
+          }}
+          className="w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-700 flex items-center justify-center transition-colors"
+          title="Xoá ảnh này"
+        >
+          <Icon name="delete" className="text-[15px]" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const AdminOrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const allOrders = useOrders();
@@ -741,84 +830,20 @@ export const AdminOrderDetailPage: React.FC = () => {
           {order.weddingInfo?.albumPhotos && order.weddingInfo.albumPhotos.length > 0 ? (
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-[360px] overflow-y-auto pr-1">
-                {order.weddingInfo.albumPhotos.map((url, i) => (
-                  <div
-                    key={i}
-                    className="group relative aspect-square rounded-xl overflow-hidden border border-border-delicate bg-surface-subtle hover:ring-2 hover:ring-burgundy-wine transition-all"
-                  >
-                    <img
-                      src={url}
-                      alt={`Ảnh ${i + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform cursor-pointer"
-                      onClick={() => setSelectedPhotoPreview(url)}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        target.style.display = 'none';
-                        const fallback = target.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
+                {order.weddingInfo.albumPhotos.map((url, i) => {
+                  const isBlob = typeof url === 'string' && url.startsWith('blob:');
+                  return (
+                    <AlbumPhotoCard
+                      key={`${order.id}-${i}-${url.slice(0, 30)}`}
+                      url={url}
+                      index={i}
+                      orderId={order.id}
+                      isBlob={isBlob}
+                      onPreview={() => setSelectedPhotoPreview(url)}
+                      onDelete={() => handleAdminDeletePhoto(i)}
                     />
-                    {/* Error Fallback container */}
-                    <div
-                      style={{ display: 'none' }}
-                      className="w-full h-full flex-col items-center justify-center p-2 text-center bg-rose-50/80 text-text-muted text-[10px] gap-1"
-                    >
-                      <Icon name="broken_image" className="text-[20px] text-rose-400" />
-                      <span className="font-medium text-rose-600 text-[10px]">Ảnh lỗi</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAdminDeletePhoto(i);
-                        }}
-                        className="mt-1 px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-semibold flex items-center gap-0.5 shadow-2xs transition-colors"
-                        title="Xoá ảnh hỏng này khỏi album"
-                      >
-                        <Icon name="delete" className="text-[11px]" />
-                        <span>Xoá</span>
-                      </button>
-                    </div>
-
-                    {/* Hover Action Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-opacity text-white">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPhotoPreview(url);
-                        }}
-                        className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
-                        title="Phóng to ảnh"
-                      >
-                        <Icon name="zoom_in" className="text-[16px]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadImage(url, `anh-cuoi-${order.id}-${i + 1}.jpg`);
-                        }}
-                        className="w-7 h-7 rounded-full bg-burgundy-wine hover:bg-[#851622] flex items-center justify-center transition-colors"
-                        title="Tải ảnh này về máy"
-                      >
-                        <Icon name="file_download" className="text-[16px]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Bạn có chắc chắn muốn xoá ảnh này khỏi album?')) {
-                            handleAdminDeletePhoto(i);
-                          }
-                        }}
-                        className="w-7 h-7 rounded-full bg-rose-600/90 hover:bg-rose-700 flex items-center justify-center transition-colors"
-                        title="Xoá ảnh này"
-                      >
-                        <Icon name="delete" className="text-[15px]" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <span className="text-[11px] text-text-muted text-right">
                 Bấm vào ảnh để xem phóng to, tải về hoặc xoá bớt ảnh
