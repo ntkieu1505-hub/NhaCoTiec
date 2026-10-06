@@ -11,12 +11,14 @@ import {
   adminUploadExcel,
   adminSendExcelToCustomer,
   useCustomerExport,
+  customerSubmitAlbum,
 } from '../../../mocks/orderStore';
 import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/constants';
 import { formatCurrency, formatDateTime, formatDate } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
 import { resolveTemplateForOrder, resolveOrderThumbnail, useTemplates } from '../../../mocks/templateStore';
 import { downloadImage, downloadAllImages } from '../../../utils/fileDownloader';
+import { uploadOrderPhoto, fileToCompressedDataUrl } from '../../../services/storageService';
 
 export const AdminOrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -35,6 +37,8 @@ export const AdminOrderDetailPage: React.FC = () => {
   const [sendSuccessMessage, setSendSuccessMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const albumFileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAlbum, setIsUploadingAlbum] = useState(false);
 
   // Fallback if order not found
   if (!order) {
@@ -136,7 +140,42 @@ export const AdminOrderDetailPage: React.FC = () => {
     reader.onerror = () => {
       alert('Không thể đọc file. Vui lòng thử lại!');
     };
-    reader.readAsDataURL(file);
+  };
+
+  const handleAdminAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setIsUploadingAlbum(true);
+    const files = Array.from(e.target.files);
+    try {
+      const newUrls = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const uploaded = await uploadOrderPhoto(order.id, file);
+            if (uploaded && !uploaded.startsWith('blob:')) return uploaded;
+          } catch {
+            // fallback
+          }
+          return fileToCompressedDataUrl(file);
+        })
+      );
+      const existing = (order.weddingInfo?.albumPhotos || []).filter((u) => !u.startsWith('blob:'));
+      const updated = [...existing, ...newUrls.filter(Boolean)];
+      customerSubmitAlbum(order.id, updated);
+      setSendSuccessMessage(`Đã thêm thành công ${newUrls.filter(Boolean).length} ảnh vào album.`);
+      setTimeout(() => setSendSuccessMessage(null), 4000);
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi khi tải ảnh lên album.');
+    } finally {
+      setIsUploadingAlbum(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleAdminDeletePhoto = (photoIndex: number) => {
+    const existing = order.weddingInfo?.albumPhotos || [];
+    const updated = existing.filter((_, idx) => idx !== photoIndex);
+    customerSubmitAlbum(order.id, updated);
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
@@ -641,9 +680,27 @@ export const AdminOrderDetailPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <input
+                ref={albumFileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleAdminAddPhotos}
+                className="hidden"
+              />
               <span className="text-xs font-semibold text-deep-espresso">
                 {order.weddingInfo?.albumPhotos?.length || 0} ảnh
               </span>
+              <button
+                type="button"
+                onClick={() => albumFileInputRef.current?.click()}
+                disabled={isUploadingAlbum}
+                className="px-2.5 py-1 rounded-lg bg-surface-subtle hover:bg-gold-foil/10 text-deep-espresso hover:text-burgundy-wine border border-border-delicate text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition-colors disabled:opacity-50"
+                title="Tải thêm ảnh vào album cho khách"
+              >
+                <Icon name={isUploadingAlbum ? "sync" : "add_photo_alternate"} className={`text-[14px] ${isUploadingAlbum ? 'animate-spin' : ''}`} />
+                <span>{isUploadingAlbum ? 'Đang tải...' : '+ Thêm ảnh'}</span>
+              </button>
               {order.weddingInfo?.albumPhotos && order.weddingInfo.albumPhotos.length > 0 && (
                 <button
                   type="button"
@@ -704,24 +761,36 @@ export const AdminOrderDetailPage: React.FC = () => {
                     {/* Error Fallback container */}
                     <div
                       style={{ display: 'none' }}
-                      className="w-full h-full flex-col items-center justify-center p-2 text-center bg-rose-50/50 text-text-muted text-[10px]"
+                      className="w-full h-full flex-col items-center justify-center p-2 text-center bg-rose-50/80 text-text-muted text-[10px] gap-1"
                     >
-                      <Icon name="broken_image" className="text-[20px] text-rose-400 mb-1" />
-                      <span>Ảnh lỗi</span>
+                      <Icon name="broken_image" className="text-[20px] text-rose-400" />
+                      <span className="font-medium text-rose-600 text-[10px]">Ảnh lỗi</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAdminDeletePhoto(i);
+                        }}
+                        className="mt-1 px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-semibold flex items-center gap-0.5 shadow-2xs transition-colors"
+                        title="Xoá ảnh hỏng này khỏi album"
+                      >
+                        <Icon name="delete" className="text-[11px]" />
+                        <span>Xoá</span>
+                      </button>
                     </div>
 
                     {/* Hover Action Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity text-white">
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition-opacity text-white">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedPhotoPreview(url);
                         }}
-                        className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
                         title="Phóng to ảnh"
                       >
-                        <Icon name="zoom_in" className="text-[18px]" />
+                        <Icon name="zoom_in" className="text-[16px]" />
                       </button>
                       <button
                         type="button"
@@ -729,23 +798,45 @@ export const AdminOrderDetailPage: React.FC = () => {
                           e.stopPropagation();
                           downloadImage(url, `anh-cuoi-${order.id}-${i + 1}.jpg`);
                         }}
-                        className="w-8 h-8 rounded-full bg-burgundy-wine hover:bg-[#851622] flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-full bg-burgundy-wine hover:bg-[#851622] flex items-center justify-center transition-colors"
                         title="Tải ảnh này về máy"
                       >
-                        <Icon name="file_download" className="text-[18px]" />
+                        <Icon name="file_download" className="text-[16px]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('Bạn có chắc chắn muốn xoá ảnh này khỏi album?')) {
+                            handleAdminDeletePhoto(i);
+                          }
+                        }}
+                        className="w-7 h-7 rounded-full bg-rose-600/90 hover:bg-rose-700 flex items-center justify-center transition-colors"
+                        title="Xoá ảnh này"
+                      >
+                        <Icon name="delete" className="text-[15px]" />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
               <span className="text-[11px] text-text-muted text-right">
-                Bấm vào ảnh để xem phóng to hoặc tải về
+                Bấm vào ảnh để xem phóng to, tải về hoặc xoá bớt ảnh
               </span>
             </div>
           ) : (
             <div className="p-8 text-center text-xs text-text-muted bg-surface-subtle/40 rounded-xl border border-dashed border-border-delicate flex flex-col items-center gap-2">
               <Icon name="add_photo_alternate" className="text-[28px] text-text-muted/60" />
               <span>Khách hàng chưa tải album ảnh lên hệ thống.</span>
+              <button
+                type="button"
+                onClick={() => albumFileInputRef.current?.click()}
+                disabled={isUploadingAlbum}
+                className="mt-1 px-3 py-1.5 rounded-lg bg-burgundy-wine text-white hover:bg-[#851622] text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+              >
+                <Icon name="upload" className="text-[14px]" />
+                <span>+ Tải ảnh lên cho đơn hàng này</span>
+              </button>
             </div>
           )}
         </div>
