@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Icon } from '../../../components/common/Icon';
-import { uploadOrderPhoto } from '../../../services/storageService';
+import { uploadOrderPhoto, fileToCompressedDataUrl } from '../../../services/storageService';
 
 interface PhotoAlbumModalProps {
   isOpen: boolean;
@@ -109,14 +109,20 @@ export const PhotoAlbumModal: React.FC<PhotoAlbumModalProps> = ({
           try {
             const uploadPromise = uploadOrderPhoto(orderId || 'customer_album', item.file);
             const timeoutPromise = new Promise<string>((_, reject) =>
-              setTimeout(() => reject(new Error('Storage timeout')), 3500)
+              setTimeout(() => reject(new Error('Storage timeout')), 8000)
             );
             const uploadedUrl = await Promise.race([uploadPromise, timeoutPromise]);
-            finalUrls.push(uploadedUrl || item.url);
+            if (uploadedUrl && !uploadedUrl.startsWith('blob:')) {
+              finalUrls.push(uploadedUrl);
+            } else {
+              const compressed = await fileToCompressedDataUrl(item.file);
+              finalUrls.push(compressed);
+            }
           } catch {
-            finalUrls.push(item.url);
+            const compressed = await fileToCompressedDataUrl(item.file);
+            finalUrls.push(compressed);
           }
-        } else {
+        } else if (item.url && !item.url.startsWith('blob:')) {
           finalUrls.push(item.url);
         }
       }

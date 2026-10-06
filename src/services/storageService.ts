@@ -2,7 +2,7 @@ import { storage } from './firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Helper to compress an image file to a data URL if storage is unavailable or fails
-function fileToCompressedDataUrl(file: File, maxWidth = 1200, quality = 0.75): Promise<string> {
+export function fileToCompressedDataUrl(file: File, maxWidth = 1200, quality = 0.75): Promise<string> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined') {
       resolve('');

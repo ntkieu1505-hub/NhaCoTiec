@@ -16,6 +16,7 @@ import { ORDER_STAGES, PAYMENT_STATUS_META, BANK_INFO } from '../../../utils/con
 import { formatCurrency, formatDateTime, formatDate } from '../../../utils/formatters';
 import { OrderStatusStage } from '../../../types/order';
 import { resolveTemplateForOrder, resolveOrderThumbnail, useTemplates } from '../../../mocks/templateStore';
+import { downloadImage, downloadAllImages } from '../../../utils/fileDownloader';
 
 export const AdminOrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -639,10 +640,46 @@ export const AdminOrderDetailPage: React.FC = () => {
                 </h3>
               </div>
             </div>
-            <span className="text-xs font-semibold text-deep-espresso">
-              {order.weddingInfo?.albumPhotos?.length || 0} ảnh đã tải
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-deep-espresso">
+                {order.weddingInfo?.albumPhotos?.length || 0} ảnh
+              </span>
+              {order.weddingInfo?.albumPhotos && order.weddingInfo.albumPhotos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => downloadAllImages(order.weddingInfo!.albumPhotos!, `anh-cuoi-${order.id}`)}
+                  className="px-2.5 py-1 rounded-lg bg-burgundy-wine text-white hover:bg-[#851622] text-[11px] font-semibold flex items-center gap-1 shadow-xs transition-colors"
+                  title="Tải tất cả các ảnh trong album về máy tính"
+                >
+                  <Icon name="download_for_offline" className="text-[14px]" />
+                  <span>Tải tất cả</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {order.weddingInfo?.albumDriveUrl && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs">
+              <div className="flex items-center gap-2">
+                <Icon name="folder_shared" className="text-[20px] text-blue-700" />
+                <div>
+                  <span className="font-semibold text-blue-900 block">Thư mục Google Drive của khách</span>
+                  <span className="text-[11px] text-blue-700/80 truncate max-w-[260px] block">
+                    {order.weddingInfo.albumDriveUrl}
+                  </span>
+                </div>
+              </div>
+              <a
+                href={order.weddingInfo.albumDriveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-1 transition-colors shrink-0 shadow-2xs"
+              >
+                <span>Mở Drive</span>
+                <Icon name="open_in_new" className="text-[14px]" />
+              </a>
+            </div>
+          )}
 
           {order.weddingInfo?.albumPhotos && order.weddingInfo.albumPhotos.length > 0 ? (
             <div className="flex flex-col gap-3">
@@ -650,22 +687,59 @@ export const AdminOrderDetailPage: React.FC = () => {
                 {order.weddingInfo.albumPhotos.map((url, i) => (
                   <div
                     key={i}
-                    onClick={() => setSelectedPhotoPreview(url)}
-                    className="group relative aspect-square rounded-xl overflow-hidden border border-border-delicate cursor-pointer bg-surface-subtle hover:ring-2 hover:ring-burgundy-wine transition-all"
+                    className="group relative aspect-square rounded-xl overflow-hidden border border-border-delicate bg-surface-subtle hover:ring-2 hover:ring-burgundy-wine transition-all"
                   >
                     <img
                       src={url}
                       alt={`Ảnh ${i + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform cursor-pointer"
+                      onClick={() => setSelectedPhotoPreview(url)}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
                     />
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
-                      <Icon name="zoom_in" className="text-[20px]" />
+                    {/* Error Fallback container */}
+                    <div
+                      style={{ display: 'none' }}
+                      className="w-full h-full flex-col items-center justify-center p-2 text-center bg-rose-50/50 text-text-muted text-[10px]"
+                    >
+                      <Icon name="broken_image" className="text-[20px] text-rose-400 mb-1" />
+                      <span>Ảnh lỗi</span>
+                    </div>
+
+                    {/* Hover Action Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity text-white">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPhotoPreview(url);
+                        }}
+                        className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+                        title="Phóng to ảnh"
+                      >
+                        <Icon name="zoom_in" className="text-[18px]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadImage(url, `anh-cuoi-${order.id}-${i + 1}.jpg`);
+                        }}
+                        className="w-8 h-8 rounded-full bg-burgundy-wine hover:bg-[#851622] flex items-center justify-center transition-colors"
+                        title="Tải ảnh này về máy"
+                      >
+                        <Icon name="file_download" className="text-[18px]" />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
               <span className="text-[11px] text-text-muted text-right">
-                Bấm vào ảnh để phóng to xem chi tiết
+                Bấm vào ảnh để xem phóng to hoặc tải về
               </span>
             </div>
           ) : (
@@ -1009,24 +1083,63 @@ export const AdminOrderDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* 7. LIGHTBOX MODAL FOR PHOTO PREVIEW */}
+      {/* 7. LIGHTBOX MODAL FOR PHOTO PREVIEW & DOWNLOAD */}
       {selectedPhotoPreview && (
         <div
           onClick={() => setSelectedPhotoPreview(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-pointer"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm cursor-pointer"
         >
-          <div className="relative max-w-2xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl bg-black">
-            <img
-              src={selectedPhotoPreview}
-              alt="Ảnh cưới xem lớn"
-              className="w-full h-full object-contain"
-            />
-            <button
-              onClick={() => setSelectedPhotoPreview(null)}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black transition-colors"
-            >
-              <Icon name="close" className="text-[18px]" />
-            </button>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-3xl max-h-[90vh] rounded-2xl overflow-hidden shadow-2xl bg-black/95 flex flex-col cursor-default border border-white/10"
+          >
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-black/70 text-white border-b border-white/10 z-10">
+              <span className="text-xs font-medium text-white/90 flex items-center gap-1.5">
+                <Icon name="photo" className="text-[16px] text-gold-foil" />
+                <span>Xem chi tiết ảnh cưới</span>
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => downloadImage(selectedPhotoPreview, `anh-cuoi-${order.id}-full.jpg`)}
+                  className="px-3 py-1.5 rounded-lg bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+                  title="Tải ảnh này về máy tính"
+                >
+                  <Icon name="file_download" className="text-[16px]" />
+                  <span>Tải ảnh về máy</span>
+                </button>
+
+                <a
+                  href={selectedPhotoPreview}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors"
+                  title="Mở ảnh trong tab mới"
+                >
+                  <Icon name="open_in_new" className="text-[16px]" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhotoPreview(null)}
+                  className="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors ml-1"
+                  title="Đóng (Esc)"
+                >
+                  <Icon name="close" className="text-[18px]" />
+                </button>
+              </div>
+            </div>
+
+            {/* Photo Container */}
+            <div className="flex items-center justify-center p-3 overflow-hidden max-h-[calc(90vh-50px)]">
+              <img
+                src={selectedPhotoPreview}
+                alt="Ảnh cưới xem lớn"
+                className="max-h-[78vh] w-auto max-w-full object-contain rounded-lg shadow-lg"
+              />
+            </div>
           </div>
         </div>
       )}

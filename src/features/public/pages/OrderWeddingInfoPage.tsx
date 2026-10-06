@@ -6,6 +6,7 @@ import { formatCurrency } from '../../../utils/formatters';
 import { createOrder } from '../../../mocks/orderStore';
 import { useAuth } from '../../../mocks/authStore';
 import { useCmsContent } from '../../../mocks/cmsStore';
+import { uploadOrderPhoto, fileToCompressedDataUrl } from '../../../services/storageService';
 
 interface UploadedPhoto {
   id: string;
@@ -13,6 +14,7 @@ interface UploadedPhoto {
   name: string;
   size: string;
   note: string;
+  file?: File;
 }
 
 export const OrderWeddingInfoPage: React.FC = () => {
@@ -107,6 +109,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
         name: file.name,
         size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
         note: '',
+        file,
       }));
       setPhotos([...photos, ...newPhotos]);
     }
@@ -120,7 +123,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
     setPhotos(photos.map((p) => (p.id === id ? { ...p, note } : p)));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -154,6 +157,25 @@ export const OrderWeddingInfoPage: React.FC = () => {
       : template.name;
 
     try {
+      // Convert / Upload all photos so they are permanent URLs, NOT temporary blob: URLs
+      const processedPhotos = await Promise.all(
+        photos.map(async (p) => {
+          if (p.file) {
+            try {
+              const uploaded = await uploadOrderPhoto(user?.id || 'new_order', p.file);
+              if (uploaded && !uploaded.startsWith('blob:')) {
+                return { ...p, url: uploaded };
+              }
+            } catch {
+              // fallback
+            }
+            const compressed = await fileToCompressedDataUrl(p.file);
+            return { ...p, url: compressed || p.url };
+          }
+          return p;
+        })
+      );
+
       const newOrder = createOrder({
         userId: user?.id,
         templateId: template.id,
@@ -176,9 +198,9 @@ export const OrderWeddingInfoPage: React.FC = () => {
           invitationMessage: invitationMessage.trim() || undefined,
           loveStory: loveStory.trim() || undefined,
           timeline: timeline.trim() || undefined,
-          albumPhotos: photos.map((p) => p.url),
-          albumPhotoCount: photos.length,
-          albumPhotoNotes: photos.map((p) => ({
+          albumPhotos: processedPhotos.map((p) => p.url).filter((u) => !u.startsWith('blob:')),
+          albumPhotoCount: processedPhotos.length,
+          albumPhotoNotes: processedPhotos.map((p) => ({
             id: p.id,
             url: p.url,
             note: p.note,
