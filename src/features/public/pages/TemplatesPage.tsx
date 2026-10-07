@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { Badge } from '../../../components/common/Badge';
 import { usePublicTemplates } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { Template } from '../../../types/template';
@@ -11,14 +10,11 @@ import { useAuth } from '../../../mocks/authStore';
 export const TemplatesPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const publicTemplates = usePublicTemplates();
-  const [filter, setFilter] = useState<'all' | 'basic' | 'premium'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplateForOrder, setSelectedTemplateForOrder] = useState<Template | null>(null);
 
   const filtered = useMemo(() => {
     return publicTemplates.filter((t) => {
-      const matchCat = filter === 'all' || (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === filter;
-      if (!matchCat) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const matchName = t.name.toLowerCase().includes(q);
@@ -28,7 +24,7 @@ export const TemplatesPage: React.FC = () => {
       }
       return true;
     });
-  }, [publicTemplates, filter, searchQuery]);
+  }, [publicTemplates, searchQuery]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
@@ -44,57 +40,22 @@ export const TemplatesPage: React.FC = () => {
           Đội ngũ Nhà Có Tiệc sẽ tiếp nhận và tùy biến riêng từng câu chữ, ảnh cưới và âm nhạc theo thông điệp của bạn.
         </p>
 
-        {/* Filters: Category tabs + Search bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
-          {/* 3 tabs filter: Tất cả, Cao cấp, Cơ bản */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-surface-subtle border border-border-delicate shadow-xs shrink-0">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-                filter === 'all'
-                  ? 'bg-[#63141a] text-white shadow-sm'
-                  : 'text-deep-espresso hover:bg-surface-card'
-              }`}
-            >
-              Tất cả
-            </button>
-            <button
-              onClick={() => setFilter('premium')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-                filter === 'premium'
-                  ? 'bg-[#63141a] text-white shadow-sm'
-                  : 'text-deep-espresso hover:bg-surface-card'
-              }`}
-            >
-              Cao cấp
-            </button>
-            <button
-              onClick={() => setFilter('basic')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-                filter === 'basic'
-                  ? 'bg-[#63141a] text-white shadow-sm'
-                  : 'text-deep-espresso hover:bg-surface-card'
-              }`}
-            >
-              Cơ bản
-            </button>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64">
+        {/* Search bar */}
+        <div className="flex items-center justify-center mt-6">
+          <div className="relative w-full max-w-md">
             <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[17px] text-text-muted pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm theo tên, phong cách..."
-              className="w-full h-9 pl-9 pr-8 rounded-full bg-surface-subtle border border-border-delicate text-xs text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine focus:border-burgundy-wine"
+              className="w-full h-10 pl-9 pr-8 rounded-full bg-surface-subtle border border-border-delicate text-xs text-deep-espresso placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-burgundy-wine focus:border-burgundy-wine shadow-xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-deep-espresso"
                 title="Xóa tìm kiếm"
               >
                 <Icon name="close" className="text-[14px]" />
@@ -115,10 +76,7 @@ export const TemplatesPage: React.FC = () => {
           </span>
           <button
             type="button"
-            onClick={() => {
-              setSearchQuery('');
-              setFilter('all');
-            }}
+            onClick={() => setSearchQuery('')}
             className="mt-3 px-5 py-2 rounded-full bg-burgundy-wine text-white text-xs font-semibold hover:bg-burgundy-wine/90"
           >
             Xem tất cả mẫu thiệp
@@ -145,11 +103,6 @@ export const TemplatesPage: React.FC = () => {
                   style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
                 />
               </Link>
-              <span className="absolute top-3 left-3 pointer-events-none">
-                <Badge variant={template.category === 'premium' ? 'premium' : 'basic'}>
-                  {template.category === 'premium' ? 'Cao cấp' : 'Cơ bản'}
-                </Badge>
-              </span>
               <span className="absolute bottom-3 right-3 bg-[#63141a] text-surface-cream font-serif text-sm font-semibold px-3 py-1 rounded-lg shadow-md pointer-events-none">
                 {formatCurrency(template.price)}
               </span>

@@ -264,10 +264,10 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       status,
       isPinned,
       isDeleted: false,
-      category: price >= 79000 ? 'premium' : 'basic',
+      category: 'premium',
       rating: initialData?.rating || 5.0,
       reviewCount: initialData?.reviewCount || 1,
-      badgeText: price >= 79000 ? 'Cao cấp' : 'Cơ bản',
+      badgeText: initialData?.badgeText || undefined,
       musicTitle: musicTitle.trim() || 'A Thousand Years',
       musicArtist: musicArtist.trim() || 'Nhà Có Tiệc Studio',
       features: features.map((f) => f.trim()).filter(Boolean)

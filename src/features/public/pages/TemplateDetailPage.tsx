@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { Badge } from '../../../components/common/Badge';
 import { usePublicTemplates } from '../../../mocks/templateStore';
 import { useZaloSupportUrl } from '../../../mocks/cmsStore';
 import { formatCurrency } from '../../../utils/formatters';
@@ -122,9 +121,6 @@ export const TemplateDetailPage: React.FC = () => {
         <div className="md:col-span-7 flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Badge variant={template.category === 'premium' ? 'premium' : 'basic'}>
-                {template.category === 'premium' ? 'Gói Cao cấp' : 'Gói Cơ bản'}
-              </Badge>
               <span className="text-xs text-gold-foil font-semibold flex items-center gap-1">
                 <Icon name="grade" className="text-[16px]" /> {template.rating || 5.0} ({template.reviewCount || 1} đánh giá)
               </span>

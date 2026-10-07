@@ -331,7 +331,7 @@ export const OrderWeddingInfoPage: React.FC = () => {
             <div className="flex-1 min-w-0">
               <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-subtle text-burgundy-wine font-label-caps text-[10px] font-bold uppercase mb-1 border border-border-delicate">
                 <Icon name="stars" className="text-[12px] text-gold-foil" />
-                <span>{template.category === 'premium' ? 'Cao Cấp' : 'Cơ Bản'} • {template.style}</span>
+                <span>Mẫu thiệp cưới • {template.style}</span>
               </div>
               <h2 className="font-serif text-base font-bold text-deep-espresso leading-snug">
                 {hasCoupleNames ? (

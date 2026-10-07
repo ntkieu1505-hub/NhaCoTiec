@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
-import { Badge } from '../../../components/common/Badge';
 import { usePublicTemplates } from '../../../mocks/templateStore';
 import { useCmsContent } from '../../../mocks/cmsStore';
 import { formatCurrency } from '../../../utils/formatters';
@@ -9,7 +8,6 @@ import { formatCurrency } from '../../../utils/formatters';
 export const HomePage: React.FC = () => {
   const publicTemplates = usePublicTemplates();
   const cms = useCmsContent();
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'basic' | 'premium'>('all');
 
   // Lọc chỉ những mẫu thiệp được ghim lên trang chủ (chỉ lấy mẫu có cờ isPinned === true)
   const pinnedTemplates = publicTemplates
@@ -25,11 +23,7 @@ export const HomePage: React.FC = () => {
     });
 
   // Nếu Admin chưa ghim mẫu nào cụ thể, fallback hiển thị 4 mẫu mở bán đầu tiên để trang chủ không bị trống
-  const baseTemplates = pinnedTemplates.length > 0 ? pinnedTemplates : publicTemplates.slice(0, 4);
-
-  const filteredTemplates = selectedCategory === 'all'
-    ? baseTemplates
-    : baseTemplates.filter((t) => (t.category || (t.price >= 79000 ? 'premium' : 'basic')) === selectedCategory);
+  const filteredTemplates = pinnedTemplates.length > 0 ? pinnedTemplates : publicTemplates.slice(0, 4);
 
   const activeFeatures = (cms.features || [])
     .filter((f) => f.enabled)
@@ -156,40 +150,6 @@ export const HomePage: React.FC = () => {
           <p className="text-sm text-text-muted max-w-md">
             {cms.featuredTemplates.description}
           </p>
-
-          {/* Filter Pills: Đúng 3 mục "Tất cả", "Cao cấp", "Cơ bản" */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-surface-subtle border border-border-delicate mt-4">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                selectedCategory === 'all'
-                  ? 'bg-burgundy-wine text-white shadow-xs'
-                  : 'text-deep-espresso hover:bg-surface-card'
-              }`}
-            >
-              Tất cả
-            </button>
-            <button
-              onClick={() => setSelectedCategory('premium')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                selectedCategory === 'premium'
-                  ? 'bg-burgundy-wine text-white shadow-xs'
-                  : 'text-deep-espresso hover:bg-surface-card'
-              }`}
-            >
-              Cao cấp
-            </button>
-            <button
-              onClick={() => setSelectedCategory('basic')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                selectedCategory === 'basic'
-                  ? 'bg-burgundy-wine text-white shadow-xs'
-                  : 'text-deep-espresso hover:bg-surface-card'
-              }`}
-            >
-              Cơ bản
-            </button>
-          </div>
         </div>
 
         {/* Templates Grid Cards - Consistent 9:19.5 Modern Smartphone Ratio */}
@@ -228,11 +188,6 @@ export const HomePage: React.FC = () => {
                       style={{ objectPosition: template.thumbnailPosition || 'center 30%' }}
                     />
                   </Link>
-                  <span className="absolute top-3 left-3 pointer-events-none">
-                    <Badge variant={template.category === 'premium' ? 'premium' : 'basic'}>
-                      {template.category === 'premium' ? 'Cao cấp' : 'Cơ bản'}
-                    </Badge>
-                  </span>
                   <span className="absolute bottom-3 right-3 bg-burgundy-wine text-surface-cream font-serif text-sm font-semibold px-3 py-1 rounded-lg shadow-md pointer-events-none">
                     {formatCurrency(template.price)}
                   </span>
@@ -511,7 +466,7 @@ export const HomePage: React.FC = () => {
           {[
             {
               q: 'Chi phí mua thiệp cưới tại Nhà Có Tiệc được tính như thế nào?',
-              a: 'Nhà Có Tiệc áp dụng mô hình bán theo sản phẩm đơn chiếc (59.000đ cho mẫu Cơ bản, 79.000đ cho mẫu Cao cấp). Không có phí duy trì định kỳ, không subscription, thanh toán 1 lần duy nhất.'
+              a: 'Nhà Có Tiệc áp dụng mô hình bán theo từng mẫu thiệp (chỉ từ 59.000đ - 79.000đ tùy mẫu). Không có phí duy trì định kỳ, không subscription, thanh toán 1 lần duy nhất.'
             },
             {
               q: 'Tôi có phải tự thiết kế thiệp hay canh chỉnh layout không?',
