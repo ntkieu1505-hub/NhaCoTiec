@@ -88,8 +88,10 @@ export const AdminTemplatesPage: React.FC = () => {
   const handleSaveTemplate = (data: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingTemplate) {
       updateTemplate(editingTemplate.id, data);
+      alert(`Đã cập nhật thành công mẫu thiệp "${data.name}"!`);
     } else {
       createTemplate(data);
+      alert(`Đã thêm mới thành công mẫu thiệp "${data.name}"!`);
     }
     // Xóa bộ lọc tìm kiếm và bộ lọc kiểu dáng/giá để mẫu vừa lưu luôn hiển thị
     setSearchQuery('');
@@ -553,7 +555,10 @@ export const AdminTemplatesPage: React.FC = () => {
       {/* MODAL: Thêm mới & Chỉnh sửa mẫu thiệp */}
       <TemplateFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTemplate(null);
+        }}
         initialData={editingTemplate}
         existingTemplates={templates}
         onSave={handleSaveTemplate}

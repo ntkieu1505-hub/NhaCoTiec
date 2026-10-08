@@ -232,8 +232,8 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!name.trim()) {
       alert('Vui lòng nhập tên mẫu thiệp');
       return;
@@ -246,9 +246,14 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       alert('Vui lòng nhập mô tả phong cách thiệp');
       return;
     }
-    if (!previewUrl.trim()) {
+
+    let formattedPreviewUrl = (previewUrl || '').trim();
+    if (!formattedPreviewUrl) {
       alert('Vui lòng nhập link xem thử demo thiệp');
       return;
+    }
+    if (!formattedPreviewUrl.startsWith('http://') && !formattedPreviewUrl.startsWith('https://')) {
+      formattedPreviewUrl = `https://${formattedPreviewUrl}`;
     }
 
     onSave({
@@ -257,10 +262,10 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       slug: slug.trim().toLowerCase(),
       style: style.trim(),
       description: description.trim(),
-      price: Number(price) || 79000,
-      thumbnailUrl,
+      price: Math.max(0, Number(price) || 0) || 79000,
+      thumbnailUrl: thumbnailUrl || SAMPLE_THUMBNAILS[0].url,
       thumbnailPosition,
-      previewUrl: previewUrl.trim(),
+      previewUrl: formattedPreviewUrl,
       status,
       isPinned,
       isDeleted: false,
@@ -270,7 +275,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       badgeText: initialData?.badgeText || undefined,
       musicTitle: musicTitle.trim() || 'A Thousand Years',
       musicArtist: musicArtist.trim() || 'Nhà Có Tiệc Studio',
-      features: features.map((f) => f.trim()).filter(Boolean)
+      features: features.map((f) => (typeof f === 'string' ? f.trim() : String(f || ''))).filter(Boolean)
     });
 
     onClose();
@@ -303,8 +308,14 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
           </button>
         </div>
 
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 text-xs text-deep-espresso">
+        {/* Modal Form Container with Sticky Footer */}
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className="flex-1 flex flex-col min-h-0 overflow-hidden"
+        >
+          {/* Scrollable Modal Body */}
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 text-xs text-deep-espresso">
           {/* SECTION 1: BASIC INFORMATION */}
           <div className="flex flex-col gap-3">
             <span className="font-label-caps text-[10px] uppercase font-bold text-burgundy-wine tracking-wider border-b border-border-delicate pb-1 flex items-center gap-1.5">
@@ -391,12 +402,9 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                 <div className="flex items-center gap-1.5">
                   <input
                     type="number"
-                    step="1000"
-                    min="10000"
-                    max="1000000"
                     value={price}
                     onChange={(e) => setPrice(Number(e.target.value) || 0)}
-                    required
+                    placeholder="79000"
                     className="flex-1 px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
                   />
                   <button
@@ -603,11 +611,10 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               </label>
               <div className="flex gap-2">
                 <input
-                  type="url"
+                  type="text"
                   value={previewUrl}
                   onChange={(e) => setPreviewUrl(e.target.value)}
                   placeholder="https://nhacotiec.vn/demo/minh-anh"
-                  required
                   className="flex-1 px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
                 />
                 <a
@@ -899,18 +906,21 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             </div>
           </div>
 
-          {/* Modal Footer Actions */}
-          <div className="pt-4 border-t border-border-delicate flex items-center justify-end gap-2.5">
+          </div>
+
+          {/* Sticky Modal Footer Actions */}
+          <div className="px-6 py-3.5 border-t border-border-delicate bg-surface-card flex items-center justify-end gap-2.5 shrink-0 shadow-xs">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-full border border-border-delicate hover:bg-surface-subtle text-text-muted hover:text-deep-espresso font-semibold text-xs transition-colors"
+              className="px-4 py-2 rounded-full border border-border-delicate hover:bg-surface-subtle text-text-muted hover:text-deep-espresso font-semibold text-xs transition-colors cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              className="px-6 py-2 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-semibold text-xs shadow-md transition-colors flex items-center gap-1.5"
+              onClick={handleSubmit}
+              className="px-6 py-2 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white font-semibold text-xs shadow-md transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Icon name="check" className="text-[16px]" />
               <span>{isEdit ? 'Cập nhật mẫu thiệp' : 'Lưu mẫu thiệp mới'}</span>
