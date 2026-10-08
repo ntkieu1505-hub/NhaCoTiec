@@ -10,6 +10,7 @@ import {
   resetTemplates,
   purgeCorruptedTemplates,
   togglePinTemplate,
+  syncAllTemplatesToFirestore,
 } from '../../../mocks/templateStore';
 import { formatCurrency } from '../../../utils/formatters';
 import { TemplateFormModal } from '../components/TemplateFormModal';
@@ -85,14 +86,37 @@ export const AdminTemplatesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+
+  const handleCloudSync = async () => {
+    setIsSyncingCloud(true);
+    try {
+      const res = await syncAllTemplatesToFirestore();
+      if (res.success) {
+        alert(
+          `Đã đồng bộ thành công ${res.count} mẫu thiệp lên máy chủ Cloud Firestore!\n\nTất cả khách hàng truy cập website trên bất kỳ máy tính, điện thoại hay trình duyệt nào hiện đã xem được dữ liệu mới nhất ngay lập tức.`
+        );
+      } else {
+        alert(`Đồng bộ thất bại: ${res.error || 'Vui lòng kiểm tra kết nối mạng'}`);
+      }
+    } catch (e: any) {
+      alert(`Đồng bộ thất bại: ${e?.message || 'Lỗi mạng'}`);
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
+
   const handleSaveTemplate = (data: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingTemplate) {
       updateTemplate(editingTemplate.id, data);
-      alert(`Đã cập nhật thành công mẫu thiệp "${data.name}"!`);
+      alert(`Đã cập nhật thành công mẫu thiệp "${data.name}" và đồng bộ lên đám mây!`);
     } else {
       createTemplate(data);
-      alert(`Đã thêm mới thành công mẫu thiệp "${data.name}"!`);
+      alert(`Đã thêm mới thành công mẫu thiệp "${data.name}" và đồng bộ lên đám mây!`);
     }
+    // Tự động đẩy toàn bộ thay đổi lên Cloud Firestore để đảm bảo đồng bộ đa thiết bị
+    syncAllTemplatesToFirestore().catch(() => {});
+
     // Xóa bộ lọc tìm kiếm và bộ lọc kiểu dáng/giá để mẫu vừa lưu luôn hiển thị
     setSearchQuery('');
     outletCtx.setSearchQuery?.('');
@@ -111,12 +135,14 @@ export const AdminTemplatesPage: React.FC = () => {
       )
     ) {
       deleteTemplate(tpl.id);
+      syncAllTemplatesToFirestore().catch(() => {});
       alert(`Đã xóa vĩnh viễn mẫu thiệp "${tpl.name}"!`);
     }
   };
 
   const handlePurge = () => {
     const cleaned = purgeCorruptedTemplates();
+    syncAllTemplatesToFirestore().catch(() => {});
     alert(`Đã dọn dẹp và đồng bộ lại danh sách mẫu thiệp! (${cleaned} mục được xử lý)`);
   };
 
@@ -144,8 +170,18 @@ export const AdminTemplatesPage: React.FC = () => {
         <div className="flex items-center flex-wrap gap-2 shrink-0">
           <button
             type="button"
+            onClick={handleCloudSync}
+            disabled={isSyncingCloud}
+            className="px-3.5 py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+            title="Đồng bộ tất cả các mẫu thiệp lên Cloud Firestore để khách hàng trên mọi thiết bị đều xem được bản mới nhất"
+          >
+            <Icon name={isSyncingCloud ? 'hourglass_top' : 'cloud_sync'} className={`text-[16px] text-emerald-700 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+            <span>{isSyncingCloud ? 'Đang đồng bộ...' : 'Đồng bộ đám mây'}</span>
+          </button>
+          <button
+            type="button"
             onClick={handlePurge}
-            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             title="Dọn dẹp và thanh lọc các mẫu lỗi hoặc đã xóa"
           >
             <Icon name="cleaning_services" className="text-[15px] text-amber-700" />
@@ -156,9 +192,10 @@ export const AdminTemplatesPage: React.FC = () => {
             onClick={() => {
               if (window.confirm('Đặt lại toàn bộ mẫu thiệp về dữ liệu ban đầu?')) {
                 resetTemplates();
+                syncAllTemplatesToFirestore().catch(() => {});
               }
             }}
-            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-3 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-text-muted border border-border-delicate text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             title="Khôi phục danh sách mẫu ban đầu"
           >
             <Icon name="refresh" className="text-[15px]" />
@@ -167,7 +204,7 @@ export const AdminTemplatesPage: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="px-4 py-2 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+            className="px-4 py-2 rounded-full bg-burgundy-wine hover:bg-[#851622] text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <Icon name="add" className="text-[18px]" />
             <span>+ Thêm mẫu thiệp</span>

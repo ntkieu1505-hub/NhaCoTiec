@@ -41,6 +41,26 @@ function saveDeletedIds() {
   } catch (e) {}
 }
 
+/**
+ * Recursively cleans an object for Firestore by converting undefined fields to null
+ * or stripping them, as Firestore throws on undefined values.
+ */
+export function sanitizeForFirestore<T>(data: T): any {
+  if (data === undefined) return null;
+  if (data === null || typeof data !== 'object') return data;
+  if (data instanceof Date) return data.toISOString();
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeForFirestore(item));
+  }
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      clean[key] = sanitizeForFirestore(value);
+    }
+  }
+  return clean;
+}
+
 // In-memory cache synced with localStorage, merging baseline mock templates
 let currentTemplates: Template[] = (() => {
   try {
@@ -232,6 +252,51 @@ function initFirestoreTemplatesSync() {
 
 initFirestoreTemplatesSync();
 
+/**
+ * Admin Action: Force sync all active local templates to Cloud Firestore
+ * Ensures visitors on all devices receive the latest data immediately.
+ */
+export async function syncAllTemplatesToFirestore(): Promise<{ success: boolean; count: number; error?: string }> {
+  if (!db) {
+    return { success: false, count: 0, error: 'Chưa kết nối Cloud Firestore' };
+  }
+  try {
+    const templatesToSync = currentTemplates.filter((t) => !deletedTemplateIds.has(t.id) && !isPurgedTemplate(t));
+    let count = 0;
+    for (const tpl of templatesToSync) {
+      const sanitized = sanitizeForFirestore(tpl);
+      await setDoc(doc(db, 'templates', tpl.id), sanitized, { merge: true });
+      count++;
+    }
+
+    // Sync deleted metadata
+    await setDoc(
+      doc(db, 'settings', 'templates_meta'),
+      sanitizeForFirestore({
+        deletedTemplateIds: Array.from(deletedTemplateIds),
+        updatedAt: new Date().toISOString(),
+      }),
+      { merge: true }
+    );
+
+    // Sync CMS featured templates if any pinned
+    try {
+      const cms = getCmsContent();
+      const pinnedIds = templatesToSync.filter((t) => t.isPinned).map((t) => t.id);
+      if (pinnedIds.length > 0) {
+        updateFeaturedTemplates({
+          featuredTemplateIds: Array.from(new Set([...(cms.featuredTemplates?.featuredTemplateIds || []), ...pinnedIds])),
+        });
+      }
+    } catch (e) {}
+
+    return { success: true, count };
+  } catch (err: any) {
+    console.error('Failed to sync templates to Firestore:', err);
+    return { success: false, count: 0, error: err?.message || String(err) };
+  }
+}
+
 function notify() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentTemplates));
@@ -420,7 +485,8 @@ export function createTemplate(
 
   // Sync to Firestore
   if (db) {
-    setDoc(doc(db, 'templates', id), newTemplate, { merge: true }).catch((err) => {
+    const cleanDoc = sanitizeForFirestore(newTemplate);
+    setDoc(doc(db, 'templates', id), cleanDoc, { merge: true }).catch((err) => {
       console.warn('Failed to save template to Firestore:', err);
     });
   }
@@ -470,10 +536,10 @@ export function updateTemplate(
     if (db) {
       setDoc(
         doc(db, 'settings', 'templates_meta'),
-        {
+        sanitizeForFirestore({
           deletedTemplateIds: Array.from(deletedTemplateIds),
           updatedAt: new Date().toISOString(),
-        },
+        }),
         { merge: true }
       ).catch(() => {});
     }
@@ -523,16 +589,21 @@ export function updateTemplate(
   notify();
 
   if (updatedItem && db) {
-    setDoc(doc(db, 'templates', id), updatedItem, { merge: true }).catch((err) => {
-      console.warn('Failed to update template in Firestore:', err);
-    });
+    const cleanDoc = sanitizeForFirestore(updatedItem);
+    setDoc(doc(db, 'templates', id), cleanDoc, { merge: true })
+      .then(() => {
+        console.info(`[Firestore] Đã đồng bộ mẫu thiệp #${id} lên Firestore thành công.`);
+      })
+      .catch((err) => {
+        console.warn('Failed to update template in Firestore:', err);
+      });
     logActivity({
       type: 'admin_setting_changed',
       actorName: 'Admin',
       actorRole: 'admin',
       title: 'Cập nhật mẫu thiệp',
       description: `Admin đã chỉnh sửa mẫu thiệp "${updatedItem.title}" (#${updatedItem.id})`,
-      details: { templateId: updatedItem.id, updates },
+      details: { templateId: updatedItem.id, updates: sanitizeForFirestore(updates) },
     }).catch(() => {});
   }
 

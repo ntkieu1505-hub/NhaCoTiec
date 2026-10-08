@@ -272,7 +272,7 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       category: 'premium',
       rating: initialData?.rating || 5.0,
       reviewCount: initialData?.reviewCount || 1,
-      badgeText: initialData?.badgeText || undefined,
+      badgeText: initialData?.badgeText || '',
       musicTitle: musicTitle.trim() || 'A Thousand Years',
       musicArtist: musicArtist.trim() || 'Nhà Có Tiệc Studio',
       features: features.map((f) => (typeof f === 'string' ? f.trim() : String(f || ''))).filter(Boolean)
