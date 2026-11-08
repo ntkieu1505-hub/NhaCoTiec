@@ -568,7 +568,7 @@ export const AdminGuestsWishesPage: React.FC = () => {
                           <div className="flex items-center gap-2 self-end sm:self-auto">
                             <button
                               type="button"
-                              onClick={() => handleDownloadExcel(exp.fileName)}
+                              onClick={() => handleDownloadExcel(exp.fileName || 'Danh_Sach_Khach_Moi.xlsx')}
                               className="px-4 py-2 rounded-full bg-surface-card hover:bg-surface-subtle text-deep-espresso border border-border-delicate text-xs font-semibold flex items-center gap-1.5 transition-colors"
                             >
                               <Icon name="download" className="text-[16px]" />
@@ -698,7 +698,7 @@ export const AdminGuestsWishesPage: React.FC = () => {
                                     <>
                                       <button
                                         type="button"
-                                        onClick={() => handleDownloadExcel(exp.fileName)}
+                                        onClick={() => handleDownloadExcel(exp.fileName || 'Danh_Sach_Khach_Moi.xlsx')}
                                         className="p-1 text-text-muted hover:text-deep-espresso"
                                         title="Tải file"
                                       >

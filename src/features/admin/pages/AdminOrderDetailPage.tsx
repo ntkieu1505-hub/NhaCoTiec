@@ -9,6 +9,7 @@ import {
   adminAdvanceStage,
   adminCompleteDesign,
   adminUploadExcel,
+  adminDeleteExcel,
   adminSendExcelToCustomer,
   useCustomerExport,
   customerSubmitAlbum,
@@ -1600,7 +1601,7 @@ export const AdminOrderDetailPage: React.FC = () => {
               </span>
             </div>
 
-            {exportData && exportData.fileName ? (
+            {exportData && (exportData.status === 'uploaded' || exportData.status === 'sent') && exportData.fileName ? (
               <div className="flex flex-col gap-3 text-xs">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-card border border-border-delicate shadow-2xs">
                   <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
@@ -1615,6 +1616,22 @@ export const AdminOrderDetailPage: React.FC = () => {
                       {exportData.uploadedAt && ` • Tải lên: ${formatDateTime(exportData.uploadedAt)}`}
                     </span>
                   </div>
+                  {exportData.status === 'uploaded' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Bạn có chắc muốn xoá file này và quay lại trạng thái chưa tải file?')) {
+                          adminDeleteExcel(order.id);
+                          setSendSuccessMessage('Đã xoá file khỏi đơn hàng.');
+                          setTimeout(() => setSendSuccessMessage(null), 3000);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-text-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      title="Xoá file này"
+                    >
+                      <Icon name="delete" className="text-[16px]" />
+                    </button>
+                  )}
                 </div>
 
                 {exportData.status === 'sent' && exportData.sentAt && (
@@ -1648,9 +1665,16 @@ export const AdminOrderDetailPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="py-6 text-center text-xs text-text-muted flex flex-col items-center gap-2">
-                <Icon name="folder_off" className="text-[24px] text-text-muted/60" />
-                <span>Chưa có file nào được tải lên. Hãy chọn file ở ô bên trái.</span>
+              <div className="py-8 text-center text-xs text-text-muted flex flex-col items-center gap-2.5">
+                <div className="w-12 h-12 rounded-full bg-surface-subtle flex items-center justify-center text-text-muted/60">
+                  <Icon name="folder_off" className="text-[26px]" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-semibold text-deep-espresso">Chưa có file nào được tải lên</span>
+                  <span className="text-[11px] text-text-muted max-w-xs leading-relaxed">
+                    Sau khi tiệc cưới diễn ra hoặc khi cần xuất dữ liệu, hãy tải file Excel tổng hợp ở khung bên trái để chuyển giao cho khách.
+                  </span>
+                </div>
               </div>
             )}
           </div>

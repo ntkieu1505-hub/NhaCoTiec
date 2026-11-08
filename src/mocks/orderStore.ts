@@ -907,7 +907,7 @@ export function useOrders() {
 // CUSTOMER EXPORTS (Excel Khách mời & Lời chúc - customerExports collection)
 // ============================================================================
 
-const EXPORTS_STORAGE_KEY = 'nha_co_tiec_exports_v1';
+const EXPORTS_STORAGE_KEY = 'nha_co_tiec_exports_v2';
 
 const DEFAULT_CUSTOMER_EXPORTS: Record<string, CustomerExport> = {
   NCT01: {
@@ -915,13 +915,10 @@ const DEFAULT_CUSTOMER_EXPORTS: Record<string, CustomerExport> = {
     orderId: 'NCT01',
     invitationId: 'tpl-minh-anh',
     userId: 'usr-01',
-    fileName: 'Danh_Sach_Khach_Moi_Loi_Chuc_NCT01.xlsx',
-    fileUrl: '#',
-    fileSize: '248 KB',
     status: 'draft', // Initial state: "Chưa có file" / "Đang chờ dữ liệu"
     deadline: '25/12/2026 (3 ngày trước ngày cưới)',
-    guestCount: 24,
-    wishCount: 8,
+    guestCount: 0,
+    wishCount: 0,
     message: 'Nhà Có Tiệc sẽ gửi file dữ liệu khách mời sau khi hoàn tất tổng hợp.'
   },
   NCT02: {
@@ -929,13 +926,10 @@ const DEFAULT_CUSTOMER_EXPORTS: Record<string, CustomerExport> = {
     orderId: 'NCT02',
     invitationId: 'tpl-thanh-xuan',
     userId: 'usr-03',
-    fileName: 'Danh_Sach_Khach_Moi_NCT02.xlsx',
-    fileUrl: '#',
-    fileSize: '180 KB',
     status: 'draft',
     deadline: '15/11/2026 (3 ngày trước ngày cưới)',
-    guestCount: 15,
-    wishCount: 4,
+    guestCount: 0,
+    wishCount: 0,
     message: 'Nhà Có Tiệc sẽ gửi file dữ liệu khách mời sau khi hoàn tất tổng hợp.'
   },
   NCT03: {
@@ -943,13 +937,10 @@ const DEFAULT_CUSTOMER_EXPORTS: Record<string, CustomerExport> = {
     orderId: 'NCT03',
     invitationId: 'tpl-ngoc-lan',
     userId: 'usr-04',
-    fileName: 'Danh_Sach_Khach_Moi_NCT03.xlsx',
-    fileUrl: '#',
-    fileSize: '195 KB',
     status: 'draft',
     deadline: '20/12/2026 (3 ngày trước ngày cưới)',
-    guestCount: 18,
-    wishCount: 6,
+    guestCount: 0,
+    wishCount: 0,
     message: 'Nhà Có Tiệc sẽ gửi file dữ liệu khách mời sau khi hoàn tất tổng hợp.'
   },
   NCT04: {
@@ -960,7 +951,7 @@ const DEFAULT_CUSTOMER_EXPORTS: Record<string, CustomerExport> = {
     fileName: 'Danh_Sach_Khach_Moi_Loi_Chuc_NCT04.xlsx',
     fileUrl: '#',
     fileSize: '310 KB',
-    status: 'sent', // Đơn đã hoàn tất -> Đã gửi khách
+    status: 'sent', // Đơn đã hoàn tất trong quá khứ -> Đã gửi khách
     deadline: '02/09/2026',
     uploadedAt: '2026-09-02T10:00:00Z',
     sentAt: '2026-09-02T14:30:00Z',
@@ -972,14 +963,21 @@ const DEFAULT_CUSTOMER_EXPORTS: Record<string, CustomerExport> = {
 
 let currentExports: Record<string, CustomerExport> = (() => {
   try {
-    const saved = localStorage.getItem(EXPORTS_STORAGE_KEY);
+    const saved = localStorage.getItem(EXPORTS_STORAGE_KEY) || localStorage.getItem('nha_co_tiec_exports_v1');
     if (saved) {
       const parsed = JSON.parse(saved);
       const normalized: Record<string, CustomerExport> = {};
       Object.keys(parsed).forEach((k) => {
         const exp = parsed[k];
+        // Clean up dummy mock files: if status is draft or no real uploadedAt/fileDataUrl, leave fileName undefined
+        const isDraft = exp.status === 'draft' || (!exp.uploadedAt && !exp.fileDataUrl && exp.status !== 'sent');
         normalized[k] = {
           ...exp,
+          status: isDraft ? 'draft' : exp.status,
+          fileName: isDraft ? undefined : exp.fileName,
+          fileSize: isDraft ? undefined : exp.fileSize,
+          fileUrl: isDraft ? undefined : exp.fileUrl,
+          fileDataUrl: isDraft ? undefined : exp.fileDataUrl,
           uploadedAt: exp?.uploadedAt ? toIsoDateString(exp.uploadedAt) : undefined,
           sentAt: exp?.sentAt ? toIsoDateString(exp.sentAt) : undefined,
         };
@@ -1063,18 +1061,35 @@ export function getCustomerExport(orderId: string): CustomerExport {
     currentExports[orderId] = {
       id: `exp-${orderId}`,
       orderId,
-      fileName: `Danh_Sach_Khach_Moi_Loi_Chuc_${orderId}.xlsx`,
-      fileUrl: '#',
-      fileSize: '240 KB',
       status: 'draft',
       deadline: '3 ngày trước ngày cưới',
-      guestCount: 20,
-      wishCount: 5,
+      guestCount: 0,
+      wishCount: 0,
       message: 'Nhà Có Tiệc sẽ gửi file dữ liệu khách mời sau khi hoàn tất tổng hợp.'
     };
     notifyExports(orderId);
   }
   return currentExports[orderId];
+}
+
+/**
+ * Admin Action: Delete / Revert uploaded Excel file back to draft
+ */
+export function adminDeleteExcel(orderId: string): CustomerExport {
+  const existing = getCustomerExport(orderId);
+  const updated: CustomerExport = {
+    ...existing,
+    fileName: undefined,
+    fileSize: undefined,
+    fileUrl: undefined,
+    fileDataUrl: undefined,
+    uploadedAt: undefined,
+    sentAt: undefined,
+    status: 'draft',
+  };
+  currentExports[orderId] = updated;
+  notifyExports(orderId);
+  return updated;
 }
 
 /**
