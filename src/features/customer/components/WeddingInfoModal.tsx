@@ -30,45 +30,59 @@ export const WeddingInfoModal: React.FC<WeddingInfoModalProps> = ({
   const [loveStory, setLoveStory] = useState('');
   const [groomParents, setGroomParents] = useState('');
   const [brideParents, setBrideParents] = useState('');
+  const [familyInfo, setFamilyInfo] = useState('');
   const [timeline, setTimeline] = useState('');
   const [designerNotes, setDesignerNotes] = useState('');
 
   const [videoUrl, setVideoUrl] = useState('');
   const [videoNotes, setVideoNotes] = useState('');
+  const [musicTitle, setMusicTitle] = useState('');
+  const [albumDriveUrl, setAlbumDriveUrl] = useState('');
+  const [rsvpDeadline, setRsvpDeadline] = useState('');
+
+  // Bank accounts
+  const [groomBankName, setGroomBankName] = useState('');
+  const [groomAccountNumber, setGroomAccountNumber] = useState('');
+  const [groomAccountHolder, setGroomAccountHolder] = useState('');
+  const [brideBankName, setBrideBankName] = useState('');
+  const [brideAccountNumber, setBrideAccountNumber] = useState('');
+  const [brideAccountHolder, setBrideAccountHolder] = useState('');
 
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     if (initialInfo) {
-      setGroomName(initialInfo.groomName || 'Trần Đức Minh');
-      setBrideName(initialInfo.brideName || 'Nguyễn Minh Anh');
-      setCustomerEmail(initialInfo.customerEmail || 'minhanh.wedding@gmail.com');
-      setCustomerPhone(initialInfo.customerPhone || '0982 123 456');
+      setGroomName(initialInfo.groomName || '');
+      setBrideName(initialInfo.brideName || '');
+      setCustomerEmail(initialInfo.customerEmail || '');
+      setCustomerPhone(initialInfo.customerPhone || '');
 
-      setWeddingDate(initialInfo.weddingDate || '2026-12-28');
+      setWeddingDate(initialInfo.weddingDate || '');
       setWeddingTime(initialInfo.weddingTime || '18:00');
-      setVenueName(initialInfo.venueName || 'Trung tâm Hội nghị Tiệc cưới GEM Center');
-      setVenueAddress(initialInfo.venueAddress || 'Số 8 Nguyễn Bỉnh Khiêm, P. Đa Kao, Quận 1, TP. Hồ Chí Minh');
-      setGoogleMapUrl(initialInfo.googleMapUrl || 'https://maps.google.com/?q=GEM+Center');
+      setVenueName(initialInfo.venueName || '');
+      setVenueAddress(initialInfo.venueAddress || '');
+      setGoogleMapUrl(initialInfo.googleMapUrl || '');
 
-      setInvitationMessage(
-        initialInfo.invitationMessage ||
-          'Tình yêu là khi hai trái tim cùng chung một nhịp đập. Trân trọng kính mời bạn đến chung vui cùng chúng mình trong ngày trọng đại nhất.'
-      );
-      setLoveStory(
-        initialInfo.loveStory ||
-          'Gặp nhau vào một chiều thu Hà Nội năm 2021, từ hai người xa lạ chúng mình đã đồng hành qua bao vui buồn để viết nên cái kết viên mãn hôm nay.'
-      );
-      setGroomParents(initialInfo.groomParents || 'Ông Trần Văn Hùng & Bà Lê Thị Mai');
-      setBrideParents(initialInfo.brideParents || 'Ông Nguyễn Văn An & Bà Vũ Thị Cúc');
-      setTimeline(
-        initialInfo.timeline ||
-          '17:30: Đón khách & Chụp ảnh lưu niệm • 18:30: Khai lễ vu quy • 19:00: Khai tiệc mừng & Giao lưu • 20:30: Ném hoa cưới'
-      );
-      setDesignerNotes(initialInfo.designerNotes || 'Vui lòng nhấn mạnh tone màu kem linen và phông chữ thanh lịch.');
+      setInvitationMessage(initialInfo.invitationMessage || '');
+      setLoveStory(initialInfo.loveStory || '');
+      setGroomParents(initialInfo.groomParents || '');
+      setBrideParents(initialInfo.brideParents || '');
+      setFamilyInfo(initialInfo.familyInfo || '');
+      setTimeline(initialInfo.timeline || '');
+      setDesignerNotes(initialInfo.designerNotes || '');
 
       setVideoUrl(initialInfo.videoUrl || '');
       setVideoNotes(initialInfo.videoNotes || '');
+      setMusicTitle(initialInfo.musicTitle || '');
+      setAlbumDriveUrl(initialInfo.albumDriveUrl || '');
+      setRsvpDeadline(initialInfo.rsvpDeadline || '');
+
+      setGroomBankName(initialInfo.bankAccountGroom?.bankName || '');
+      setGroomAccountNumber(initialInfo.bankAccountGroom?.accountNumber || '');
+      setGroomAccountHolder(initialInfo.bankAccountGroom?.accountHolder || '');
+      setBrideBankName(initialInfo.bankAccountBride?.bankName || '');
+      setBrideAccountNumber(initialInfo.bankAccountBride?.accountNumber || '');
+      setBrideAccountHolder(initialInfo.bankAccountBride?.accountHolder || '');
     }
   }, [initialInfo, isOpen]);
 
@@ -103,10 +117,24 @@ export const WeddingInfoModal: React.FC<WeddingInfoModalProps> = ({
       loveStory: loveStory.trim(),
       groomParents: groomParents.trim(),
       brideParents: brideParents.trim(),
+      familyInfo: familyInfo.trim(),
       timeline: timeline.trim(),
       designerNotes: designerNotes.trim(),
       videoUrl: videoUrl.trim(),
       videoNotes: videoNotes.trim(),
+      musicTitle: musicTitle.trim(),
+      albumDriveUrl: albumDriveUrl.trim(),
+      rsvpDeadline: rsvpDeadline.trim(),
+      bankAccountGroom: groomAccountNumber.trim() ? {
+        bankName: groomBankName.trim() || 'Vietcombank',
+        accountNumber: groomAccountNumber.trim(),
+        accountHolder: groomAccountHolder.trim() || groomName.trim(),
+      } : undefined,
+      bankAccountBride: brideAccountNumber.trim() ? {
+        bankName: brideBankName.trim() || 'MB Bank',
+        accountNumber: brideAccountNumber.trim(),
+        accountHolder: brideAccountHolder.trim() || brideName.trim(),
+      } : undefined,
     });
 
     setIsSuccess(true);
@@ -293,6 +321,18 @@ export const WeddingInfoModal: React.FC<WeddingInfoModalProps> = ({
                   className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
                 />
               </div>
+
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="font-semibold text-deep-espresso">
+                  Hạn chót xác nhận tham dự (RSVP Deadline)
+                </label>
+                <input
+                  type="date"
+                  value={rsvpDeadline}
+                  onChange={(e) => setRsvpDeadline(e.target.value)}
+                  className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                />
+              </div>
             </div>
           </div>
 
@@ -326,6 +366,19 @@ export const WeddingInfoModal: React.FC<WeddingInfoModalProps> = ({
                   value={brideParents}
                   onChange={(e) => setBrideParents(e.target.value)}
                   placeholder="Ông Nguyễn Văn An & Bà Vũ Thị Cúc"
+                  className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="font-semibold text-deep-espresso">
+                  Thông tin đại diện gia đình hai họ (Tùy chọn)
+                </label>
+                <input
+                  type="text"
+                  value={familyInfo}
+                  onChange={(e) => setFamilyInfo(e.target.value)}
+                  placeholder="Ví dụ: Trưởng nam & Út nữ, hoặc thông tin tộc họ..."
                   className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
                 />
               </div>
@@ -416,6 +469,118 @@ export const WeddingInfoModal: React.FC<WeddingInfoModalProps> = ({
                   placeholder="Ví dụ: Tự động phát khi cuộn tới mục Video cưới..."
                   className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
                 />
+              </div>
+
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="font-semibold text-deep-espresso">
+                  Bài hát yêu thích / Nhạc nền thiệp cưới
+                </label>
+                <input
+                  type="text"
+                  value={musicTitle}
+                  onChange={(e) => setMusicTitle(e.target.value)}
+                  placeholder="Ví dụ: A Thousand Years - Christina Perri, Until I Found You..."
+                  className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="font-semibold text-deep-espresso">
+                  Link Thư mục Google Drive ảnh cưới
+                </label>
+                <input
+                  type="url"
+                  value={albumDriveUrl}
+                  onChange={(e) => setAlbumDriveUrl(e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  className="px-3.5 py-2 rounded-xl bg-surface-subtle border border-border-delicate text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 5: BANK ACCOUNTS FOR GIFT BOX */}
+          <div className="flex flex-col gap-3">
+            <span className="font-label-caps text-[10px] uppercase font-bold text-burgundy-wine tracking-wider border-b border-border-delicate pb-1 flex items-center gap-1.5">
+              <Icon name="payments" className="text-[14px]" />
+              5. Tài Khoản Mừng Cưới (Hộp Mừng Cưới QR Online)
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Groom Bank */}
+              <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-2">
+                <span className="font-bold text-deep-espresso text-xs flex items-center gap-1 text-burgundy-wine">
+                  <Icon name="account_balance" className="text-[14px]" />
+                  Tài khoản Nhà Trai (Chú rể)
+                </span>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Ngân hàng</label>
+                  <input
+                    type="text"
+                    value={groomBankName}
+                    onChange={(e) => setGroomBankName(e.target.value)}
+                    placeholder="Ví dụ: Vietcombank, Techcombank..."
+                    className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Số tài khoản</label>
+                  <input
+                    type="text"
+                    value={groomAccountNumber}
+                    onChange={(e) => setGroomAccountNumber(e.target.value)}
+                    placeholder="Số tài khoản nhận mừng cưới"
+                    className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-delicate text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Chủ tài khoản</label>
+                  <input
+                    type="text"
+                    value={groomAccountHolder}
+                    onChange={(e) => setGroomAccountHolder(e.target.value)}
+                    placeholder="Tên chủ thẻ / chủ tài khoản"
+                    className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+              </div>
+
+              {/* Bride Bank */}
+              <div className="p-3 rounded-xl bg-surface-subtle/50 border border-border-delicate flex flex-col gap-2">
+                <span className="font-bold text-deep-espresso text-xs flex items-center gap-1 text-burgundy-wine">
+                  <Icon name="account_balance" className="text-[14px]" />
+                  Tài khoản Nhà Gái (Cô dâu)
+                </span>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Ngân hàng</label>
+                  <input
+                    type="text"
+                    value={brideBankName}
+                    onChange={(e) => setBrideBankName(e.target.value)}
+                    placeholder="Ví dụ: MB Bank, ACB, VPBank..."
+                    className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Số tài khoản</label>
+                  <input
+                    type="text"
+                    value={brideAccountNumber}
+                    onChange={(e) => setBrideAccountNumber(e.target.value)}
+                    placeholder="Số tài khoản nhận mừng cưới"
+                    className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-delicate text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-text-muted">Chủ tài khoản</label>
+                  <input
+                    type="text"
+                    value={brideAccountHolder}
+                    onChange={(e) => setBrideAccountHolder(e.target.value)}
+                    placeholder="Tên chủ thẻ / chủ tài khoản"
+                    className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-delicate text-xs font-medium focus:outline-none focus:ring-1 focus:ring-burgundy-wine"
+                  />
+                </div>
               </div>
             </div>
           </div>

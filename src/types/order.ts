@@ -69,6 +69,7 @@ export interface RevisionRequest {
   referenceImage?: string;
   createdAt: string;
   status: 'pending' | 'in_progress' | 'resolved';
+  resolvedAt?: string;
 }
 
 export interface WeddingInformation {

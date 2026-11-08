@@ -635,6 +635,42 @@ export function adminCompleteDesign(orderId: string, customUrl?: string): Order 
 }
 
 /**
+ * Admin Action: Update wedding information for an order
+ */
+export function adminUpdateWeddingInfo(
+  orderId: string,
+  data: Partial<WeddingInformation>
+): Order {
+  return customerSubmitWeddingInfo(orderId, data);
+}
+
+/**
+ * Admin Action: Mark a customer revision request as resolved
+ */
+export function adminResolveRevision(
+  orderId: string,
+  revisionId: string
+): Order {
+  const now = new Date().toISOString();
+  let targetOrder: Order | undefined;
+  currentOrders = currentOrders.map((ord) => {
+    if (ord.id === orderId) {
+      targetOrder = {
+        ...ord,
+        updatedAt: now,
+        revisionRequests: (ord.revisionRequests || []).map((rev) =>
+          rev.id === revisionId ? { ...rev, status: 'resolved' as const } : rev
+        ),
+      };
+      return targetOrder;
+    }
+    return ord;
+  });
+  notify(targetOrder);
+  return getOrderById(orderId)!;
+}
+
+/**
  * Customer Action: Submit wedding information form
  * Saves customer-entered wedding details and marks weddingInfoSubmitted: true.
  * IMPORTANT: Does NOT automatically change orderStatus from Customer UI!
