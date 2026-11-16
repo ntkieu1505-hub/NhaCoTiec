@@ -16,6 +16,36 @@
     <!-- Material Symbols Outlined -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
+    <!-- n8n Chat Widget -->
+    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+    <style>
+      :root {
+        --chat--color-primary: #881337;
+        --chat--color-primary-shade-50: #700f2b;
+        --chat--color-primary-shade-100: #580c22;
+        --chat--color-secondary: #fef2f2;
+      }
+    </style>
+    <script type="module">
+      import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+      createChat({
+        webhookUrl: 'https://nhacotiec.app.n8n.cloud/webhook/91dc254f-3743-4a2c-a884-d57a7fcddde4/chat',
+        initialMessages: [
+          'Xin chào anh/chị! Bên em là trợ lý của Nhà Có Tiệc.',
+          'Anh/chị cần em tư vấn thiệp cưới hay báo giá ạ?'
+        ],
+        i18n: {
+          en: {
+            title: 'Nhà Có Tiệc',
+            subtitle: 'Tư vấn thiệp cưới điện tử',
+            footer: '',
+            getStarted: 'Bắt đầu trò chuyện',
+            inputPlaceholder: 'Nhập câu hỏi của anh/chị...'
+          }
+        }
+      });
+    </script>
+
     <!-- Google tag (gtag.js) - Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z2HW7GTQZK"></script>
     <script>
