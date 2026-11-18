@@ -425,6 +425,15 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                   >
                     79k
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrice(99000)}
+                    className={`px-2.5 py-2 rounded-xl border text-[11px] font-semibold transition-colors ${
+                      price === 99000 ? 'bg-burgundy-wine text-white border-burgundy-wine' : 'bg-surface-subtle border-border-delicate text-text-muted hover:bg-surface-card'
+                    }`}
+                  >
+                    99k
+                  </button>
                 </div>
                 <span className="text-[10px] text-text-muted">
                   * Giá được lưu ở dạng số nguyên ({price}), không lưu dạng chuỗi định dạng.

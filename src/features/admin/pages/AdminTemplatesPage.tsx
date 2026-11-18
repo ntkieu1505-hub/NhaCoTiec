@@ -398,6 +398,7 @@ export const AdminTemplatesPage: React.FC = () => {
               <option value="">Mức giá: Tất cả</option>
               <option value="59000">Đồng giá 59.000đ</option>
               <option value="79000">Đồng giá 79.000đ</option>
+              <option value="99000">Đồng giá 99.000đ</option>
             </select>
           </div>
         </div>
