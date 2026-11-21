@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/common/Icon';
 import { usePaymentSettings } from '../../../mocks/paymentSettingsStore';
+import { useSystemSettings, updateSystemSettings } from '../../../mocks/systemSettingsStore';
 
 export const AdminSettingsPage: React.FC = () => {
   const paymentSettings = usePaymentSettings();
-  const [basicPrice, setBasicPrice] = useState('59.000');
-  const [premiumPrice, setPremiumPrice] = useState('79.000');
-  const [slaHours, setSlaHours] = useState('24');
-  const [freeRevisions, setFreeRevisions] = useState('3');
+  const systemSettings = useSystemSettings();
+
+  const [basicPrice, setBasicPrice] = useState(systemSettings.basicPrice);
+  const [premiumPrice, setPremiumPrice] = useState(systemSettings.premiumPrice);
+  const [renewalPrice, setRenewalPrice] = useState(systemSettings.renewalPrice);
+  const [slaHours, setSlaHours] = useState(systemSettings.slaHours);
+  const [freeRevisions, setFreeRevisions] = useState(systemSettings.freeRevisions);
   const [saved, setSaved] = useState(false);
+
+  // Sync state when systemSettings updates from Firestore / localStorage
+  useEffect(() => {
+    setBasicPrice(systemSettings.basicPrice);
+    setPremiumPrice(systemSettings.premiumPrice);
+    setRenewalPrice(systemSettings.renewalPrice);
+    setSlaHours(systemSettings.slaHours);
+    setFreeRevisions(systemSettings.freeRevisions);
+  }, [systemSettings]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    updateSystemSettings({
+      basicPrice,
+      premiumPrice,
+      renewalPrice,
+      slaHours,
+      freeRevisions,
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -112,7 +132,8 @@ export const AdminSettingsPage: React.FC = () => {
                 <div className="relative flex items-center">
                   <input
                     type="text"
-                    defaultValue="30.000"
+                    value={renewalPrice}
+                    onChange={(e) => setRenewalPrice(e.target.value)}
                     className="w-full bg-surface-card border border-border-delicate rounded-lg px-2.5 py-1.5 text-xs font-semibold text-deep-espresso"
                   />
                   <span className="absolute right-2 text-[10px] text-text-muted">/ 3 Th</span>
