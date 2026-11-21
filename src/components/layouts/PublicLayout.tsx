@@ -10,11 +10,13 @@ import {
   getEffectiveZaloPhone,
 } from '../../mocks/cmsStore';
 import { useAuth } from '../../mocks/authStore';
+import { useSystemSettings } from '../../mocks/systemSettingsStore';
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const cms = useCmsContent();
+  const systemSettings = useSystemSettings();
   const zaloUrl = useZaloSupportUrl();
   const { isAuthenticated, isAdmin, logout } = useAuth();
 
@@ -203,10 +205,12 @@ export const PublicLayout: React.FC = () => {
               </p>
               <div className="flex items-center gap-3 pt-2 text-xs text-gold-foil font-medium">
                 <span className="flex items-center gap-1">
-                  <Icon name="verified" className="text-[14px]" /> Cam kết 24h
+                  <Icon name="verified" className="text-[14px]" /> Cam kết {systemSettings.slaHours || '24'}h
                 </span>
                 <span>•</span>
-                <span>Giá bán lẻ 59k - 79k</span>
+                <span>
+                  Giá bán lẻ {systemSettings.basicPrice?.replace(/\.000$|000$/, '') || '59'}k - {systemSettings.premiumPrice?.replace(/\.000$|000$/, '') || '79'}k
+                </span>
               </div>
 
               {/* Social Media Links from CMS */}
