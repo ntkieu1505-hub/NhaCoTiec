@@ -1,0 +1,545 @@
+{
+  "name": "Tổng hợp content & video TikTok",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -64,
+        -304
+      ],
+      "id": "b9eea81f-8eb5-419a-80e1-c201f5a8642f",
+      "name": "Chạy mỗi ngày 20h"
+    },
+    {
+      "parameters": {
+        "actorId": {
+          "__rl": true,
+          "value": "GdWCkxBtKWOsKjdch",
+          "mode": "list",
+          "cachedResultName": "TikTok Scraper (clockworks/tiktok-scraper)",
+          "cachedResultUrl": "https://console.apify.com/actors/GdWCkxBtKWOsKjdch/input"
+        },
+        "customBody": "{\n    \"aiVideoDescription\": false,\n    \"aiVideoSummary\": false,\n    \"commentsPerPost\": 0,\n    \"excludePinnedPosts\": false,\n    \"hashtags\": [\n        \"thiepcuoi\",\n        \"thiepcuoionline\"\n    ],\n    \"maxFollowersPerProfile\": 0,\n    \"maxFollowingPerProfile\": 0,\n    \"maxRepliesPerComment\": 0,\n    \"proxyCountryCode\": \"None\",\n    \"resultsPerPage\": 10,\n    \"scrapeAdditionalAuthorMeta\": false,\n    \"scrapeRelatedSearchWords\": false,\n    \"scrapeRelatedVideos\": false,\n    \"shouldDownloadAvatars\": false,\n    \"shouldDownloadCovers\": false,\n    \"shouldDownloadMusicCovers\": false,\n    \"shouldDownloadSlideshowImages\": false,\n    \"shouldDownloadVideos\": false,\n    \"topLevelCommentsPerPost\": 0\n}",
+        "timeout": 300,
+        "maxTotalChargeUsd": 0.5,
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -304
+      ],
+      "id": "c5062c6a-7292-4567-8427-8940cf2d902a",
+      "name": "Quét TikTok lấy thiệp cưới",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "NLlSmCSNlIEaoly8",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Datasets",
+        "datasetId": "=VhDpM0GqLCYcsUPd6",
+        "offset": {},
+        "options": {},
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -304
+      ],
+      "id": "d1287134-d118-4dae-bdbe-d14948cb7923",
+      "name": "Lấy danh sách video",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "NLlSmCSNlIEaoly8",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qixNj9CErL5p9zz0deuzKSlLzn0Y9fMchEjtYkBlrVw",
+          "mode": "list",
+          "cachedResultName": "TikTok thiệp cưới",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qixNj9CErL5p9zz0deuzKSlLzn0Y9fMchEjtYkBlrVw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qixNj9CErL5p9zz0deuzKSlLzn0Y9fMchEjtYkBlrVw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Link": "={{ $('Xếp video hot lên đầu').item.json.webVideoUrl }}",
+            "Caption": "={{ $('Xếp video hot lên đầu').item.json.text }}",
+            "Views": "={{ $('Xếp video hot lên đầu').item.json.playCount }}",
+            "Likes": "={{ $('Xếp video hot lên đầu').item.json.diggCount }}",
+            "Kenh": "={{ $('Xếp video hot lên đầu').item.json.authorMeta.name }}",
+            "Ảnh": "==IMAGE(\"https://drive.google.com/thumbnail?id={{ $json.id }}&sz=w400\")"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Views",
+              "displayName": "Views",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Likes",
+              "displayName": "Likes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Kenh",
+              "displayName": "Kenh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ảnh",
+              "displayName": "Ảnh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        128
+      ],
+      "id": "7be4047c-c45a-4ba4-b4bd-1a8a5eedc566",
+      "name": "Lưu vào Google Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f1t3bRILS538CRUI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "playCount",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -80
+      ],
+      "id": "abcefef5-e2b9-4869-b1e3-6c77d06f5a71",
+      "name": "Xếp video hot lên đầu"
+    },
+    {
+      "parameters": {
+        "url": "=   {{ $json.videoMeta.coverUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        592,
+        -80
+      ],
+      "id": "cd2bfaf7-b351-495d-b8be-80f29f7e29e4",
+      "name": "Tải ảnh bìa"
+    },
+    {
+      "parameters": {
+        "name": "={{ $itemIndex }}-anh-bia.jpg",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "12rMC3KzH04fG0HoD7eFc0Dh4SIKjzbjt",
+          "mode": "list",
+          "cachedResultName": "Ảnh bìa TikTok NCT",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/12rMC3KzH04fG0HoD7eFc0Dh4SIKjzbjt"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -32,
+        128
+      ],
+      "id": "50c3b2b6-1caf-4a29-8e44-86400c64e4b8",
+      "name": "Lưu ảnh vào drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "L8Uh4AFsIQ2zjwwI",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        608,
+        128
+      ],
+      "id": "32dfcf9b-feb9-4c17-873c-dc160e166550",
+      "name": "Lấy 5 video hot nhất"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        192,
+        544
+      ],
+      "id": "0097703a-8b82-4555-817b-f93c84d5932c",
+      "name": "Gemini ",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GYSXYXzZqOt7oxSm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Đây là các video TikTok thiệp cưới đang hot:\n{{ $input.all().map(i => `- ${i.json.Caption} | ${i.json.Views} lượt xem | ${i.json.Likes} thích | ${i.json.Link}`).join('\\n') }}\n\nBạn là chuyên viên content của Nhà Cỗ Tiệc (thiệp cưới online). Hãy:\n1. Chỉ ra 3 điểm chung khiến các video này hot (chủ đề, kiểu mở đầu, hashtag).\n2. Viết 3 ý tưởng video mới, mỗi ý gồm: tiêu đề, kịch bản 3 cảnh, caption, 5 hashtag.\nChỉ lấy cảm hứng, không sao chép nguyên caption của người khác. Trả lời bằng tiếng Việt.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -64,
+        352
+      ],
+      "id": "d6beec20-5a7d-4d77-b8da-9f92eefbb73f",
+      "name": "AI viết ý tưởng content",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qixNj9CErL5p9zz0deuzKSlLzn0Y9fMchEjtYkBlrVw",
+          "mode": "list",
+          "cachedResultName": "TikTok thiệp cưới",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qixNj9CErL5p9zz0deuzKSlLzn0Y9fMchEjtYkBlrVw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 760738052,
+          "mode": "list",
+          "cachedResultName": "Ý tưởng content",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qixNj9CErL5p9zz0deuzKSlLzn0Y9fMchEjtYkBlrVw/edit#gid=760738052"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ngày": "={{ $now.format('dd/MM/yyyy') }}",
+            "Ý tưởng": "={{ $json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Ngày",
+              "displayName": "Ngày",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ý tưởng",
+              "displayName": "Ý tưởng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        320,
+        352
+      ],
+      "id": "a41022d9-3d77-4f8d-82e2-1b8387886f62",
+      "name": "Lưu ý tưởng content",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "f1t3bRILS538CRUI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "dc0abd61-3188-4605-8892-746fabde6bb1",
+              "leftValue": "={{ $json.playCount }}",
+              "rightValue": 10000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        288,
+        -80
+      ],
+      "id": "831a5275-14e2-4e8d-9a51-fe417cff8a48",
+      "name": "Lọc video trên 10.000 views"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chạy mỗi ngày 20h": {
+      "main": [
+        [
+          {
+            "node": "Quét TikTok lấy thiệp cưới",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quét TikTok lấy thiệp cưới": {
+      "main": [
+        [
+          {
+            "node": "Lấy danh sách video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy danh sách video": {
+      "main": [
+        [
+          {
+            "node": "Xếp video hot lên đầu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Xếp video hot lên đầu": {
+      "main": [
+        [
+          {
+            "node": "Lọc video trên 10.000 views",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tải ảnh bìa": {
+      "main": [
+        [
+          {
+            "node": "Lưu ảnh vào drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lưu ảnh vào drive": {
+      "main": [
+        [
+          {
+            "node": "Lưu vào Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lưu vào Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Lấy 5 video hot nhất",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lấy 5 video hot nhất": {
+      "main": [
+        [
+          {
+            "node": "AI viết ý tưởng content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini ": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI viết ý tưởng content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI viết ý tưởng content": {
+      "main": [
+        [
+          {
+            "node": "Lưu ý tưởng content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lọc video trên 10.000 views": {
+      "main": [
+        [
+          {
+            "node": "Tải ảnh bìa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a6bf9ccb-9a0e-4660-a304-fafec0991bf9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6023128c0b680e3d81ef2ecf2ae2ae70ae603aa7ca19a8b15ffc0837ab4a697b"
+  },
+  "nodeGroups": [],
+  "id": "Vv8pO9IhO0P5H0Dm",
+  "tags": []
+}
