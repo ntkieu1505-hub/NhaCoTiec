@@ -107,10 +107,13 @@ Kích hoạt theo lịch → Apify thu thập video TikTok → Sắp xếp và l
 ## 3. Công nghệ sử dụng
 
 ### 3.1. Website
-- Vite.
-- React.
-- TypeScript.
-- Google Gemini API.
+- ChatGPT: Lên ý tưởng, xây dựng Prompt.
+- Google Stitch: Thiết kế giao diện UX/UI.
+- Google AI Studio: Hỗ trợ phát triển website và tạo mã nguồn.
+- React, TypeScript, Vite, Tailwind CSS: Xây dựng giao diện và chức năng website.
+- Firebase: Kết nối Backend, xác thực và quản lý dữ liệu.
+- GitHub: Lưu trữ, quản lý và đồng bộ mã nguồn.
+- Vercel: Build, hosting và triển khai website.
 
 ### 3.2. AI Agent 1 – Trợ lý AI Nhà Có Tiệc
 - n8n: Xây dựng và tự động hóa workflow.
@@ -129,6 +132,5 @@ Kích hoạt theo lịch → Apify thu thập video TikTok → Sắp xếp và l
 
 - Source code Website Nhà Có Tiệc.
 - Workflow JSON của AI Agent 1 và AI Agent 2.
-- System Prompt của các AI Agent.
 - Các file AI Skills được sử dụng trong dự án.
 - Hình ảnh kiểm thử và kết quả hoạt động của các sản phẩm.
